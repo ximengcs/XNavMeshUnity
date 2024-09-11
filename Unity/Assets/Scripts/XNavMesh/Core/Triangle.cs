@@ -14,6 +14,10 @@ namespace XFrame.PathFinding
         public XVector2 P2;
         public XVector2 P3;
 
+        public Edge E1 => new Edge(P1, P2);
+        public Edge E2 => new Edge(P2, P3);
+        public Edge E3 => new Edge(P3, P1);
+
         public Triangle(XVector2 p1, XVector2 p2, XVector2 p3)
         {
             P1 = p1;

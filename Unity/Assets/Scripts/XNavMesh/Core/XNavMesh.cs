@@ -57,6 +57,16 @@ namespace XFrame.PathFinding
             return faces;
         }
 
+        public HalfEdgeFace FindFace(Triangle triangle)
+        {
+            foreach (HalfEdgeFace face in m_Data.Faces)
+            {
+                if (triangle.Equals(face))
+                    return face;
+            }
+            return null;
+        }
+
         public XNavMeshList<TriangleArea> Add2(Triangle triangle, AreaType area, out List<XVector2> edges)
         {
             triangle = m_Normalizer.Normalize(triangle);
@@ -67,124 +77,42 @@ namespace XFrame.PathFinding
                 re.Add(new TriangleArea(m_Normalizer.UnNormalize(new Triangle(face)), AreaType.Walk));
             }
 
-            edges = new List<XVector2>();
+            List<Edge> edgeList = new List<Edge>();
             foreach (HalfEdgeFace face in relationFaces)
             {
                 HalfEdge e1 = face.Edge;
                 HalfEdge e2 = e1.NextEdge;
                 HalfEdge e3 = e1.PrevEdge;
-                Debug.LogWarning($" tri {m_Normalizer.UnNormalize(e1.Vertex.Position)} {m_Normalizer.UnNormalize(e2.Vertex.Position)} {m_Normalizer.UnNormalize(e3.Vertex.Position)} ");
-                if (XMath.CheckTriangleLineSameDir(triangle, e1))
+                if (XMath.CheckLineOutOfTriangle(triangle, e1))
                 {
-                    edges.Add(m_Normalizer.UnNormalize(e1.Vertex.Position));
-                    //Debug.Log($"a1 {m_Normalizer.UnNormalize(e1.Vertex.Position)}");
+                    edgeList.Add(e1.ToEdge());
                 }
-                if (XMath.CheckTriangleLineSameDir(triangle, e2))
+                if (XMath.CheckLineOutOfTriangle(triangle, e2))
                 {
-                    edges.Add(m_Normalizer.UnNormalize(e2.Vertex.Position));
-                    //Debug.Log($"a2 {m_Normalizer.UnNormalize(e2.Vertex.Position)}");
+                    edgeList.Add(e2.ToEdge());
                 }
-                if (XMath.CheckTriangleLineSameDir(triangle, e3))
+                if (XMath.CheckLineOutOfTriangle(triangle, e3))
                 {
-                    edges.Add(m_Normalizer.UnNormalize(e3.Vertex.Position));
-                    //Debug.Log($"a3 {m_Normalizer.UnNormalize(e3.Vertex.Position)}");
+                    edgeList.Add(e3.ToEdge());
                 }
             }
 
-            Debug.LogWarning(edges.Count);
-            Debug.LogWarning(re.Count);
-            foreach (XVector2 v in edges)
-                ;// Debug.LogWarning(v);
-            return re;
-
-            HashSet<HalfEdgeFace> faces = new HashSet<HalfEdgeFace>();
-
-            // 找出所有在三角形内的点所在的三角形
-            foreach (HalfEdgeVertex vert in m_Data.Vertices)
-            {
-                if (triangle.Contains(vert.Position))
-                {
-                    if (!faces.Contains(vert.Edge.Face))
-                        faces.Add(vert.Edge.Face);
-                }
-            }
-
-            // 所有边界的点, 需为逆时针以方便添加Constraint
-            List<XVector2> edgePoints = new List<XVector2>();
-            List<HalfEdgeFace> edgeFaces = new List<HalfEdgeFace>();
-            // 计算所有三角形边合并的多边形
-            foreach (HalfEdgeFace face in faces)
-            {
-                XVector2 p1 = face.Edge.Vertex.Position;
-                XVector2 p2 = face.Edge.NextEdge.Vertex.Position;
-                XVector2 p3 = face.Edge.PrevEdge.Vertex.Position;
-
-                if (triangle.Has(p1) && triangle.Has(p2) && triangle.Has(p3))
-                    continue;
-
-                edgeFaces.Add(face);
-            }
-
-            Debug.Log($" triangle {triangle} ");
-
-            // 如果目标三角形内有其他点，那么需要把点相关的面也添加进来，并且之后要在原数据中删除这些点
-            List<XVector2> willDeletePoints = new List<XVector2>();
-            XVector2 tmpPoint = default;
-            HalfEdge tmpEdge = edgeFaces[0].Edge;
+            edges = new List<XVector2>();
+            Edge curEdge = edgeList[0];
             do
             {
-                XVector2 p1 = tmpEdge.Vertex.Position;
-                XVector2 p2 = tmpEdge.NextEdge.Vertex.Position;
-                XVector2 p3 = tmpEdge.PrevEdge.Vertex.Position;
-
-                if (triangle.Contains(p1))
+                edges.Add(m_Normalizer.UnNormalize(curEdge.P1));
+                Edge tmp = curEdge;
+                curEdge = null;
+                foreach (Edge e in edgeList)
                 {
-                    tmpPoint = p2;
-                    if (!edgePoints.Contains(p2))
+                    if (e.P1.Equals(tmp.P2))
                     {
-                        if (!triangle.Contains(p2)) // 目标三角形中包含这个点
-                        {
-                            edgePoints.Add(p2);
-                        }
-                        else
-                        {
-                            willDeletePoints.Add(p2);
-                        }
+                        curEdge = e;
+                        break;
                     }
-
-                    tmpEdge = tmpEdge.NextEdge.OppositeEdge;
                 }
-                else if (triangle.Contains(p2))
-                {
-                    tmpPoint = p3;
-                    if (!edgePoints.Contains(p3))
-                    {
-                        if (!triangle.Contains(p3))
-                            edgePoints.Add(p3);
-                        else
-                            willDeletePoints.Add(p3);
-                    }
-
-                    tmpEdge = tmpEdge.PrevEdge.OppositeEdge;
-                }
-                else if (triangle.Contains(p3))
-                {
-                    tmpPoint = p1;
-                    if (!edgePoints.Contains(p1))
-                    {
-                        if (!triangle.Contains(p1))
-                            edgePoints.Add(p1);
-                        else
-                            willDeletePoints.Add(p1);
-                    }
-
-                    tmpEdge = tmpEdge.OppositeEdge;
-                }
-
-                // count == 0 : 第一个节点在目标三角形内，需要剔除掉
-                // count == 1 : 第一个合法的节点
-            }
-            while (edgePoints.Count <= 1 || (edgePoints.Count > 1 && !edgePoints[0].Equals(tmpPoint)));
+            } while (curEdge != null && edges.Count < edgeList.Count);
 
             // 临时半边数据用于构建三角形涉及的区域
             HalfEdgeData tmpData = new HalfEdgeData();
@@ -192,36 +120,34 @@ namespace XFrame.PathFinding
             tmpData.AddTriangle(superTriangle);
 
             // 将边界点添加到临时半边数据中
-            foreach (XVector2 p in edgePoints)
+            List<XVector2> contraintList = new List<XVector2>();
+            for (int i = edges.Count - 1; i >= 0; i--)
+                contraintList.Add(m_Normalizer.Normalize(edges[i]));
+            foreach (XVector2 p in contraintList)
             {
                 DelaunayIncrementalSloan.InsertNewPointInTriangulation(p, tmpData);
             }
 
             // 添加三角形的三个点
-            //DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P1, tmpData);
-            //DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P2, tmpData);
-            //DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P3, tmpData);
+            DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P1, tmpData);
+            DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P2, tmpData);
+            DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P3, tmpData);
 
             // 添加Constraint以剪切形状
-            ConstrainedDelaunaySloan.AddConstraints(tmpData, edgePoints, true);
+            ConstrainedDelaunaySloan.AddConstraints(tmpData, contraintList, true);
 
             // 移除大三角形
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
             // 替换结构的中三角形
-
             // 找出所有关联的边并移除旧边，添加新边
-            for (int i = 0; i < edgePoints.Count; i++)
+            foreach (Edge edge in edgeList)
             {
-                XVector2 from = edgePoints[i];
-                XVector2 to = edgePoints[(i + 1) % edgePoints.Count];
-                Edge edge = new Edge(from, to);
-
                 foreach (HalfEdge e in tmpData.Edges)
                 {
                     if (e.EqualsEdge(edge))
                     {
-                        foreach (HalfEdgeFace face in faces)
+                        foreach (HalfEdgeFace face in relationFaces)  //只需要找相关联的面就可以
                         {
                             if (face.FindEdge(edge, out HalfEdge halfEdge))
                             {
@@ -245,27 +171,17 @@ namespace XFrame.PathFinding
                 }
             }
 
-            foreach (XVector2 p in willDeletePoints) // 删除和这些点关联的数据
-            {
-                Debug.Log($"remove {m_Normalizer.UnNormalize(p)}");
-                foreach (HalfEdgeFace face in m_Data.Faces)
-                {
-                    if (face.Contains(p))
-                    {
-                        m_Data.Faces.Remove(face);
+            // 删除旧的相关联的面
 
-                        HalfEdge e1 = face.Edge;
-                        HalfEdge e2 = e1.NextEdge;
-                        HalfEdge e3 = e2.PrevEdge;
-                        m_Data.Edges.Remove(e1);
-                        m_Data.Edges.Remove(e2);
-                        m_Data.Edges.Remove(e3);
-                        m_Data.Vertices.Remove(e1.Vertex);
-                        m_Data.Vertices.Remove(e2.Vertex);
-                        m_Data.Vertices.Remove(e3.Vertex);
-                        break;
-                    }
-                }
+            foreach (HalfEdgeFace face in relationFaces)
+            {
+                m_Data.Vertices.Remove(face.Edge.Vertex);
+                m_Data.Vertices.Remove(face.Edge.NextEdge.Vertex);
+                m_Data.Vertices.Remove(face.Edge.PrevEdge.Vertex);
+                m_Data.Edges.Remove(face.Edge);
+                m_Data.Edges.Remove(face.Edge.NextEdge);
+                m_Data.Edges.Remove(face.Edge.PrevEdge);
+                m_Data.Faces.Remove(face);
             }
 
             // 添加新边数据
@@ -276,14 +192,26 @@ namespace XFrame.PathFinding
             foreach (HalfEdgeFace f in tmpData.Faces)
                 m_Data.Faces.Add(f);
 
-            XNavMeshList<TriangleArea> triangles = HalfEdgeUtility.HalfEdgeToTriangle(tmpData);
+            // 标记区域
+            HalfEdgeFace target = FindFace(triangle);
+            if (target != null)
+            {
+                Debug.LogWarning("set ob");
+                target.Area = AreaType.Obstacle;
+            }
+            else
+            {
+                Debug.LogError("not find");
+            }
+
+            // 移动障碍物时需要 把旧的关联的区域和新区域合并
+
+            XNavMeshList<TriangleArea> triangles = HalfEdgeUtility.HalfEdgeToTriangle(m_Data);
             for (int i = 0; i < triangles.Count; i++)
             {
                 TriangleArea origin = triangles[i];
                 triangles[i] = new TriangleArea(m_Normalizer.UnNormalize(origin.Shape), origin.Area);
             }
-
-            // 标记区域
 
             return triangles;
         }

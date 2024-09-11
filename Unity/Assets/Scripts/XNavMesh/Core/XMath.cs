@@ -41,17 +41,17 @@ namespace XFrame.PathFinding
             return index;
         }
 
-        public static bool CheckTriangleLineSameDir(Triangle triangle, HalfEdge e)
+        public static bool CheckLineOutOfTriangle(Triangle triangle, HalfEdge e)
         {
-            XVector2 p1 = e.Vertex.Position;
-            XVector2 p2 = e.NextEdge.Vertex.Position;
-
-            // 检查三角形的三个点和是否同向
-            bool dir1 = XVector2.Cross(triangle.P1 - p1, p2 - p1) > 0;
-            bool dir2 = XVector2.Cross(triangle.P2 - p1, p2 - p1) > 0;
-            bool dir3 = XVector2.Cross(triangle.P3 - p1, p2 - p1) > 0;
-            Debug.LogWarning($"dot {dir1} {dir2} {dir3} ");
-            return dir1 ? dir2 && dir3 : !dir2 && !dir3; 
+            Edge lineEdge = e.ToEdge();
+            if (!LineLine(triangle.E1, lineEdge, true) &&
+                !LineLine(triangle.E2, lineEdge, true) &&
+                !LineLine(triangle.E3, lineEdge, true))
+            {
+                if (!triangle.Contains(e.Vertex.Position))
+                    return true;
+            }
+            return false;
         }
 
         //

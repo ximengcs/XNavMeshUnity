@@ -87,7 +87,10 @@ public class Test : MonoBehaviour
 
             Color color = Color.green;
             if (triangle.Area == AreaType.Obstacle)
+            {
+                Debug.Log("ob");
                 color = Color.red;
+            }
             m_Meshs.Add(new(mesh, color, triangle.Shape));
         }
     }
