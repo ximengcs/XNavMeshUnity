@@ -136,6 +136,12 @@ namespace XFrame.PathFinding
             // 添加Constraint以剪切形状
             ConstrainedDelaunaySloan.AddConstraints(tmpData, contraintList, true);
 
+            List<XVector2> targetPoints = new List<XVector2>()
+            {
+                triangle.P1, triangle.P2, triangle.P3
+            };
+            ConstrainedDelaunaySloan.AddConstraints(tmpData, targetPoints, false);
+
             // 移除大三角形
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
@@ -172,7 +178,6 @@ namespace XFrame.PathFinding
             }
 
             // 删除旧的相关联的面
-
             foreach (HalfEdgeFace face in relationFaces)
             {
                 m_Data.Vertices.Remove(face.Edge.Vertex);
@@ -205,7 +210,6 @@ namespace XFrame.PathFinding
             }
 
             // 移动障碍物时需要 把旧的关联的区域和新区域合并
-
             XNavMeshList<TriangleArea> triangles = HalfEdgeUtility.HalfEdgeToTriangle(m_Data);
             for (int i = 0; i < triangles.Count; i++)
             {

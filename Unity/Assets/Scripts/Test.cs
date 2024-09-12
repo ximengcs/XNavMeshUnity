@@ -44,7 +44,9 @@ public class Test : MonoBehaviour
         m_Lines = m_NavMesh.Remove(m_Triangle);
 
         List<Triangle> triangles = new List<Triangle>(EarClipping.Triangulate(m_Lines));
-        GenerateMesh(triangles);
+        //GenerateMesh(triangles);
+        GenerateMesh(m_NavMesh.ToTriangles());
+
     }
 
     public void RandomPoint()
