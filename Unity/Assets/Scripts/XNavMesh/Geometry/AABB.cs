@@ -99,6 +99,45 @@ namespace XFrame.PathFinding
             return true;
         }
 
+        public Triangle Constraint(Triangle triangle)
+        {
+            XVector2 p1 = triangle.P1;
+            XVector2 p2 = triangle.P2;
+            XVector2 p3 = triangle.P3;
+
+            XVector2 min = p1;
+            XVector2 max = p1;
+            if (p2.X < min.X) min.X = p2.X;
+            if (p2.Y < min.Y) min.Y = p2.Y;
+            if (p3.X < min.X) min.X = p3.X;
+            if (p3.Y < min.Y) min.Y = p3.Y;
+            if (p2.X > max.X) max.X = p2.X;
+            if (p2.Y > max.Y) max.Y = p2.Y;
+            if (p3.X > max.X) max.X = p3.X;
+            if (p3.Y > max.Y) max.Y = p3.Y;
+
+            XVector2 offset = new XVector2();
+            offset.X = Min.X - min.X;
+            offset.Y = Min.Y - min.Y;
+            if (offset.X < 0)
+            {
+                offset.X = Max.X - max.X;
+                if (offset.X > 0) 
+                    offset.X = 0;
+            }
+            if (offset.Y < 0)
+            {
+                offset.Y = Max.Y - max.Y;
+                if (offset.Y > 0)
+                    offset.Y = 0;
+            }
+
+            triangle.P1 += offset;
+            triangle.P2 += offset;
+            triangle.P3 += offset;
+            return triangle;
+        }
+
         public bool Contains(Triangle triangle)
         {
             return Contains(triangle.P1) && Contains(triangle.P2) && Contains(triangle.P3);

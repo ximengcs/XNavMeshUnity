@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using System.Runtime.ConstrainedExecution;
 
 namespace XFrame.PathFinding
 {
@@ -73,21 +74,32 @@ namespace XFrame.PathFinding
 
         public Triangle MoveWithExtraData(Triangle triangle, XVector2 offset, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
+            Debug.LogWarning($"AABB {AABB} ");
             Triangle newTriangle = triangle + offset;
-            if (!AABB.Contains(newTriangle))
-            {
-                newAreaData = null;
-                newAreaOutEdges = null;
-                return triangle;
-            }
-
+            Debug.LogWarning($"new tri {newTriangle} ");
+            newTriangle = AABB.Constraint(newTriangle);
+            Debug.LogWarning($"new tri to {newTriangle} ");
             newTriangle = m_Normalizer.Normalize(newTriangle);
             triangle = m_Normalizer.Normalize(triangle);
             offset = m_Normalizer.Normalize(offset);
             AreaType areaType = InnerGetTriangleAreaType(triangle);
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
             InnerFindRelationFaces(newTriangle, relationFaces);
+            Debug.LogWarning("face start--------");
+            foreach (HalfEdgeFace face in relationFaces)
+            {
+                Debug.LogWarning($"{face}");
+            }
+            Debug.LogWarning("face end--------");
+
             newAreaOutEdges = InnerGetEdgeList2(triangle, newTriangle, relationFaces);
+            Debug.LogWarning("edge start--------");
+            foreach (Edge edge in newAreaOutEdges)
+            {
+                Debug.LogWarning($"{edge.P1} -> {edge.P2} ");
+            }
+            Debug.LogWarning("edge end--------");
+
             newAreaData = GenerateHalfEdgeData(newAreaOutEdges, newTriangle.ToPoints());
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
             InnerSetTriangleAreaType(newTriangle, areaType);
@@ -142,6 +154,13 @@ namespace XFrame.PathFinding
                 HalfEdge e1 = face.Edge;
                 HalfEdge e2 = e1.NextEdge;
                 HalfEdge e3 = e1.PrevEdge;
+
+                // 边界必然加入
+                if (e1.OppositeEdge == null) TryAddEdgeList(e1, edgeList);
+                if (e2.OppositeEdge == null) TryAddEdgeList(e2, edgeList);
+                if (e3.OppositeEdge == null) TryAddEdgeList(e3, edgeList);
+
+                // 与三角形不相交且在外面则加入
                 InnerCheckTriangleOut(triangle, e1, edgeList);
                 InnerCheckTriangleOut(triangle, e2, edgeList);
                 InnerCheckTriangleOut(triangle, e3, edgeList);
@@ -158,6 +177,13 @@ namespace XFrame.PathFinding
                 HalfEdge e1 = face.Edge;
                 HalfEdge e2 = e1.NextEdge;
                 HalfEdge e3 = e1.PrevEdge;
+
+                // 边界必然加入
+                if (e1.OppositeEdge == null) TryAddEdgeList(e1, edgeList);
+                if (e2.OppositeEdge == null) TryAddEdgeList(e2, edgeList);
+                if (e3.OppositeEdge == null) TryAddEdgeList(e3, edgeList);
+
+                // 与三角形不相交且在外面则加入
                 if (XMath.CheckLineOutOfTriangle(triangle, e1))
                 {
                     InnerCheckTriangleOut(triangle2, e1, edgeList);
@@ -179,21 +205,27 @@ namespace XFrame.PathFinding
         {
             if (XMath.CheckLineOutOfTriangle(triangle, e))
             {
-                Edge cur = e.ToEdge();
-                Edge tar = null;
-                foreach (Edge tmp in edgeList)
-                {
-                    if (tmp == cur)
-                    {
-                        tar = tmp;
-                        break;
-                    }
-                }
+                TryAddEdgeList(e, edgeList);
+            }
+        }
 
-                if (tar == null)
+        private void TryAddEdgeList(HalfEdge e, List<Edge> edgeList)
+        {
+            Edge cur = e.ToEdge();
+            Edge tar = null;
+            foreach (Edge tmp in edgeList)
+            {
+                if (tmp == cur)
                 {
-                    edgeList.Add(cur);
+                    tar = tmp;
+                    break;
                 }
+            }
+
+            if (tar == null)
+            {
+                edgeList.Add(cur);
+                Debug.LogWarning($"add -> [{cur.P1} {cur.P2}] {m_Normalizer.UnNormalize(cur.P1)} {m_Normalizer.UnNormalize(cur.P2)} ");
             }
         }
 
