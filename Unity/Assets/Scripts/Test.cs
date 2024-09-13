@@ -1,154 +1,138 @@
 using UnityEngine;
+using UnityEditor;
 using XFrame.PathFinding;
 using System.Collections.Generic;
-using UnityEditor;
 
-public class Test : MonoBehaviour
+public partial class Test : MonoBehaviour
 {
     public Transform RectPoints;
     public Transform HolePoints;
+    public GameObject MeshPrefab;
+
+    private XNavMesh m_NavMesh;
+
+    private XNavMeshRenderer m_MeshRender1;
+    private XNavMeshRenderer m_MeshRender2;
+    private MeshArea m_Mesh1;
+    private MeshArea m_Mesh2;
 
     private Triangle m_Triangle;
-    private XNavMesh m_NavMesh;
-    private List<(Mesh, Color, Triangle)> m_Meshs;
-    private List<XVector2> m_Lines;
+    private List<Edge> m_Lines;
 
     public void Init()
     {
         var points = GetAllPoints(RectPoints);
+        m_MeshRender1 = new XNavMeshRenderer(MeshPrefab);
+        m_MeshRender2 = new XNavMeshRenderer(MeshPrefab);
         m_NavMesh = new XNavMesh(new AABB(points));
         m_NavMesh.Add(points);
-        //m_NavMesh.AddConstraint(points);
-        GenerateMesh(m_NavMesh.ToTriangles());
-    }
-
-    private void Update()
-    {
-        if (m_NavMesh != null)
-        {
-            //RandomPoint();
-        }
+        RefreshMeshArea();
     }
 
     public void AddHole()
     {
         var holePoints = GetAllPoints(HolePoints);
         m_Triangle = new Triangle(holePoints);
-        //m_NavMesh.Add2(m_Triangle, AreaType.Obstacle);
-        //m_NavMesh.AddConstraint(holePoints);
-        GenerateMesh(m_NavMesh.Add2(m_Triangle, AreaType.Obstacle, out m_Lines));
+        m_NavMesh.AddWithExtraData(m_Triangle, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
+        RefreshMeshArea();
+        RefreshMeshArea2(newAreaData, Color.blue);
+        RefreshLine(newOutLine);
     }
 
     public void RemoveHole()
     {
-        m_Lines = m_NavMesh.Remove(m_Triangle);
-
-        List<Triangle> triangles = new List<Triangle>(EarClipping.Triangulate(m_Lines));
-        //GenerateMesh(triangles);
-        GenerateMesh(m_NavMesh.ToTriangles());
-
+        m_NavMesh.RemoveWithExtraData(m_Triangle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
+        RefreshMeshArea();
+        RefreshMeshArea2(newAreaData, Color.blue);
+        RefreshLine(newOutLine);
     }
 
-    public void RandomPoint()
+    public void MoveHole()
     {
-        XVector2 min = m_NavMesh.AABB.Min;
-        XVector2 max = m_NavMesh.AABB.Max;
-        m_NavMesh.Add(new XVector2(Random.Range(min.X, max.X), Random.Range(min.Y, max.Y)));
-        GenerateMesh(m_NavMesh.ToTriangles());
+        InnerMove(new XVector2(2f, 0f));
     }
 
-    private void GenMesh(List<Triangle> triangles)
+    public void Up()
     {
-        GenerateMesh(triangles);
+        InnerMove(new XVector2(0f, 2f));
     }
 
-    private void GenerateMesh(List<TriangleArea> triangles)
+    public void Down()
     {
-        m_Meshs = new List<(Mesh, Color, Triangle)>();
-        foreach (TriangleArea triangle in triangles)
-        {
-            XVector2 v1 = triangle.Shape.P1;
-            XVector2 v2 = triangle.Shape.P2;
-            XVector2 v3 = triangle.Shape.P3;
-
-            Mesh mesh = new Mesh();
-            Vector3[] vertices = new Vector3[3];
-            vertices[0] = new Vector3(v1.X, v1.Y);
-            vertices[1] = new Vector3(v2.X, v2.Y);
-            vertices[2] = new Vector3(v3.X, v3.Y);
-
-            int[] faces = new int[3];
-            faces[0] = 0;
-            faces[1] = 1;
-            faces[2] = 2;
-
-            mesh.vertices = vertices;
-            mesh.triangles = faces;
-            mesh.RecalculateBounds();
-            mesh.RecalculateNormals();
-
-            Color color = Color.green;
-            if (triangle.Area == AreaType.Obstacle)
-            {
-                Debug.Log("ob");
-                color = Color.red;
-            }
-            m_Meshs.Add(new(mesh, color, triangle.Shape));
-        }
+        InnerMove(new XVector2(0f, -2f));
     }
 
-    private void GenerateMesh(List<Triangle> triangles)
+    public void Left()
     {
-        m_Meshs = new List<(Mesh, Color, Triangle)>();
-        foreach (Triangle triangle in triangles)
-        {
-            XVector2 v1 = triangle.P1;
-            XVector2 v2 = triangle.P2;
-            XVector2 v3 = triangle.P3;
+        InnerMove(new XVector2(-2f, 0f));
+    }
 
-            Mesh mesh = new Mesh();
-            Vector3[] vertices = new Vector3[3];
-            vertices[0] = new Vector3(v1.X, v1.Y);
-            vertices[1] = new Vector3(v2.X, v2.Y);
-            vertices[2] = new Vector3(v3.X, v3.Y);
+    public void Right()
+    {
+        InnerMove(new XVector2(2f, 0f));
+    }
 
-            int[] faces = new int[3];
-            faces[0] = 0;
-            faces[1] = 1;
-            faces[2] = 2;
+    private void InnerMove(XVector2 offset)
+    {
+        m_Triangle = m_NavMesh.MoveWithExtraData(m_Triangle, offset, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
+        RefreshMeshArea();
+        RefreshMeshArea2(newAreaData, Color.blue);
+        RefreshLine(newOutLine);
+    }
 
-            mesh.vertices = vertices;
-            mesh.triangles = faces;
-            mesh.RecalculateBounds();
-            mesh.RecalculateNormals();
-            m_Meshs.Add(new(mesh, new Color(Random.Range(0f, 1), Random.Range(0f, 1), Random.Range(0f, 1), 1), triangle));
-        }
+    private void RefreshMeshArea()
+    {
+        m_Mesh1 = new MeshArea(m_NavMesh, Color.green);
+        m_MeshRender1.Refresh(m_Mesh1);
+    }
+
+    private void RefreshMeshArea2(HalfEdgeData data, Color color)
+    {
+        if(data == null) return;
+        m_Mesh2 = new MeshArea(m_NavMesh, data, Color.blue);
+        m_MeshRender2.Refresh(m_Mesh2);
+    }
+
+    private void RefreshLine(List<Edge> lines)
+    {
+        if(lines == null) return;
+        m_NavMesh.Normalizer.UnNormalize(lines);
+        m_Lines = lines;
     }
 
     private void OnDrawGizmos()
     {
-        if (m_Meshs != null)
-        {
-            foreach (var item in m_Meshs)
-            {
-                Gizmos.color = item.Item2;
-                Gizmos.DrawLine(item.Item3.P1.ToUnityVec3(), item.Item3.P2.ToUnityVec3());
-                Gizmos.DrawLine(item.Item3.P2.ToUnityVec3(), item.Item3.P3.ToUnityVec3());
-                Gizmos.DrawLine(item.Item3.P3.ToUnityVec3(), item.Item3.P1.ToUnityVec3());
-                Gizmos.color = new Color(item.Item2.r, item.Item2.g, item.Item2.b, 0.5f);
-                Gizmos.DrawMesh(item.Item1);
-            }
-        }
+        InnerDrawMesh(m_Mesh1);
+        InnerDrawMesh(m_Mesh2);
 
         if (m_Lines != null)
         {
             Handles.color = Color.yellow;
             for (int i = 0; i < m_Lines.Count; i++)
             {
-                Vector3 p1 = m_Lines[i].ToUnityVec3();
-                Vector3 p2 = m_Lines[XMath.ClampListIndex(i + 1, m_Lines.Count)].ToUnityVec3();
+                Edge e = m_Lines[i];
+                Vector3 p1 = e.P1.ToUnityVec3();
+                Vector3 p2 = e.P2.ToUnityVec3();
 
                 Handles.DrawAAPolyLine(10, p1, p2);
+            }
+        }
+    }
+
+    private void InnerDrawMesh(MeshArea area)
+    {
+        if (area != null)
+        {
+            foreach (MeshInfo item in area.Meshs)
+            {
+                Color color = item.Color;
+                Gizmos.color = color;
+                Gizmos.DrawLine(item.Triangle.P1.ToUnityVec3(), item.Triangle.P2.ToUnityVec3());
+                Gizmos.DrawLine(item.Triangle.P2.ToUnityVec3(), item.Triangle.P3.ToUnityVec3());
+                Gizmos.DrawLine(item.Triangle.P3.ToUnityVec3(), item.Triangle.P1.ToUnityVec3());
+                color.a = 0.5f;
+                Gizmos.color = color;
+                Gizmos.DrawMesh(item.Mesh);
             }
         }
     }

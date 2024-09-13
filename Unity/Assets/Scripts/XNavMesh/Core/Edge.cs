@@ -11,5 +11,19 @@ namespace XFrame.PathFinding
             P1 = p1;
             P2 = p2;
         }
+
+        public static bool operator ==(Edge left, Edge right)
+        {
+            if (ReferenceEquals(left, null))
+                return ReferenceEquals(right, null);
+            else if (ReferenceEquals(right, null))
+                return false;
+            return left.P1.Equals(right.P1) && left.P2.Equals(right.P2);
+        }
+
+        public static bool operator !=(Edge left, Edge right)
+        {
+            return !(left == right);
+        }
     }
 }

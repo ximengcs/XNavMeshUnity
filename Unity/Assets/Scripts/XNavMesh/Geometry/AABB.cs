@@ -98,5 +98,21 @@ namespace XFrame.PathFinding
 
             return true;
         }
+
+        public bool Contains(Triangle triangle)
+        {
+            return Contains(triangle.P1) && Contains(triangle.P2) && Contains(triangle.P3);
+        }
+
+        public bool Contains(XVector2 point)
+        {
+            return point.X >= Min.X && point.X <= Max.X &&
+                point.Y >= Min.Y && point.Y <= Max.Y;
+        }
+
+        public override string ToString()
+        {
+            return $" {Min}, {Max} ";
+        }
     }
 }

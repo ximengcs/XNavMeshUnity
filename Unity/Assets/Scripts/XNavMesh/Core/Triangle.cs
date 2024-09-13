@@ -264,9 +264,25 @@ namespace XFrame.PathFinding
             return P3;
         }
 
+        public List<XVector2> ToPoints()
+        {
+            return new List<XVector2>()
+            {
+                P1 , P2 , P3
+            };
+        }
+
         public override string ToString()
         {
             return $"({P1}, {P2}, {P3})";
+        }
+
+        public static Triangle operator +(Triangle triangle, XVector2 v)
+        {
+            triangle.P1 += v;
+            triangle.P2 += v;
+            triangle.P3 += v;
+            return triangle;
         }
     }
 }

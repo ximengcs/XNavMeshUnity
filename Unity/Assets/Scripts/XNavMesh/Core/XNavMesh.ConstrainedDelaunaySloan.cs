@@ -43,8 +43,6 @@ namespace XFrame.PathFinding
                         continue;
                     }
 
-                    Debug.Log($" reach {c_p1} {c_p2} ");
-
                     //Step 2. Find all edges in the current triangulation that intersects with this constraint
                     //Is returning unique edges only, so not one edge going in the opposite direction
                     //timer.Start();
@@ -71,8 +69,6 @@ namespace XFrame.PathFinding
                 //Step 5. Remove superfluous triangles, such as the triangles "inside" the constraints  
                 if (shouldRemoveTriangles)
                 {
-                    Debug.Log($" remove ");
-
                     //timer.Start();
                     RemoveSuperfluousTriangles(triangleData, constraints);
                     //timer.Stop();

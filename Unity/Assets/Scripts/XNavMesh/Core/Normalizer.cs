@@ -86,5 +86,14 @@ namespace XFrame.PathFinding
             for (int i = 0; i < points.Count; i++)
                 points[i] = UnNormalize(points[i]);
         }
+
+        public void UnNormalize(List<Edge> edges)
+        {
+            foreach (Edge e in edges)
+            {
+                e.P1 = UnNormalize(e.P1);
+                e.P2 = UnNormalize(e.P2);
+            }
+        }
     }
 }

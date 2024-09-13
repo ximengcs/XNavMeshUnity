@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections.Generic;
+using Unity.VisualScripting;
 
 namespace XFrame.PathFinding
 {
@@ -23,128 +22,205 @@ namespace XFrame.PathFinding
             Initialize();
         }
 
+        private void Initialize()
+        {
+            Triangle superTriangle = GeometryUtility.SuperTriangle;
+            m_Data.AddTriangle(superTriangle);
+
+            XVector2 min = m_AABB.Min;
+            XVector2 max = m_AABB.Max;
+            Add(new XVector2(min.X, min.Y));
+            Add(new XVector2(min.X, max.Y));
+            Add(new XVector2(max.X, min.Y));
+            Add(new XVector2(max.X, max.Y));
+
+            DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
+        }
+
+        /// <summary>
+        /// 添加一个三角形区域
+        /// </summary>
+        /// <param name="triangle">三角形(非归一化)</param>
+        /// <param name="area">区域类型</param>
         public void Add(Triangle triangle, AreaType area)
         {
-            Add(triangle.P1);
-            Add(triangle.P2);
-            Add(triangle.P3);
-
-            HalfEdgeFace face = InnerFindFace(m_Normalizer.Normalize(triangle));
+            triangle = m_Normalizer.Normalize(triangle);
+            InnerAdd(triangle.P1);
+            InnerAdd(triangle.P2);
+            InnerAdd(triangle.P3);
+            HalfEdgeFace face = InnerFindFace(triangle);
             face.Area = area;
         }
 
-        private List<HalfEdgeFace> FindRelationFaces(HalfEdgeVertex vert)
+        /// <summary>
+        /// 寻找与三角形相关联的面
+        /// </summary>
+        /// <param name="triangle">三角形(归一化)</param>
+        /// <returns>相关联的面集合</returns>
+        private HashSet<HalfEdgeFace> InnerFindRelationFaces(Triangle triangle, HashSet<HalfEdgeFace> result = null)
         {
-            List<HalfEdgeFace> faces = new List<HalfEdgeFace>();
+            HashSet<HalfEdgeFace> faces = result != null ? result : new HashSet<HalfEdgeFace>();
             foreach (HalfEdgeFace face in m_Data.Faces)
             {
-                if (face.Contains(vert.Position))
+                if (triangle.Intersect(face))
                 {
-                    faces.Add(face);
+                    if (!faces.Contains(face))
+                        faces.Add(face);
                 }
             }
             return faces;
         }
 
-        private List<HalfEdgeFace> FindRelationFaces(Triangle triangle)
+        public Triangle MoveWithExtraData(Triangle triangle, XVector2 offset, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
-            List<HalfEdgeFace> faces = new List<HalfEdgeFace>();
-            foreach (HalfEdgeFace face in m_Data.Faces)
+            Triangle newTriangle = triangle + offset;
+            if (!AABB.Contains(newTriangle))
             {
-                if (triangle.Intersect(face))
-                    faces.Add(face);
+                newAreaData = null;
+                newAreaOutEdges = null;
+                return triangle;
             }
-            return faces;
+
+            newTriangle = m_Normalizer.Normalize(newTriangle);
+            triangle = m_Normalizer.Normalize(triangle);
+            offset = m_Normalizer.Normalize(offset);
+            AreaType areaType = InnerGetTriangleAreaType(triangle);
+            HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
+            InnerFindRelationFaces(newTriangle, relationFaces);
+            newAreaOutEdges = InnerGetEdgeList2(triangle, newTriangle, relationFaces);
+            newAreaData = GenerateHalfEdgeData(newAreaOutEdges, newTriangle.ToPoints());
+            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+            InnerSetTriangleAreaType(newTriangle, areaType);
+            return m_Normalizer.UnNormalize(newTriangle);
         }
 
-        public HalfEdgeFace FindFace(Triangle triangle)
-        {
-            foreach (HalfEdgeFace face in m_Data.Faces)
-            {
-                if (triangle.Equals(face))
-                    return face;
-            }
-            return null;
-        }
-
-        public XNavMeshList<TriangleArea> Add2(Triangle triangle, AreaType area, out List<XVector2> edges)
+        public void RemoveWithExtraData(Triangle triangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
             triangle = m_Normalizer.Normalize(triangle);
-            XNavMeshList<TriangleArea> re = new XNavMeshList<TriangleArea>(8);
-            List<HalfEdgeFace> relationFaces = FindRelationFaces(triangle);
-            foreach (HalfEdgeFace face in relationFaces)
+            HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
+            newAreaOutEdges = InnerGetEdgeList(triangle, relationFaces);
+            newAreaData = GenerateHalfEdgeData(newAreaOutEdges);
+            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+        }
+
+        public void AddWithExtraData(Triangle triangle, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        {
+            triangle = m_Normalizer.Normalize(triangle);
+            HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
+            newAreaOutEdges = InnerGetEdgeList(triangle, relationFaces);
+            newAreaData = GenerateHalfEdgeData(newAreaOutEdges, triangle.ToPoints());
+            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+
+            // 标记区域
+            InnerSetTriangleAreaType(triangle, area);
+        }
+
+        private AreaType InnerGetTriangleAreaType(Triangle triangle)
+        {
+            HalfEdgeFace target = InnerFindFace(triangle);
+            return target != null ? target.Area : AreaType.None;
+        }
+
+        private void InnerSetTriangleAreaType(Triangle triangle, AreaType areaType)
+        {
+            HalfEdgeFace target = InnerFindFace(triangle);
+            if (target != null)
             {
-                re.Add(new TriangleArea(m_Normalizer.UnNormalize(new Triangle(face)), AreaType.Walk));
+                target.Area = areaType;
+            }
+            else
+            {
+                Debug.LogError("not find new triangle");
+            }
+        }
+
+        private List<Edge> InnerGetEdgeList(Triangle triangle, HashSet<HalfEdgeFace> faces)
+        {
+            List<Edge> edgeList = new List<Edge>();
+            foreach (HalfEdgeFace face in faces)
+            {
+                HalfEdge e1 = face.Edge;
+                HalfEdge e2 = e1.NextEdge;
+                HalfEdge e3 = e1.PrevEdge;
+                InnerCheckTriangleOut(triangle, e1, edgeList);
+                InnerCheckTriangleOut(triangle, e2, edgeList);
+                InnerCheckTriangleOut(triangle, e3, edgeList);
             }
 
+            return InnerSortEdge(edgeList);
+        }
+
+        private List<Edge> InnerGetEdgeList2(Triangle triangle, Triangle triangle2, HashSet<HalfEdgeFace> faces)
+        {
             List<Edge> edgeList = new List<Edge>();
-            foreach (HalfEdgeFace face in relationFaces)
+            foreach (HalfEdgeFace face in faces)
             {
                 HalfEdge e1 = face.Edge;
                 HalfEdge e2 = e1.NextEdge;
                 HalfEdge e3 = e1.PrevEdge;
                 if (XMath.CheckLineOutOfTriangle(triangle, e1))
                 {
-                    edgeList.Add(e1.ToEdge());
+                    InnerCheckTriangleOut(triangle2, e1, edgeList);
                 }
                 if (XMath.CheckLineOutOfTriangle(triangle, e2))
                 {
-                    edgeList.Add(e2.ToEdge());
+                    InnerCheckTriangleOut(triangle2, e2, edgeList);
                 }
                 if (XMath.CheckLineOutOfTriangle(triangle, e3))
                 {
-                    edgeList.Add(e3.ToEdge());
+                    InnerCheckTriangleOut(triangle2, e3, edgeList);
                 }
             }
 
-            edges = new List<XVector2>();
+            return InnerSortEdge(edgeList);
+        }
+
+        private void InnerCheckTriangleOut(Triangle triangle, HalfEdge e, List<Edge> edgeList)
+        {
+            if (XMath.CheckLineOutOfTriangle(triangle, e))
+            {
+                Edge cur = e.ToEdge();
+                Edge tar = null;
+                foreach (Edge tmp in edgeList)
+                {
+                    if (tmp == cur)
+                    {
+                        tar = tmp;
+                        break;
+                    }
+                }
+
+                if (tar == null)
+                {
+                    edgeList.Add(cur);
+                }
+            }
+        }
+
+        private List<Edge> InnerSortEdge(List<Edge> edgeList)
+        {
+            List<Edge> sortEdge = new List<Edge>();
             Edge curEdge = edgeList[0];
             do
             {
-                edges.Add(m_Normalizer.UnNormalize(curEdge.P1));
                 Edge tmp = curEdge;
                 curEdge = null;
                 foreach (Edge e in edgeList)
                 {
-                    if (e.P1.Equals(tmp.P2))
+                    if (e.P2.Equals(tmp.P1))
                     {
                         curEdge = e;
+                        sortEdge.Add(e);
                         break;
                     }
                 }
-            } while (curEdge != null && edges.Count < edgeList.Count);
+            } while (curEdge != null && sortEdge.Count < edgeList.Count);
+            return sortEdge;
+        }
 
-            // 临时半边数据用于构建三角形涉及的区域
-            HalfEdgeData tmpData = new HalfEdgeData();
-            Triangle superTriangle = GeometryUtility.SuperTriangle;
-            tmpData.AddTriangle(superTriangle);
 
-            // 将边界点添加到临时半边数据中
-            List<XVector2> contraintList = new List<XVector2>();
-            for (int i = edges.Count - 1; i >= 0; i--)
-                contraintList.Add(m_Normalizer.Normalize(edges[i]));
-            foreach (XVector2 p in contraintList)
-            {
-                DelaunayIncrementalSloan.InsertNewPointInTriangulation(p, tmpData);
-            }
-
-            // 添加三角形的三个点
-            DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P1, tmpData);
-            DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P2, tmpData);
-            DelaunayIncrementalSloan.InsertNewPointInTriangulation(triangle.P3, tmpData);
-
-            // 添加Constraint以剪切形状
-            ConstrainedDelaunaySloan.AddConstraints(tmpData, contraintList, true);
-
-            List<XVector2> targetPoints = new List<XVector2>()
-            {
-                triangle.P1, triangle.P2, triangle.P3
-            };
-            ConstrainedDelaunaySloan.AddConstraints(tmpData, targetPoints, false);
-
-            // 移除大三角形
-            DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
-
+        private void InnerReplaceHalfEdgeData(List<Edge> edgeList, HashSet<HalfEdgeFace> relationFaces, HalfEdgeData tmpData)
+        {
             // 替换结构的中三角形
             // 找出所有关联的边并移除旧边，添加新边
             foreach (Edge edge in edgeList)
@@ -196,134 +272,32 @@ namespace XFrame.PathFinding
                 m_Data.Edges.Add(e);
             foreach (HalfEdgeFace f in tmpData.Faces)
                 m_Data.Faces.Add(f);
-
-            // 标记区域
-            HalfEdgeFace target = FindFace(triangle);
-            if (target != null)
-            {
-                Debug.LogWarning("set ob");
-                target.Area = AreaType.Obstacle;
-            }
-            else
-            {
-                Debug.LogError("not find");
-            }
-
-            // 移动障碍物时需要 把旧的关联的区域和新区域合并
-            XNavMeshList<TriangleArea> triangles = HalfEdgeUtility.HalfEdgeToTriangle(m_Data);
-            for (int i = 0; i < triangles.Count; i++)
-            {
-                TriangleArea origin = triangles[i];
-                triangles[i] = new TriangleArea(m_Normalizer.UnNormalize(origin.Shape), origin.Area);
-            }
-
-            return triangles;
         }
 
-        public List<XVector2> Remove(Triangle triangle)
+        public HalfEdgeData GenerateHalfEdgeData(List<Edge> edgeList, List<XVector2> extraPoints = null)
         {
-            triangle = m_Normalizer.Normalize(triangle);
+            HalfEdgeData tmpData = new HalfEdgeData();
+            Triangle superTriangle = GeometryUtility.SuperTriangle;
+            tmpData.AddTriangle(superTriangle);
+            foreach (Edge e in edgeList)
+                DelaunayIncrementalSloan.InsertNewPointInTriangulation(e.P1, tmpData);
+            // 添加Constraint以剪切形状
+            List<XVector2> tmpList = new List<XVector2>();  // TO DO 
+            foreach (Edge e in edgeList)
+                tmpList.Add(e.P1);
 
-            List<XVector2> result = new List<XVector2>();
-
-            // 找出三角形所在的面
-            HalfEdgeFace face = InnerFindFace(triangle);
-
-            // 从一个起始面开始绕着所在的面循环
-            HalfEdgeFace startFace;
-            HalfEdge o_e1 = face.Edge.OppositeEdge;
-            HalfEdge o_e2 = face.Edge.NextEdge.OppositeEdge;
-            HalfEdge o_e3 = face.Edge.NextEdge.NextEdge.OppositeEdge;
-
-            if (o_e1 == null)
+            if (extraPoints != null)
             {
-                if (o_e2 == null)
-                    startFace = o_e3.Face;
-                else
-                    startFace = o_e2.Face;
-            }
-            else if (o_e2 == null)
-            {
-                startFace = o_e3.Face;
-            }
-            else
-            {
-                startFace = o_e1.Face;
-            }
-
-            HalfEdgeFace cur = startFace;
-            while (cur != null)
-            {
-                XVector2 p1 = cur.Edge.Vertex.Position;
-                XVector2 p2 = cur.Edge.NextEdge.Vertex.Position;
-                XVector2 p3 = cur.Edge.PrevEdge.Vertex.Position;
-
-                bool p1Has = triangle.Has(p1);
-                bool p2Has = triangle.Has(p2);
-                bool p3Has = triangle.Has(p3);
-
-                HalfEdge nextEdge = null;
-
-                if (!p1Has)
+                foreach (XVector2 v in extraPoints)
                 {
-                    if (!result.Contains(p1))
-                    {
-                        result.Add(p1);
-                    }
-                }
-                else
-                {
-                    if (!p3Has)
-                        nextEdge = cur.Edge;
-                    else
-                        nextEdge = cur.Edge.PrevEdge;
-                }
-
-                if (!p2Has)
-                {
-                    if (!result.Contains(p2))
-                    {
-                        result.Add(p2);
-                    }
-                }
-                else
-                {
-                    if (!p1Has)
-                        nextEdge = cur.Edge.NextEdge;
-                    else
-                        nextEdge = cur.Edge;
-                }
-
-                if (!p3Has)
-                {
-                    if (!result.Contains(p3))
-                    {
-                        result.Add(p3);
-                    }
-                }
-                else
-                {
-                    if (!p2Has)
-                        nextEdge = cur.Edge.PrevEdge;
-                    else
-                        nextEdge = cur.Edge.NextEdge;
-                }
-
-                if (nextEdge != null)
-                {
-                    cur = nextEdge.OppositeEdge.Face;
-                    if (cur == startFace)
-                        cur = null;
-                }
-                else
-                {
-                    cur = null;
+                    DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
                 }
             }
 
-            m_Normalizer.UnNormalize(result);
-            result.Reverse();
-            return result;
+            ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
+            ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, true);
+            DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
+            return tmpData;
         }
 
         public void Add(List<XVector2> points)
@@ -338,14 +312,16 @@ namespace XFrame.PathFinding
         /// <param name="newPoint"></param>
         public void Add(XVector2 newPoint)
         {
-            XVector2 normalize = m_Normalizer.Normalize(newPoint);
-            DelaunayIncrementalSloan.InsertNewPointInTriangulation(normalize, m_Data);
+            InnerAdd(m_Normalizer.Normalize(newPoint));
         }
 
-        public void AddConstraint(List<XVector2> contraint)
+        /// <summary>
+        /// 添加一个点(归一化)
+        /// </summary>
+        /// <param name="newPoint">点(归一化)</param>
+        private void InnerAdd(XVector2 point)
         {
-            m_Normalizer.Normalize(contraint);
-            ConstrainedDelaunaySloan.AddConstraints(m_Data, contraint, true);
+            DelaunayIncrementalSloan.InsertNewPointInTriangulation(point, m_Data);
         }
 
         private HalfEdgeFace InnerFindFace(Triangle triangle)
@@ -358,32 +334,22 @@ namespace XFrame.PathFinding
             return null;
         }
 
-        private void Initialize()
+        public static XNavMeshList<TriangleArea> ToTriangles(XNavMesh navMesh, HalfEdgeData data)
         {
-            Triangle superTriangle = GeometryUtility.SuperTriangle;
-            m_Data.AddTriangle(superTriangle);
-
-            XVector2 min = m_AABB.Min;
-            XVector2 max = m_AABB.Max;
-            Add(new XVector2(min.X, min.Y));
-            Add(new XVector2(min.X, max.Y));
-            Add(new XVector2(max.X, min.Y));
-            Add(new XVector2(max.X, max.Y));
-
-            DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
-        }
-
-        public XNavMeshList<TriangleArea> ToTriangles()
-        {
-            XNavMeshList<TriangleArea> triangles = HalfEdgeUtility.HalfEdgeToTriangle(m_Data);
+            XNavMeshList<TriangleArea> triangles = HalfEdgeUtility.HalfEdgeToTriangle(data);
 
             for (int i = 0; i < triangles.Count; i++)
             {
                 TriangleArea origin = triangles[i];
-                triangles[i] = new TriangleArea(m_Normalizer.UnNormalize(origin.Shape), origin.Area);
+                triangles[i] = new TriangleArea(navMesh.m_Normalizer.UnNormalize(origin.Shape), origin.Area);
             }
 
             return triangles;
+        }
+
+        public XNavMeshList<TriangleArea> ToTriangles()
+        {
+            return ToTriangles(this, m_Data);
         }
     }
 }
