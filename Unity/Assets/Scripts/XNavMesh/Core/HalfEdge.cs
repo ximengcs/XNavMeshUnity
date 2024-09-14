@@ -53,7 +53,7 @@ namespace XFrame.PathFinding
 
         public override string ToString()
         {
-            return Vertex.ToString();
+            return $" {Vertex} -> {NextEdge.Vertex} ";
         }
     }
 }

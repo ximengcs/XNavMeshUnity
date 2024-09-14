@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using Unity.VisualScripting;
-using System.Runtime.ConstrainedExecution;
 
 namespace XFrame.PathFinding
 {
@@ -36,6 +34,24 @@ namespace XFrame.PathFinding
             Add(new XVector2(max.X, max.Y));
 
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
+        }
+        public static void Test(XNavMesh nav, Normalizer normalizer)
+        {
+            Test(nav.m_Data, normalizer);
+        }
+        public static void Test(HalfEdgeData data, Normalizer normalizer)
+        {
+            Debug.Log($"Edge count {data.Edges.Count}");
+            Debug.Log($"Face count {data.Faces.Count}");
+            foreach (HalfEdge edge in data.Edges)
+            {
+                string str = $" {normalizer.UnNormalize(edge.Vertex.Position)},{normalizer.UnNormalize(edge.NextEdge.Vertex.Position)} ";
+                if (edge.OppositeEdge != null)
+                    str += $" op {normalizer.UnNormalize(edge.OppositeEdge.Vertex.Position)}, {normalizer.UnNormalize(edge.OppositeEdge.NextEdge.Vertex.Position)} ";
+                else
+                    str += " op is null";
+                Debug.Log(str);
+            }
         }
 
         /// <summary>
@@ -368,12 +384,10 @@ namespace XFrame.PathFinding
 
         public static XNavMeshList<TriangleArea> ToTriangles(XNavMesh navMesh, HalfEdgeData data)
         {
-            XNavMeshList<TriangleArea> triangles = HalfEdgeUtility.HalfEdgeToTriangle(data);
-
-            for (int i = 0; i < triangles.Count; i++)
+            XNavMeshList<TriangleArea> triangles = new XNavMeshList<TriangleArea>(8);
+            foreach (HalfEdgeFace face in data.Faces)
             {
-                TriangleArea origin = triangles[i];
-                triangles[i] = new TriangleArea(navMesh.m_Normalizer.UnNormalize(origin.Shape), origin.Area);
+                triangles.Add(new TriangleArea(face, navMesh.m_Normalizer));
             }
 
             return triangles;

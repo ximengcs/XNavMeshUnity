@@ -242,5 +242,59 @@ namespace XFrame.PathFinding
 
             return intersectionPoint;
         }
+
+        public static bool CheckPointsOnLine(XVector2 p1, XVector2 p2, XVector2 p3)
+        {
+            return (Equals(p1.X, p2.X) && Equals(p2.X, p3.X)) || (Equals(p1.Y, p2.Y) && Equals(p2.Y, p3.Y));
+        }
+
+        public static void FindMinMaxPoint(Triangle triangle, out XVector2 min, out XVector2 max)
+        {
+            XVector2 p1 = triangle.P1;
+            XVector2 p2 = triangle.P2;
+            XVector2 p3 = triangle.P3;
+
+            min = p1;
+            max = p1;
+
+            if (min.X > p2.X) min.X = p2.X;
+            if (min.X > p3.X) min.X = p3.X;
+            if (max.X < p2.X) max.X = p2.X;
+            if (max.X < p3.X) max.X = p3.X;
+
+            if (min.Y > p2.Y) min.Y = p2.Y;
+            if (min.Y > p3.Y) min.Y = p3.Y;
+            if (max.Y < p2.Y) max.Y = p2.Y;
+            if (max.Y < p3.Y) max.Y = p3.Y;
+
+            // 排序
+            if (p1.Equals(min))
+            {
+                if (!p2.Equals(max))
+                {
+                    XVector2 tmp = min;
+                    min = max;
+                    max = tmp;
+                }
+            }
+            else if (p2.Equals(min))
+            {
+                if (!p3.Equals(max))
+                {
+                    XVector2 tmp = min;
+                    min = max;
+                    max = tmp;
+                }
+            }
+            else if (p3.Equals(min))
+            {
+                if (!p1.Equals(max))
+                {
+                    XVector2 tmp = min;
+                    min = max;
+                    max = tmp;
+                }
+            }
+        }
     }
 }

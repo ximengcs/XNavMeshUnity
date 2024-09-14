@@ -7,15 +7,61 @@ public partial class Test
 {
     public struct MeshInfo
     {
+        public TriangleArea AreaInfo;
         public Mesh Mesh;
         public Color Color;
         public Triangle Triangle;
 
-        public MeshInfo(Mesh mesh, Color color, Triangle triangle)
+        public MeshInfo(TriangleArea areaInfo, Mesh mesh, Color color)
         {
+            AreaInfo = areaInfo;
             Mesh = mesh;
             Color = color;
-            Triangle = triangle;
+            Triangle = areaInfo.Shape;
+        }
+
+        public bool E1HasOpposite()
+        {
+            HalfEdge e1 = AreaInfo.Face.Edge;
+            HalfEdge e2 = e1.NextEdge;
+            return InnerCheckHasOpposite(e1, e2);
+        }
+
+        public bool E2HasOpposite()
+        {
+            HalfEdge e2 = AreaInfo.Face.Edge.NextEdge;
+            HalfEdge e3 = e2.NextEdge;
+            return InnerCheckHasOpposite(e2, e3);
+        }
+
+        public bool E3HasOpposite()
+        {
+            HalfEdge e1 = AreaInfo.Face.Edge;
+            HalfEdge e3 = e1.PrevEdge;
+            return InnerCheckHasOpposite(e3, e1);
+        }
+
+        private bool InnerCheckHasOpposite(HalfEdge e1, HalfEdge e2)
+        {
+            if (AreaInfo.Face.IsSide)
+                return false;
+            if (e1.OppositeEdge != null)
+            {
+                XVector2 p1 = e1.Vertex.Position;
+                XVector2 p2 = e2.Vertex.Position;
+                XVector2 p3 = e1.OppositeEdge.Vertex.Position;
+                XVector2 p4 = e1.OppositeEdge.NextEdge.Vertex.Position;
+                if (p1.Equals(p3) && p2.Equals(p4))
+                {
+                    UnityEngine.Debug.LogError("edge error");
+                }
+                else
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
@@ -65,7 +111,7 @@ public partial class Test
                 {
                     origin = Color.red;
                 }
-                m_Meshs.Add(new(mesh, origin, triangle.Shape));
+                m_Meshs.Add(new(triangle, mesh, origin));
             }
         }
     }

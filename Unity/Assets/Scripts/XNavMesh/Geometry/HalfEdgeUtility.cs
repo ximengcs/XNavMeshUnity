@@ -42,27 +42,6 @@ namespace XFrame.PathFinding
             return shouldFlipEdge;
         }
 
-        /// <summary>
-        /// 半边数据结构转换为三角形列表
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        public static XNavMeshList<TriangleArea> HalfEdgeToTriangle(HalfEdgeData data)
-        {
-            XNavMeshList<TriangleArea> triangles = PoolUtility.RequireTriangleList(data.Faces.Count);
-
-            foreach (HalfEdgeFace face in data.Faces)
-            {
-                XVector2 p1 = face.Edge.Vertex.Position;
-                XVector2 p2 = face.Edge.NextEdge.Vertex.Position;
-                XVector2 p3 = face.Edge.NextEdge.NextEdge.Vertex.Position;
-
-                triangles.Add(new TriangleArea(p1, p2, p3, face.Area));
-            }
-
-            return triangles;
-        }
-
         //
         // Flip triangle edge
         //
