@@ -24,6 +24,38 @@ namespace XFrame.PathFinding
             return gap <= EPSILON && gap >= -EPSILON;
         }
 
+        public static bool CheckPointOnTriangleLine(Triangle triangle, XVector2 point, out XVector2 oppositePoint)
+        {
+            XVector2 p1 = triangle.P1;
+            XVector2 p2 = triangle.P2;
+            XVector2 p3 = triangle.P3;
+            if (Det2(p1 - p2, p1 - point) == 0)  // 行列式为0
+            {
+                oppositePoint = p3;
+                return true;
+            }
+
+            if (Det2(p2 - p3, p2 - point) == 0)
+            {
+                oppositePoint = p1;
+                return true;
+            }
+
+            if (Det2(p3 - p1, p3 - point) == 0)
+            {
+                oppositePoint = p2;
+                return true;
+            }
+
+            oppositePoint = default;
+            return false;
+        }
+
+        public static float Dot(XVector2 a, XVector2 b)
+        {
+            return a.X * b.X + a.Y * b.Y;
+        }
+
         public static float Det2(float x1, float x2, float y1, float y2)
         {
             return x1 * y2 - y1 * x2;
@@ -43,12 +75,16 @@ namespace XFrame.PathFinding
 
         public static bool CheckLineOutOfTriangle(Triangle triangle, HalfEdge e)
         {
-            Edge lineEdge = e.ToEdge();
+            return CheckLineOutOfTriangle(triangle, e.ToEdge());
+        }
+
+        public static bool CheckLineOutOfTriangle(Triangle triangle, Edge lineEdge)
+        {
             if (!LineLine(triangle.E1, lineEdge, true) &&
                 !LineLine(triangle.E2, lineEdge, true) &&
                 !LineLine(triangle.E3, lineEdge, true))
             {
-                if (!triangle.Contains(e.Vertex.Position))
+                if (!triangle.Contains(lineEdge.P1))
                     return true;
             }
             return false;

@@ -1,5 +1,6 @@
 ﻿
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using XFrame.PathFinding;
 
@@ -45,17 +46,22 @@ public partial class Test
         {
             if (AreaInfo.Face.IsSide)
                 return false;
-            if (e1.OppositeEdge != null)
+
+            if (e2.OppositeEdge != null)
             {
                 XVector2 p1 = e1.Vertex.Position;
                 XVector2 p2 = e2.Vertex.Position;
-                XVector2 p3 = e1.OppositeEdge.Vertex.Position;
-                XVector2 p4 = e1.OppositeEdge.NextEdge.Vertex.Position;
+                XVector2 p3 = e2.OppositeEdge.Vertex.Position;
+                XVector2 p4 = e2.OppositeEdge.PrevEdge.Vertex.Position;
+
+                //string str = $" {AreaInfo.Normalizer.UnNormalize(p1)},{AreaInfo.Normalizer.UnNormalize(p2)} ";
+                //if (e1.OppositeEdge != null)
+                //    str += $" op {AreaInfo.Normalizer.UnNormalize(p3)}, {AreaInfo.Normalizer.UnNormalize(p4)} ";
+                //else
+                //    str += " op is null";
+                //UnityEngine.Debug.Log(str);
+
                 if (p1.Equals(p3) && p2.Equals(p4))
-                {
-                    UnityEngine.Debug.LogError("edge error");
-                }
-                else
                 {
                     return true;
                 }

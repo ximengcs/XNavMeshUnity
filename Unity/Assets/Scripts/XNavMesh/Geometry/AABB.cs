@@ -122,7 +122,7 @@ namespace XFrame.PathFinding
             if (offset.X < 0)
             {
                 offset.X = Max.X - max.X;
-                if (offset.X > 0) 
+                if (offset.X > 0)
                     offset.X = 0;
             }
             if (offset.Y < 0)
@@ -136,6 +136,14 @@ namespace XFrame.PathFinding
             triangle.P2 += offset;
             triangle.P3 += offset;
             return triangle;
+        }
+
+        public bool InSide(XVector2 point)
+        { 
+            return XMath.Equals(point.X, Min.X) ||
+                XMath.Equals(point.X, Max.X) ||
+                XMath.Equals(point.Y, Min.Y) ||
+                XMath.Equals(point.Y, Max.Y);
         }
 
         public bool Contains(Triangle triangle)

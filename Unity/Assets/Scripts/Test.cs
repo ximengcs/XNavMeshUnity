@@ -1,8 +1,9 @@
 using UnityEngine;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using XFrame.PathFinding;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 
 public static class Debuger
 {
@@ -12,10 +13,9 @@ public static class Debuger
 
 public partial class Test : MonoBehaviour
 {
-    public static bool Debug;
-
     public Transform RectPoints;
     public Transform HolePoints;
+    public Transform HolePoints2;
     public GameObject MeshPrefab;
 
     private XNavMesh m_NavMesh;
@@ -26,6 +26,7 @@ public partial class Test : MonoBehaviour
     private MeshArea m_Mesh2;
 
     private Triangle m_Triangle;
+    private Triangle m_Triangle2;
     private List<Edge> m_Lines;
 
     public void Init()
@@ -35,27 +36,28 @@ public partial class Test : MonoBehaviour
         m_MeshRender2 = new XNavMeshRenderer(MeshPrefab);
         m_NavMesh = new XNavMesh(new AABB(points));
 
+        var holePoints = GetAllPoints(HolePoints, true);
+        m_Triangle = new Triangle(holePoints);
+
+        var holePoints2 = GetAllPoints(HolePoints2, true);
+        m_Triangle2 = new Triangle(holePoints2);
+
         Debuger.T1 = true;
         Debuger.Navmesh = m_NavMesh;
         List<XVector2> addPoints = GetAllPoints(RectPoints, true);
-
-        XNavMesh.Test(m_NavMesh, m_NavMesh.Normalizer);
-        UnityEngine.Debug.Log("===============");
-
         m_NavMesh.Add(addPoints);
         RefreshMeshArea();
-        XNavMesh.Test(m_NavMesh, m_NavMesh.Normalizer);
+        m_NavMesh.CheckDataValid();
     }
 
     public void AddHole()
     {
-        var holePoints = GetAllPoints(HolePoints, true);
-        m_Triangle = new Triangle(holePoints);
+        m_NavMesh.AddWithExtraData(m_Triangle2, AreaType.Obstacle, out HalfEdgeData newAreaData2, out List<Edge> newOutLine2);
         m_NavMesh.AddWithExtraData(m_Triangle, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
         RefreshMeshArea();
         RefreshMeshArea2(newAreaData, Color.blue);
         RefreshLine(newOutLine);
-        XNavMesh.Test(newAreaData, m_NavMesh.Normalizer);
+        m_NavMesh.CheckDataValid();
     }
 
     public void RemoveHole()
@@ -88,15 +90,63 @@ public partial class Test : MonoBehaviour
 
     public void Right()
     {
-        InnerMove(new XVector2(2f, 0f));
+        InnerMove(new XVector2(10f, 0f));
+    }
+
+    private void Update()
+    {
+        if (!m_Rotating)
+            return;
+
+        InnerRotate2();
+        InnerRotate();
+    }
+
+    private bool m_Rotating;
+    public void Rotate()
+    {
+        m_Rotating = !m_Rotating;
+    }
+
+    private void InnerRotate()
+    {
+        Vector3 tar = m_Triangle.OuterCentrePoint.ToUnityVec3();
+        HolePoints.RotateAround(tar, Vector3.back, 1);
+        var holePoints = GetAllPoints(HolePoints, true);
+        Triangle tarTriangle = new Triangle(holePoints);
+        if (m_NavMesh.ChangeWithExtraData(m_Triangle, tarTriangle, out m_Triangle, out HalfEdgeData newAreaData, out List<Edge> newOutLine))
+        {
+            RefreshAll(newAreaData, newOutLine);
+        }
+    }
+
+    private void InnerRotate2()
+    {
+        Vector3 tar = m_Triangle2.OuterCentrePoint.ToUnityVec3();
+        HolePoints2.RotateAround(tar, Vector3.back, 1);
+        var holePoints = GetAllPoints(HolePoints2, true);
+        Triangle tarTriangle = new Triangle(holePoints);
+        if (m_NavMesh.ChangeWithExtraData(m_Triangle2, tarTriangle, out m_Triangle2, out HalfEdgeData newAreaData, out List<Edge> newOutLine))
+        {
+            RefreshAll(null, null);
+        }
     }
 
     private void InnerMove(XVector2 offset)
     {
-        m_Triangle = m_NavMesh.MoveWithExtraData(m_Triangle, offset, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
+        if (m_NavMesh.MoveWithExtraData(m_Triangle, offset, out m_Triangle, out HalfEdgeData newAreaData, out List<Edge> newOutLine))
+        {
+            RefreshAll(newAreaData, newOutLine);
+        }
+    }
+
+    public void RefreshAll(HalfEdgeData newAreaData, List<Edge> newOutLine)
+    {
         RefreshMeshArea();
         RefreshMeshArea2(newAreaData, Color.blue);
         RefreshLine(newOutLine);
+        m_NavMesh.CheckDataValid();
+        //m_NavMesh.Test();
     }
 
     private void RefreshMeshArea()
@@ -123,7 +173,7 @@ public partial class Test : MonoBehaviour
     {
         InnerDrawMesh(m_Mesh1);
         InnerDrawMesh(m_Mesh2);
-
+#if UNITY_EDITOR
         if (m_Lines != null)
         {
             Handles.color = Color.yellow;
@@ -136,6 +186,7 @@ public partial class Test : MonoBehaviour
                 Handles.DrawAAPolyLine(10, p1, p2);
             }
         }
+#endif
     }
 
     private void InnerDrawMesh(MeshArea area)
@@ -149,6 +200,20 @@ public partial class Test : MonoBehaviour
                 Vector3 p1 = item.Triangle.P1.ToUnityVec3();
                 Vector3 p2 = item.Triangle.P2.ToUnityVec3();
                 Vector3 p3 = item.Triangle.P3.ToUnityVec3();
+
+                Vector3 t1 = p1;
+                Vector3 t2 = p2;
+                Vector3 t3 = p3;
+                t1.z = -5;
+                t2.z = -5;
+                t3.z = -5;
+
+#if UNITY_EDITOR
+                Handles.Label(t1, $"({t1.x},{t1.y})");
+                Handles.Label(t2, $"({t2.x},{t2.y})");
+                Handles.Label(t3, $"({t3.x},{t3.y})");
+#endif
+
                 if (!XMath.CheckPointsOnLine(item.Triangle.P1, item.Triangle.P2, item.Triangle.P3))
                 {
                     Gizmos.DrawLine(p1, p2);

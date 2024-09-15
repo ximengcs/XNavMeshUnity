@@ -39,6 +39,60 @@ namespace XFrame.PathFinding
             P3 = face.Edge.PrevEdge.Vertex.Position;
         }
 
+        /// <summary>
+        /// 三角形重心点
+        /// </summary>
+        public XVector2 CenterOfGravityPoint
+        {
+            get
+            {
+                return (P1 + P2 + P3) * (1f / 3);
+            }
+        }
+
+        /// <summary>
+        /// 三角形内心点
+        /// </summary>
+        public XVector2 InnerCentrePoint
+        {
+            get
+            {
+                float a = XVector2.Distance(P1, P2);
+                float b = XVector2.Distance(P2, P3);
+                float c = XVector2.Distance(P3, P1);
+                return new XVector2(
+                    (a * P1.X + b * P2.X + c * P3.X) / (a + b + c),
+                    (a * P1.Y + b * P2.Y + c * P3.Y) / (a + b + c));
+            }
+        }
+
+        /// <summary>
+        /// 三角形外心
+        /// </summary>
+        public XVector2 OuterCentrePoint
+        {
+            get
+            {
+                float x1 = P1.X;
+                float x2 = P2.X;
+                float x3 = P3.X;
+                float y1 = P1.Y;
+                float y2 = P2.Y;
+                float y3 = P3.Y;
+
+                float a1 = 2 * (x2 - x1);
+                float b1 = 2 * (y2 - y1);
+                float c1 = x2 * x2 + y2 * y2 - x1 * x1 - y1 * y1;
+                float a2 = 2 * (x3 - x2);
+                float b2 = 2 * (y3 - y2);
+                float c2 = x3 * x3 + y3 * y3 - x2 * x2 - y2 * y2;
+
+                float x = ((c1 * b2) - (c2 * b1)) / ((a1 * b2) - (a2 * b1));
+                float y = ((a1 * c2) - (a2 * c1)) / ((a1 * b2) - (a2 * b1));
+                return new XVector2(x, y);
+            }
+        }
+
         public bool Intersect(Triangle triangle)
         {
             Edge e1 = new Edge(P1, P2);
@@ -100,12 +154,8 @@ namespace XFrame.PathFinding
             return Has(edge.Vertex.Position);
         }
 
-        public bool Equals(HalfEdgeFace face)
+        public bool Equals(XVector2 p1, XVector2 p2, XVector2 p3)
         {
-            XVector2 p1 = face.Edge.Vertex.Position;
-            XVector2 p2 = face.Edge.NextEdge.Vertex.Position;
-            XVector2 p3 = face.Edge.PrevEdge.Vertex.Position;
-
             float checkNum = p1.X + p1.Y + p2.X + p2.Y + p3.X + p3.Y;
             float selfCheckNum = P1.X + P1.Y + P2.X + P2.Y + P3.X + P3.Y;
 
@@ -147,6 +197,19 @@ namespace XFrame.PathFinding
             }
 
             return false;
+        }
+
+        public bool Equals(Triangle triangle)
+        {
+            return Equals(triangle.P1, triangle.P2, triangle.P3);
+        }
+
+        public bool Equals(HalfEdgeFace face)
+        {
+            XVector2 p1 = face.Edge.Vertex.Position;
+            XVector2 p2 = face.Edge.NextEdge.Vertex.Position;
+            XVector2 p3 = face.Edge.PrevEdge.Vertex.Position;
+            return Equals(p1, p2, p3);
         }
 
         /// <summary>

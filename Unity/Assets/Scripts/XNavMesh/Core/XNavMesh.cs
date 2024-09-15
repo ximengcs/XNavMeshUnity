@@ -8,6 +8,7 @@ namespace XFrame.PathFinding
         private AABB m_AABB;
         private Normalizer m_Normalizer;
         private HalfEdgeData m_Data;
+        private List<XVector2> m_Rect;
 
         public AABB AABB => m_AABB;
 
@@ -18,6 +19,7 @@ namespace XFrame.PathFinding
             m_AABB = aabb;
             m_Normalizer = new Normalizer(aabb);
             m_Data = new HalfEdgeData();
+            m_Rect = new List<XVector2>();
             Initialize();
         }
 
@@ -28,6 +30,10 @@ namespace XFrame.PathFinding
 
             XVector2 min = m_AABB.Min;
             XVector2 max = m_AABB.Max;
+            m_Rect.Add(new XVector2(min.X, min.Y));
+            m_Rect.Add(new XVector2(min.X, max.Y));
+            m_Rect.Add(new XVector2(max.X, max.Y));
+            m_Rect.Add(new XVector2(max.X, min.Y));
             Add(new XVector2(min.X, min.Y));
             Add(new XVector2(min.X, max.Y));
             Add(new XVector2(max.X, min.Y));
@@ -35,6 +41,20 @@ namespace XFrame.PathFinding
 
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
         }
+
+        public void CheckDataValid()
+        {
+            if (m_Data.CheckValid())
+            {
+                Debug.Log($"data is valid {m_Data.Faces.Count}");
+            }
+        }
+
+        public void Test()
+        {
+            Test(m_Data, Normalizer);
+        }
+
         public static void Test(XNavMesh nav, Normalizer normalizer)
         {
             Test(nav.m_Data, normalizer);
@@ -43,14 +63,10 @@ namespace XFrame.PathFinding
         {
             Debug.Log($"Edge count {data.Edges.Count}");
             Debug.Log($"Face count {data.Faces.Count}");
-            foreach (HalfEdge edge in data.Edges)
+
+            foreach (HalfEdgeFace face in data.Faces)
             {
-                string str = $" {normalizer.UnNormalize(edge.Vertex.Position)},{normalizer.UnNormalize(edge.NextEdge.Vertex.Position)} ";
-                if (edge.OppositeEdge != null)
-                    str += $" op {normalizer.UnNormalize(edge.OppositeEdge.Vertex.Position)}, {normalizer.UnNormalize(edge.OppositeEdge.NextEdge.Vertex.Position)} ";
-                else
-                    str += " op is null";
-                Debug.Log(str);
+                DebugUtility.Print(face, normalizer);
             }
         }
 
@@ -88,38 +104,40 @@ namespace XFrame.PathFinding
             return faces;
         }
 
-        public Triangle MoveWithExtraData(Triangle triangle, XVector2 offset, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        public bool ChangeWithExtraData(Triangle triangle, Triangle tarTriangle, out Triangle newTriangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
-            Debug.LogWarning($"AABB {AABB} ");
-            Triangle newTriangle = triangle + offset;
-            Debug.LogWarning($"new tri {newTriangle} ");
-            newTriangle = AABB.Constraint(newTriangle);
-            Debug.LogWarning($"new tri to {newTriangle} ");
-            newTriangle = m_Normalizer.Normalize(newTriangle);
+            newAreaData = null;
+            newAreaOutEdges = null;
+            newTriangle = triangle;
+
+            tarTriangle = AABB.Constraint(tarTriangle);
+            if (tarTriangle.Equals(triangle))
+            {
+                return false;
+            }
+
+            tarTriangle = m_Normalizer.Normalize(tarTriangle);
             triangle = m_Normalizer.Normalize(triangle);
-            offset = m_Normalizer.Normalize(offset);
+
             AreaType areaType = InnerGetTriangleAreaType(triangle);
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
-            InnerFindRelationFaces(newTriangle, relationFaces);
-            Debug.LogWarning("face start--------");
-            foreach (HalfEdgeFace face in relationFaces)
+            InnerFindRelationFaces(tarTriangle, relationFaces);
+            newAreaOutEdges = InnerGetEdgeList2(triangle, tarTriangle, relationFaces);
+            if (newAreaOutEdges.Count < 3)
             {
-                Debug.LogWarning($"{face}");
+                return false;
             }
-            Debug.LogWarning("face end--------");
 
-            newAreaOutEdges = InnerGetEdgeList2(triangle, newTriangle, relationFaces);
-            Debug.LogWarning("edge start--------");
-            foreach (Edge edge in newAreaOutEdges)
-            {
-                Debug.LogWarning($"{edge.P1} -> {edge.P2} ");
-            }
-            Debug.LogWarning("edge end--------");
-
-            newAreaData = GenerateHalfEdgeData(newAreaOutEdges, newTriangle.ToPoints());
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, tarTriangle.ToPoints());
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
-            InnerSetTriangleAreaType(newTriangle, areaType);
-            return m_Normalizer.UnNormalize(newTriangle);
+            InnerSetTriangleAreaType(tarTriangle, areaType);
+            newTriangle = m_Normalizer.UnNormalize(tarTriangle);
+            return true;
+        }
+
+        public bool MoveWithExtraData(Triangle triangle, XVector2 offset, out Triangle newTriangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        {
+            return ChangeWithExtraData(triangle, triangle + offset, out newTriangle, out newAreaData, out newAreaOutEdges);
         }
 
         public void RemoveWithExtraData(Triangle triangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
@@ -127,7 +145,7 @@ namespace XFrame.PathFinding
             triangle = m_Normalizer.Normalize(triangle);
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
             newAreaOutEdges = InnerGetEdgeList(triangle, relationFaces);
-            newAreaData = GenerateHalfEdgeData(newAreaOutEdges);
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges);
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
         }
 
@@ -136,7 +154,15 @@ namespace XFrame.PathFinding
             triangle = m_Normalizer.Normalize(triangle);
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
             newAreaOutEdges = InnerGetEdgeList(triangle, relationFaces);
-            newAreaData = GenerateHalfEdgeData(newAreaOutEdges, triangle.ToPoints());
+
+            Debug.LogWarning("relation edges");
+            foreach (Edge edge in newAreaOutEdges)
+            {
+                DebugUtility.Print(edge.P1);
+            }
+            Debug.LogWarning("-------------------");
+
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, triangle.ToPoints());
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
             // 标记区域
@@ -172,9 +198,9 @@ namespace XFrame.PathFinding
                 HalfEdge e3 = e1.PrevEdge;
 
                 // 边界必然加入
-                if (e1.OppositeEdge == null) TryAddEdgeList(e1, edgeList);
-                if (e2.OppositeEdge == null) TryAddEdgeList(e2, edgeList);
-                if (e3.OppositeEdge == null) TryAddEdgeList(e3, edgeList);
+                if (e1.NextEdge.OppositeEdge == null) TryAddEdgeList(e1, edgeList);
+                if (e2.NextEdge.OppositeEdge == null) TryAddEdgeList(e2, edgeList);
+                if (e3.NextEdge.OppositeEdge == null) TryAddEdgeList(e3, edgeList);
 
                 // 与三角形不相交且在外面则加入
                 InnerCheckTriangleOut(triangle, e1, edgeList);
@@ -195,9 +221,9 @@ namespace XFrame.PathFinding
                 HalfEdge e3 = e1.PrevEdge;
 
                 // 边界必然加入
-                if (e1.OppositeEdge == null) TryAddEdgeList(e1, edgeList);
-                if (e2.OppositeEdge == null) TryAddEdgeList(e2, edgeList);
-                if (e3.OppositeEdge == null) TryAddEdgeList(e3, edgeList);
+                if (e1.NextEdge.OppositeEdge == null) TryAddEdgeList(e1, edgeList);
+                if (e2.NextEdge.OppositeEdge == null) TryAddEdgeList(e2, edgeList);
+                if (e3.NextEdge.OppositeEdge == null) TryAddEdgeList(e3, edgeList);
 
                 // 与三角形不相交且在外面则加入
                 if (XMath.CheckLineOutOfTriangle(triangle, e1))
@@ -241,13 +267,14 @@ namespace XFrame.PathFinding
             if (tar == null)
             {
                 edgeList.Add(cur);
-                Debug.LogWarning($"add -> [{cur.P1} {cur.P2}] {m_Normalizer.UnNormalize(cur.P1)} {m_Normalizer.UnNormalize(cur.P2)} ");
             }
         }
 
         private List<Edge> InnerSortEdge(List<Edge> edgeList)
         {
+            int sortCount = 0;
             List<Edge> sortEdge = new List<Edge>();
+            int targetCount = edgeList.Count;
             Edge curEdge = edgeList[0];
             do
             {
@@ -259,10 +286,48 @@ namespace XFrame.PathFinding
                     {
                         curEdge = e;
                         sortEdge.Add(e);
+
+                        // 检查三个点是否在同一条线上，并且处于边缘，如果是，则移除掉中间的点
+                        sortCount = sortEdge.Count;
+                        if (sortCount >= 3)
+                        {
+                            XVector2 p1 = sortEdge[sortCount - 1].P1;
+                            XVector2 p2 = sortEdge[sortCount - 2].P1;
+                            XVector2 p3 = sortEdge[sortCount - 3].P1;
+                            if (XMath.CheckPointsOnLine(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                            {
+                                sortEdge.RemoveAt(sortCount - 2);
+                                targetCount--;
+                            }
+                        }
+
                         break;
                     }
                 }
-            } while (curEdge != null && sortEdge.Count < edgeList.Count);
+            } while (curEdge != null && sortEdge.Count < targetCount);
+
+
+            // 因为是循环列表，需要检查元素的前两个(至少4个才需要检查)
+            sortCount = sortEdge.Count;
+            if (sortCount >= 4)
+            {
+                XVector2 p1 = sortEdge[0].P1;
+                XVector2 p2 = sortEdge[sortCount - 1].P1;
+                XVector2 p3 = sortEdge[sortCount - 2].P1;
+                if (XMath.CheckPointsOnLine(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                    sortEdge.RemoveAt(sortCount - 1);
+
+                sortCount = sortEdge.Count;
+                if (sortCount >= 4)
+                {
+                    p1 = sortEdge[1].P1;
+                    p2 = sortEdge[0].P1;
+                    p3 = sortEdge[sortCount - 1].P1;
+                    if (XMath.CheckPointsOnLine(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                        sortEdge.RemoveAt(0);
+                }
+            }
+
             return sortEdge;
         }
 
@@ -281,10 +346,14 @@ namespace XFrame.PathFinding
                         {
                             if (face.FindEdge(edge, out HalfEdge halfEdge))
                             {
+                                halfEdge = halfEdge.NextEdge;
                                 // 找到了需要替换的边
                                 if (halfEdge.OppositeEdge != null)
-                                    halfEdge.OppositeEdge.OppositeEdge = e;
-                                e.OppositeEdge = halfEdge.OppositeEdge;
+                                {
+                                    halfEdge.OppositeEdge.OppositeEdge = e.NextEdge;
+                                }
+
+                                e.NextEdge.OppositeEdge = halfEdge.OppositeEdge;
 
                                 // 移除旧边的相关数据
                                 m_Data.Vertices.Remove(halfEdge.Vertex);
@@ -322,29 +391,40 @@ namespace XFrame.PathFinding
                 m_Data.Faces.Add(f);
         }
 
-        public HalfEdgeData GenerateHalfEdgeData(List<Edge> edgeList, List<XVector2> extraPoints = null)
+        public HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, List<XVector2> extraPoints = null)
         {
             HalfEdgeData tmpData = new HalfEdgeData();
             Triangle superTriangle = GeometryUtility.SuperTriangle;
             tmpData.AddTriangle(superTriangle);
             foreach (Edge e in edgeList)
                 DelaunayIncrementalSloan.InsertNewPointInTriangulation(e.P1, tmpData);
-            // 添加Constraint以剪切形状
+
             List<XVector2> tmpList = new List<XVector2>();  // TO DO 
             foreach (Edge e in edgeList)
                 tmpList.Add(e.P1);
+            DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
-            if (extraPoints != null)
+            foreach (XVector2 v in extraPoints)
             {
-                foreach (XVector2 v in extraPoints)
+                // TO DO 剔除重复的
+                bool find = false;
+                foreach (XVector2 tmp in tmpList)
+                {
+                    if (tmp.Equals(v))
+                    {
+                        find = true;
+                        break;
+                    }
+                }
+
+                if (!find)
                 {
                     DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
                 }
             }
-
             ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
             ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, true);
-            DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
+
             return tmpData;
         }
 

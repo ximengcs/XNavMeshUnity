@@ -26,7 +26,6 @@ public partial class Test
 
         public void Refresh(MeshArea navMesh)
         {
-            return;
             foreach (GameObject go in m_Meshs)
                 GameObject.Destroy(go);
             m_Meshs.Clear();

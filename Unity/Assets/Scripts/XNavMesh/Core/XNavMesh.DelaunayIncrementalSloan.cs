@@ -71,6 +71,88 @@ namespace XFrame.PathFinding
                     return;
                 }
 
+                // 如果点落在三角形边上,并且所在边对边为空(即在边缘上)，则直接连接此点到对点
+                if (XMath.CheckPointOnTriangleLine(new Triangle(f), p, out XVector2 oppositePoint))
+                {
+                    HalfEdge edge;
+                    HalfEdge e1 = f.Edge;
+                    HalfEdge e2 = e1.NextEdge;
+                    HalfEdge e3 = e2.NextEdge;
+
+                    if (e1.Vertex.Position.Equals(oppositePoint))
+                        edge = e1;
+                    else if (e2.Vertex.Position.Equals(oppositePoint))
+                        edge = e2;
+                    else
+                        edge = e3;
+
+                    if (edge.PrevEdge.OppositeEdge == null) // 所在边对边为空
+                    {
+                        HalfEdge f1_e2 = edge.NextEdge;
+                        HalfEdge f2_e3 = edge.PrevEdge;
+
+                        HalfEdgeVertex f1_p = new HalfEdgeVertex(p);
+                        HalfEdge f1_e1 = edge;
+                        HalfEdge f1_e3 = new HalfEdge(f1_p);
+
+                        f1_p.Edge = f1_e2;
+                        f1_e2.Vertex.Edge = f1_e3;
+                        f1_e3.Vertex.Edge = f1_e1;
+
+                        f1_e2.NextEdge = f1_e3;
+                        f1_e3.PrevEdge = f1_e2;
+
+                        f1_e3.NextEdge = f1_e1;
+                        f1_e1.PrevEdge = f1_e3;
+
+                        HalfEdgeFace f1 = new HalfEdgeFace(f1_e1);
+                        f1_e1.Face = f1;
+                        f1_e2.Face = f1;
+                        f1_e3.Face = f1;
+
+                        HalfEdgeVertex f2_p1 = new HalfEdgeVertex(edge.Vertex.Position);
+                        HalfEdgeVertex f2_p2 = new HalfEdgeVertex(p);
+                        HalfEdge f2_e1 = new HalfEdge(f2_p1);
+                        HalfEdge f2_e2 = new HalfEdge(f2_p2);
+
+                        f2_p1.Edge = f2_e2;
+                        f2_p2.Edge = f2_e3;
+                        f2_e3.Vertex.Edge = f2_e1;
+
+                        f2_e1.NextEdge = f2_e2;
+                        f2_e2.PrevEdge = f2_e1;
+                        f2_e2.NextEdge = f2_e3;
+                        f2_e3.PrevEdge = f2_e2;
+                        f2_e3.NextEdge = f2_e1;
+                        f2_e1.PrevEdge = f2_e3;
+
+                        f2_e1.OppositeEdge = f1_e1.OppositeEdge;
+                        if (f2_e1.OppositeEdge != null)
+                            f2_e1.OppositeEdge.OppositeEdge = f2_e1;
+
+                        f2_e2.OppositeEdge = f1_e1;
+                        f1_e1.OppositeEdge = f2_e2;
+
+                        HalfEdgeFace f2 = new HalfEdgeFace(f2_e1);
+                        f2_e1.Face = f2;
+                        f2_e2.Face = f2;
+                        f2_e3.Face = f2;
+
+                        triangulationData.Vertices.Add(f1_p);
+                        triangulationData.Vertices.Add(f2_p1);
+                        triangulationData.Vertices.Add(f2_p2);
+
+                        triangulationData.Edges.Add(f1_e3);
+                        triangulationData.Edges.Add(f2_e1);
+                        triangulationData.Edges.Add(f2_e2);
+
+                        triangulationData.Faces.Add(f1);
+                        triangulationData.Faces.Add(f2);
+                        triangulationData.Faces.Remove(f);
+                        return;
+                    }
+                }
+
                 // 删除这个三角形，并连接由此点分开的三个三角形
                 SplitTriangleFaceAtPoint(f, p, triangulationData);
 
@@ -134,6 +216,11 @@ namespace XFrame.PathFinding
                     }
 
                     // 向左边旋转，接着检查下一个
+                    if (rotateAroundThis.Edge.OppositeEdge == null)
+                    {
+                        DebugUtility.Print(rotateAroundThis.Edge);
+                    }
+
                     rotateAroundThis = rotateAroundThis.Edge.OppositeEdge.Vertex;
 
                     // 面

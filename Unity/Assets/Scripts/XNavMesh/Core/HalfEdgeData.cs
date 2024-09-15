@@ -31,6 +31,51 @@ namespace XFrame.PathFinding
             Edges = new HashSet<HalfEdge>();
         }
 
+        public bool CheckValid()
+        {
+            HashSet<HalfEdge> edges = new HashSet<HalfEdge>();
+            HashSet<HalfEdgeVertex> vertes = new HashSet<HalfEdgeVertex>();
+            foreach (HalfEdgeFace face in Faces)
+            {
+                HalfEdge e1 = face.Edge;
+                HalfEdge e2 = e1.NextEdge;
+                HalfEdge e3 = e2.NextEdge;
+                edges.Add(e1);
+                edges.Add(e2);
+                edges.Add(e3);
+
+                if (!Edges.Contains(e1) || !Edges.Contains(e2) || !Edges.Contains(e3))
+                {
+                    UnityEngine.Debug.LogError("check edge valid error");
+                    return false;
+                }
+
+                HalfEdgeVertex v1 = e1.Vertex;
+                HalfEdgeVertex v2 = e2.Vertex;
+                HalfEdgeVertex v3 = e3.Vertex;
+                vertes.Add(v1);
+                vertes.Add(v2);
+                vertes.Add(v3);
+                if (!Vertices.Contains(v1) || !Vertices.Contains(v2) || !Vertices.Contains(v3))
+                {
+                    UnityEngine.Debug.LogError("check vert valid error");
+                    return false;
+                }
+            }
+
+            if (edges.Count != Edges.Count)
+            {
+                UnityEngine.Debug.LogError("check edge count valid error");
+                return false;
+            }
+            if (vertes.Count != Vertices.Count)
+            {
+                UnityEngine.Debug.LogError("check vert count valid error");
+                return false;
+            }
+            return true;
+        }
+
         /// <summary>
         /// 添加一个三角形
         /// </summary>
