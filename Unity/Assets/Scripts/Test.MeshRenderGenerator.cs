@@ -27,12 +27,12 @@ public partial class Test
         public void Refresh(MeshArea navMesh)
         {
             foreach (GameObject go in m_Meshs)
-                GameObject.Destroy(go);
+                Pool.ReleaseRender(go);
             m_Meshs.Clear();
 
             foreach (MeshInfo meshInfo in navMesh.Meshs)
             {
-                GameObject go = GameObject.Instantiate(m_Prefab, m_Root.transform);
+                GameObject go = Pool.RequireRender(m_Prefab, m_Root.transform);
                 MeshRenderer render = go.GetComponent<MeshRenderer>();
                 Color color = meshInfo.Color;
                 color.a = 0.5f;

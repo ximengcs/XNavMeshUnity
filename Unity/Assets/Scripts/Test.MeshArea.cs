@@ -87,6 +87,14 @@ public partial class Test
             Refresh(navMesh, XNavMesh.ToTriangles(navMesh, data), color);
         }
 
+        public void Dispose()
+        {
+            foreach (MeshInfo m in m_Meshs)
+            {
+                Pool.ReleaseMesh(m.Mesh);
+            }
+        }
+
         public void Refresh(XNavMesh navMesh, XNavMeshList<TriangleArea> triangles, Color color)
         {
             m_Meshs = new List<MeshInfo>();
@@ -96,7 +104,7 @@ public partial class Test
                 XVector2 v2 = triangle.Shape.P2;
                 XVector2 v3 = triangle.Shape.P3;
 
-                Mesh mesh = new Mesh();
+                Mesh mesh = Pool.RequireMesh();
                 Vector3[] vertices = new Vector3[3];
                 vertices[0] = new Vector3(v1.X, v1.Y);
                 vertices[1] = new Vector3(v2.X, v2.Y);

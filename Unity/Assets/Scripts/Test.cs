@@ -4,6 +4,7 @@ using UnityEditor;
 #endif
 using XFrame.PathFinding;
 using System.Collections.Generic;
+using TMPro;
 
 public static class Debuger
 {
@@ -17,6 +18,7 @@ public partial class Test : MonoBehaviour
     public Transform HolePoints;
     public Transform HolePoints2;
     public GameObject MeshPrefab;
+    public TextMeshProUGUI FpsCom;
 
     private XNavMesh m_NavMesh;
 
@@ -31,6 +33,7 @@ public partial class Test : MonoBehaviour
 
     public void Init()
     {
+        Application.targetFrameRate = 60;
         List<XVector2> points = GetAllPoints(RectPoints, false);
         m_MeshRender1 = new XNavMeshRenderer(MeshPrefab);
         m_MeshRender2 = new XNavMeshRenderer(MeshPrefab);
@@ -100,6 +103,12 @@ public partial class Test : MonoBehaviour
 
         InnerRotate2();
         InnerRotate();
+        InnerRefreshFps();
+    }
+
+    public void InnerRefreshFps()
+    {
+        FpsCom.text = $"{(1f / Time.deltaTime):F2}";
     }
 
     private bool m_Rotating;
@@ -111,7 +120,7 @@ public partial class Test : MonoBehaviour
     private void InnerRotate()
     {
         Vector3 tar = m_Triangle.OuterCentrePoint.ToUnityVec3();
-        HolePoints.RotateAround(tar, Vector3.back, 1);
+        HolePoints.RotateAround(tar, Vector3.back, 180 * Time.deltaTime);
         var holePoints = GetAllPoints(HolePoints, true);
         Triangle tarTriangle = new Triangle(holePoints);
         if (m_NavMesh.ChangeWithExtraData(m_Triangle, tarTriangle, out m_Triangle, out HalfEdgeData newAreaData, out List<Edge> newOutLine))
@@ -123,7 +132,7 @@ public partial class Test : MonoBehaviour
     private void InnerRotate2()
     {
         Vector3 tar = m_Triangle2.OuterCentrePoint.ToUnityVec3();
-        HolePoints2.RotateAround(tar, Vector3.back, 1);
+        HolePoints2.RotateAround(tar, Vector3.back, 180 * Time.deltaTime);
         var holePoints = GetAllPoints(HolePoints2, true);
         Triangle tarTriangle = new Triangle(holePoints);
         if (m_NavMesh.ChangeWithExtraData(m_Triangle2, tarTriangle, out m_Triangle2, out HalfEdgeData newAreaData, out List<Edge> newOutLine))
@@ -151,6 +160,7 @@ public partial class Test : MonoBehaviour
 
     private void RefreshMeshArea()
     {
+        m_Mesh1?.Dispose();
         m_Mesh1 = new MeshArea(m_NavMesh, Color.green);
         m_MeshRender1.Refresh(m_Mesh1);
     }
@@ -158,6 +168,7 @@ public partial class Test : MonoBehaviour
     private void RefreshMeshArea2(HalfEdgeData data, Color color)
     {
         if (data == null) return;
+        m_Mesh2?.Dispose();
         m_Mesh2 = new MeshArea(m_NavMesh, data, Color.blue);
         m_MeshRender2.Refresh(m_Mesh2);
     }
