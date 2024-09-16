@@ -93,6 +93,18 @@ namespace XFrame.PathFinding
             }
         }
 
+        public bool Intersect(XVector2 p1, XVector2 p2)
+        {
+            Edge e1 = new Edge(P1, P2);
+            Edge e2 = new Edge(P2, P3);
+            Edge e3 = new Edge(P2, P3);
+            Edge e4 = new Edge(P1, P2);
+            if (XMath.LineLine(e1, e4, true)) return true;
+            if (XMath.LineLine(e2, e4, true)) return true;
+            if (XMath.LineLine(e3, e4, true)) return true;
+            return false;
+        }
+
         public bool Intersect(Triangle triangle)
         {
             Edge e1 = new Edge(P1, P2);

@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using XFrame.PathFinding;
 
+/// <summary>
+/// 一个Poly具有多个三角形
+/// </summary>
 public class Poly
 {
     private class PolyVertex
@@ -188,8 +191,11 @@ public class Poly
                 XVector2 n1 = XVector2.Normalize(e1.P1 - e1.P2);
                 XVector2 n2 = XVector2.Normalize(e2.P1 - e2.P2);
 
-                float c1 = XVector2.Cross(cur, n1);
+                // 用来判断方向是否相同
+                float c1 = XVector2.Cross(cur, n1);  
                 float c2 = XVector2.Cross(cur, n2);
+
+                // 用来判断角度
                 float d1 = XVector2.Dot(cur, n1);
                 float d2 = XVector2.Dot(cur, n2);
 

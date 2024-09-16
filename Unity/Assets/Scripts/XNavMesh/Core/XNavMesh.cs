@@ -104,6 +104,58 @@ namespace XFrame.PathFinding
             return faces;
         }
 
+        private HashSet<HalfEdgeFace> InnerFindRelationFaces(List<XVector2> points, HashSet<HalfEdgeFace> result = null)
+        {
+            HashSet<HalfEdgeFace> faces = result != null ? result : new HashSet<HalfEdgeFace>();
+            foreach (HalfEdgeFace face in m_Data.Faces)
+            {
+                Triangle triangle = new Triangle(face);
+                for (int i = 0; i < points.Count; i++)
+                {
+                    XVector2 p1 = points[i];
+                    XVector2 p2 = points[(i + 1) % points.Count];
+                    if (triangle.Intersect(p1, p2))
+                    {
+                        if (!faces.Contains(face))
+                            faces.Add(face);
+                    }
+                }
+            }
+            return faces;
+        }
+
+        private static HashSet<HalfEdgeFace> InnerFindContainsFaces(HalfEdgeData data, List<XVector2> edgeList, HashSet<HalfEdgeFace> result = null)
+        {
+            HashSet<HalfEdgeFace> faces = result != null ? result : new HashSet<HalfEdgeFace>();
+            foreach (HalfEdgeFace face in data.Faces)
+            {
+                HalfEdge e1 = face.Edge;
+                HalfEdge e2 = e1.NextEdge;
+                HalfEdge e3 = e2.NextEdge;
+
+                for (int i = 0; i < edgeList.Count; i++)
+                {
+                    Edge edge = new Edge(edgeList[i], edgeList[(i + 1) % edgeList.Count]);
+                    if (e1.EqualsEdge(edge))
+                    {
+                        faces.Add(face);
+                        break;
+                    }
+                    if (e2.EqualsEdge(edge))
+                    {
+                        faces.Add(face);
+                        break;
+                    }
+                    if (e3.EqualsEdge(edge))
+                    {
+                        faces.Add(face);
+                        break;
+                    }
+                }
+            }
+            return faces;
+        }
+
         public bool ChangeWithExtraData(Triangle triangle, Triangle tarTriangle, out Triangle newTriangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
             newAreaData = null;
@@ -128,7 +180,7 @@ namespace XFrame.PathFinding
                 return false;
             }
 
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, tarTriangle.ToPoints());
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, tarTriangle.ToPoints());
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
             InnerSetTriangleAreaType(tarTriangle, areaType);
             newTriangle = m_Normalizer.UnNormalize(tarTriangle);
@@ -163,11 +215,31 @@ namespace XFrame.PathFinding
             }
             Debug.LogWarning("-------------------");
 
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, triangle.ToPoints());
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, triangle.ToPoints());
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
             // 标记区域
             InnerSetTriangleAreaType(triangle, area);
+        }
+
+        public void AddWithExtraData(List<XVector2> points, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        {
+            m_Normalizer.Normalize(points);
+            HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
+            newAreaOutEdges = InnerGetEdgeList3(relationFaces);
+
+            Debug.LogWarning("edge----------");
+            foreach (Edge edge in newAreaOutEdges)
+            {
+                DebugUtility.Print(edge.P1);
+            }
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, points);
+
+            // 标记区域
+            foreach (HalfEdgeFace face in InnerFindContainsFaces(newAreaData, points))
+                face.Area = area;
+
+            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
         }
 
         public void AddConstraint(List<XVector2> points)
@@ -266,6 +338,87 @@ namespace XFrame.PathFinding
             }
 
             return InnerSortEdge(edgeList);
+        }
+
+        private List<Edge> InnerGetEdgeList3(HashSet<HalfEdgeFace> faces)
+        {
+            List<Edge> edgeList = new List<Edge>();
+
+            HalfEdge startEdge = null;
+            // 找一个没有临边的边，从这个边开始迭代
+            foreach (HalfEdgeFace face in faces)
+            {
+                HalfEdge e1 = face.Edge;
+                HalfEdge e2 = e1.NextEdge;
+                HalfEdge e3 = e2.NextEdge;
+
+                if (e1.OppositeEdge == null || !faces.Contains(e1.OppositeEdge.Face))
+                {
+                    startEdge = e1;
+                    break;
+                }
+
+                if (e2.OppositeEdge == null || !faces.Contains(e2.OppositeEdge.Face))
+                {
+                    startEdge = e2;
+                    break;
+                }
+
+
+                if (e3.OppositeEdge == null || !faces.Contains(e3.OppositeEdge.Face))
+                {
+                    startEdge = e3;
+                    break;
+                }
+            }
+
+            int count = 0;
+            HalfEdge current = startEdge;
+            do
+            {
+                if (count++ >= 100)
+                {
+                    Debug.LogError("error");
+                    break;
+                }
+
+                // 找到所有下一条边(因为临边不在面列表里，所以只需要从一个方向找)
+                List<HalfEdge> nextEdges = new List<HalfEdge>();
+                HalfEdge tmp = current.NextEdge.OppositeEdge;
+                while (tmp != null)
+                {
+                    nextEdges.Add(tmp);
+                    tmp = tmp.NextEdge.OppositeEdge;
+                }
+
+                // 因为是同向，所以只需要计算角度最大的边即可, 只需计算单位向量点积
+                Edge curE = new Edge(current.Vertex.Position, current.NextEdge.Vertex.Position);
+                XVector2 n1 = XVector2.Normalize(curE.P2 - curE.P1);
+
+                float d = 1f;
+                foreach (HalfEdge e in nextEdges)
+                {
+                    XVector2 p1 = e.Vertex.Position;
+                    XVector2 p2 = e.NextEdge.Vertex.Position;
+                    if (!p1.Equals(curE.P1))
+                    {
+                        Debug.LogError("error happen");
+                    }
+
+                    XVector2 n2 = XVector2.Normalize(p2 - curE.P1);
+                    float tmpD = XMath.Dot(n1, n2);
+                    if (tmpD < d)
+                    {
+                        d = tmpD;
+                        current = e;
+                    }
+                }
+
+                edgeList.Add(new Edge(current.Vertex.Position, current.NextEdge.Vertex.Position));
+                current = current.NextEdge;
+            } while (current != startEdge);
+
+            return edgeList;
         }
 
         private void InnerCheckTriangleOut(Triangle triangle, HalfEdge e, List<Edge> edgeList)
@@ -416,7 +569,7 @@ namespace XFrame.PathFinding
                 m_Data.Faces.Add(f);
         }
 
-        public HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, List<XVector2> extraPoints = null)
+        public HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, bool removeEdgeConstraint = true, List<XVector2> extraPoints = null)
         {
             HalfEdgeData tmpData = new HalfEdgeData();
             Triangle superTriangle = GeometryUtility.SuperTriangle;
@@ -429,26 +582,30 @@ namespace XFrame.PathFinding
                 tmpList.Add(e.P1);
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
-            foreach (XVector2 v in extraPoints)
+            if (extraPoints != null)
             {
-                // TO DO 剔除重复的
-                bool find = false;
-                foreach (XVector2 tmp in tmpList)
+                foreach (XVector2 v in extraPoints)
                 {
-                    if (tmp.Equals(v))
+                    // TO DO 剔除重复的
+                    bool find = false;
+                    foreach (XVector2 tmp in tmpList)
                     {
-                        find = true;
-                        break;
+                        if (tmp.Equals(v))
+                        {
+                            find = true;
+                            break;
+                        }
+                    }
+
+                    if (!find)
+                    {
+                        DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
                     }
                 }
-
-                if (!find)
-                {
-                    DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
-                }
+                ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
             }
-            ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
-            ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, true);
+
+            ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
             return tmpData;
         }

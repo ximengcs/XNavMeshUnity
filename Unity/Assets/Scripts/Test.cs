@@ -17,6 +17,7 @@ public partial class Test : MonoBehaviour
     public Transform RectPoints;
     public Transform HolePoints;
     public Transform HolePoints2;
+    public Transform HolePoints3;
     public GameObject MeshPrefab;
     public TextMeshProUGUI FpsCom;
 
@@ -73,6 +74,16 @@ public partial class Test : MonoBehaviour
     {
         m_NavMesh.AddWithExtraData(m_Triangle2, AreaType.Obstacle, out HalfEdgeData newAreaData2, out List<Edge> newOutLine2);
         m_NavMesh.AddWithExtraData(m_Triangle, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
+        RefreshMeshArea();
+        RefreshMeshArea2(newAreaData, Color.blue);
+        RefreshLine(newOutLine);
+        m_NavMesh.CheckDataValid();
+    }
+
+    public void AddHole2()
+    {
+        List<XVector2> points = GetAllPoints(HolePoints3, false);
+        m_NavMesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
         RefreshMeshArea();
         RefreshMeshArea2(newAreaData, Color.blue);
         RefreshLine(newOutLine);
@@ -183,7 +194,6 @@ public partial class Test : MonoBehaviour
 
     private void RefreshMeshArea2(HalfEdgeData data, Color color)
     {
-        return;
         if (data == null) return;
         m_Mesh2?.Dispose();
         m_Mesh2 = new MeshArea(m_NavMesh, data, Color.blue);
@@ -281,7 +291,7 @@ public partial class Test : MonoBehaviour
                     XMath.FindMinMaxPoint(item.Triangle, out XVector2 min, out XVector2 max);
                     InnerDrawArrow(min.ToUnityVec3(), max.ToUnityVec3(), Color.cyan, true);
                 }
-                //Gizmos.DrawMesh(item.Mesh);
+                Gizmos.DrawMesh(item.Mesh);
             }
         }
     }

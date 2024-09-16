@@ -26,6 +26,7 @@ public partial class Test
 
         public void Refresh(MeshArea navMesh)
         {
+            return;
             foreach (GameObject go in m_Meshs)
                 Pool.ReleaseRender(go);
             m_Meshs.Clear();
