@@ -153,6 +153,7 @@ namespace XFrame.PathFinding
         {
             triangle = m_Normalizer.Normalize(triangle);
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
+
             newAreaOutEdges = InnerGetEdgeList(triangle, relationFaces);
 
             Debug.LogWarning("relation edges");
@@ -167,6 +168,30 @@ namespace XFrame.PathFinding
 
             // 标记区域
             InnerSetTriangleAreaType(triangle, area);
+        }
+
+        public void AddConstraint(List<XVector2> points)
+        {
+            Normalizer.Normalize(points);
+            foreach (XVector2 point in points)
+            {
+                bool find = false;
+                foreach (HalfEdgeVertex vert in m_Data.Vertices)
+                {
+                    if (vert.Position.Equals(point))
+                    {
+                        find = true;
+                        break;
+                    }
+                }
+
+                if (!find)
+                {
+                    Debug.LogWarning($"add111 {point}");
+                    InnerAdd(point);
+                }
+            }
+            ConstrainedDelaunaySloan.AddConstraints(m_Data, points, false);
         }
 
         private AreaType InnerGetTriangleAreaType(Triangle triangle)

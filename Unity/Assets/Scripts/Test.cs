@@ -31,6 +31,22 @@ public partial class Test : MonoBehaviour
     private Triangle m_Triangle2;
     private List<Edge> m_Lines;
 
+    public static Test Inst;
+
+    private void Awake()
+    {
+        Inst = this;
+    }
+
+    public void Test1()
+    {
+        List<XVector2> points = GetAllPoints(HolePoints, false);
+        List<XVector2> points2 = GetAllPoints(HolePoints2, false);
+        List<XVector2> result = Poly.Conbine(points, points2);
+        m_NavMesh.AddConstraint(result);
+        RefreshMeshArea();
+    }
+
     public void Init()
     {
         Application.targetFrameRate = 60;
@@ -167,16 +183,23 @@ public partial class Test : MonoBehaviour
 
     private void RefreshMeshArea2(HalfEdgeData data, Color color)
     {
+        return;
         if (data == null) return;
         m_Mesh2?.Dispose();
         m_Mesh2 = new MeshArea(m_NavMesh, data, Color.blue);
         m_MeshRender2.Refresh(m_Mesh2);
     }
 
-    private void RefreshLine(List<Edge> lines)
+    public void RefreshLine(List<Edge> lines)
     {
         if (lines == null) return;
         m_NavMesh.Normalizer.UnNormalize(lines);
+        m_Lines = lines;
+    }
+
+    public void RefreshLine2(List<Edge> lines)
+    {
+        if (lines == null) return;
         m_Lines = lines;
     }
 
@@ -194,6 +217,10 @@ public partial class Test : MonoBehaviour
                 Vector3 p1 = e.P1.ToUnityVec3();
                 Vector3 p2 = e.P2.ToUnityVec3();
 
+                Color color = Gizmos.color;
+                Gizmos.color = Color.green;
+                Gizmos.DrawSphere(p1, 0.2f);
+                Gizmos.color = color;
                 Handles.DrawAAPolyLine(10, p1, p2);
             }
         }

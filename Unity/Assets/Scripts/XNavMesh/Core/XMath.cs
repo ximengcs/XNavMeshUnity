@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Drawing;
 using System.Numerics;
 using UnityEngine;
 
@@ -139,6 +140,46 @@ namespace XFrame.PathFinding
             }
 
             return isIntersecting;
+        }
+
+        public static bool LineLine2(Edge e1, Edge e2, bool includeEndPoints, out XVector2 intersectPoint)
+        {
+            float tolerance = EPSILON;
+            intersectPoint = default;
+
+            XVector2 v1 = e1.P1;
+            XVector2 v2 = e1.P2;
+            XVector2 v3 = e2.P1;
+            XVector2 v4 = e2.P2;
+
+            float a = Det2(v1.X - v2.X, v1.Y - v2.Y, v3.X - v4.X, v3.Y - v4.Y);
+            if (Math.Abs(a) < float.Epsilon) // Lines are parallel
+            {
+                return false;
+            }
+
+            float d1 = Det2(v1.X, v1.Y, v2.X, v2.Y);
+            float d2 = Det2(v3.X, v3.Y, v4.X, v4.Y);
+            float x = Det2(d1, v1.X - v2.X, d2, v3.X - v4.X) / a;
+            float y = Det2(d1, v1.Y - v2.Y, d2, v3.Y - v4.Y) / a;
+
+            if (includeEndPoints)
+            {
+                if (x <= Math.Min(v1.X, v2.X) - tolerance || x >= Math.Max(v1.X, v2.X) + tolerance) return false;
+                if (y <= Math.Min(v1.Y, v2.Y) - tolerance || y >= Math.Max(v1.Y, v2.Y) + tolerance) return false;
+                if (x <= Math.Min(v3.X, v4.X) - tolerance || x >= Math.Max(v3.X, v4.X) + tolerance) return false;
+                if (y <= Math.Min(v3.Y, v4.Y) - tolerance || y >= Math.Max(v3.Y, v4.Y) + tolerance) return false;
+            }
+            else
+            {
+                if (x < Math.Min(v1.X, v2.X) - tolerance || x > Math.Max(v1.X, v2.X) + tolerance) return false;
+                if (y < Math.Min(v1.Y, v2.Y) - tolerance || y > Math.Max(v1.Y, v2.Y) + tolerance) return false;
+                if (x < Math.Min(v3.X, v4.X) - tolerance || x > Math.Max(v3.X, v4.X) + tolerance) return false;
+                if (y < Math.Min(v3.Y, v4.Y) - tolerance || y > Math.Max(v3.Y, v4.Y) + tolerance) return false;
+            }
+
+            intersectPoint = new XVector2(x, y);
+            return true;
         }
 
         //

@@ -12,6 +12,11 @@ namespace XFrame.PathFinding
             P2 = p2;
         }
 
+        public override string ToString()
+        {
+            return $" ({P1} -> {P2}) ";
+        }
+
         public static bool operator ==(Edge left, Edge right)
         {
             if (ReferenceEquals(left, null))
