@@ -6,7 +6,7 @@ using XFrame.PathFinding;
 /// <summary>
 /// 一个Poly具有多个三角形
 /// </summary>
-public class Poly
+public class PolyUtility
 {
     private class PolyVertex
     {

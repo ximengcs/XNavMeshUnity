@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.AI;
 
 namespace XFrame.PathFinding
 {
@@ -9,6 +10,7 @@ namespace XFrame.PathFinding
         private Normalizer m_Normalizer;
         private HalfEdgeData m_Data;
         private List<XVector2> m_Rect;
+        private HashSet<Poly> m_Polies;
 
         public AABB AABB => m_AABB;
 
@@ -20,6 +22,8 @@ namespace XFrame.PathFinding
             m_Normalizer = new Normalizer(aabb);
             m_Data = new HalfEdgeData();
             m_Rect = new List<XVector2>();
+            m_Polies = new HashSet<Poly>();
+
             Initialize();
         }
 
@@ -156,6 +160,45 @@ namespace XFrame.PathFinding
             return faces;
         }
 
+        public bool ChangeWithExtraData(Poly poly, XVector2 offset, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        {
+            newAreaData = null;
+            newAreaOutEdges = null;
+            List<XVector2> points = poly.Points;
+            List<XVector2> oldPoints = new List<XVector2>(points);
+            AABB.Constraint(points, offset);
+            Debug.LogWarning($" compare {points[0]} {oldPoints[0]} {offset} ");
+            if (points[0].Equals(oldPoints[0]))  // 点位没有发生变化直接返回失败
+                return false;
+
+            Normalizer.Normalize(oldPoints);
+            Normalizer.Normalize(points);
+            Debug.LogWarning("check point");
+            foreach (XVector2 point in points)
+                Debug.LogWarning(point);
+            Debug.LogWarning(offset);
+
+            HashSet<HalfEdgeFace> relationFaces = new HashSet<HalfEdgeFace>();
+            InnerFindRelationFaces(oldPoints, relationFaces);
+            InnerFindRelationFaces(points, relationFaces);
+            newAreaOutEdges = InnerGetEdgeList3(relationFaces);
+            if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
+                return false;
+
+            Debug.LogWarning("check edge");
+            foreach (Edge edge in newAreaOutEdges)
+                DebugUtility.Print(edge, Normalizer);
+            Debug.LogWarning("check edge end");
+
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, points);
+            HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, points);
+
+            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+            poly.SetFaces(faces);
+            Normalizer.UnNormalize(points);  // 还原点
+            return true;
+        }
+
         public bool ChangeWithExtraData(Triangle triangle, Triangle tarTriangle, out Triangle newTriangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
             newAreaData = null;
@@ -222,8 +265,9 @@ namespace XFrame.PathFinding
             InnerSetTriangleAreaType(triangle, area);
         }
 
-        public void AddWithExtraData(List<XVector2> points, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        public Poly AddWithExtraData(List<XVector2> points, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
+            Poly poly = new Poly(this, new List<XVector2>(points), area);
             m_Normalizer.Normalize(points);
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
@@ -235,11 +279,14 @@ namespace XFrame.PathFinding
             }
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, points);
 
-            // 标记区域
-            foreach (HalfEdgeFace face in InnerFindContainsFaces(newAreaData, points))
-                face.Area = area;
+            HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, points);
 
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+
+            // 标记区域
+            Debug.LogWarning($"face count {points.Count}");
+            poly.SetFaces(faces);
+            return poly;
         }
 
         public void AddConstraint(List<XVector2> points)
@@ -599,6 +646,7 @@ namespace XFrame.PathFinding
 
                     if (!find)
                     {
+                        Debug.LogWarning($"insert {v}");
                         DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
                     }
                 }

@@ -5,6 +5,8 @@ namespace XFrame.PathFinding
 {
     public struct XVector2
     {
+        public static XVector2 Zero = new XVector2(0f, 0f);
+
         public float X;
         public float Y;
 

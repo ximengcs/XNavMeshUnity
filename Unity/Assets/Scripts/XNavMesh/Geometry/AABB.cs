@@ -99,6 +99,51 @@ namespace XFrame.PathFinding
             return true;
         }
 
+        public bool Constraint(List<XVector2> points, XVector2 offset)
+        {
+            XVector2 min = points[0] + offset;
+            XVector2 max = min;
+            points[0] = min;
+
+            for (int i = 1; i < points.Count; i++)
+            {
+                XVector2 point = points[i] + offset;
+                points[i] = point;
+                if (point.X < min.X) min.X = point.X;
+                if (point.Y < min.Y) min.Y = point.Y;
+                if (point.X > max.X) max.X = point.X;
+                if (point.Y > max.Y) max.Y = point.Y;
+            }
+
+            offset.X = Min.X - min.X;
+            offset.Y = Min.Y - min.Y;
+            if (offset.X < 0)
+            {
+                offset.X = Max.X - max.X;
+                if (offset.X > 0)
+                    offset.X = 0;
+            }
+            if (offset.Y < 0)
+            {
+                offset.Y = Max.Y - max.Y;
+                if (offset.Y > 0)
+                    offset.Y = 0;
+            }
+
+            if (offset.Equals(XVector2.Zero))
+            {
+                return false;
+            }
+            else
+            {
+                for (int i = 0; i < points.Count; i++)
+                {
+                    points[i] += offset;
+                }
+                return true;
+            }
+        }
+
         public Triangle Constraint(Triangle triangle)
         {
             XVector2 p1 = triangle.P1;
@@ -139,7 +184,7 @@ namespace XFrame.PathFinding
         }
 
         public bool InSide(XVector2 point)
-        { 
+        {
             return XMath.Equals(point.X, Min.X) ||
                 XMath.Equals(point.X, Max.X) ||
                 XMath.Equals(point.Y, Min.Y) ||

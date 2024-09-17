@@ -43,7 +43,7 @@ public partial class Test : MonoBehaviour
     {
         List<XVector2> points = GetAllPoints(HolePoints, false);
         List<XVector2> points2 = GetAllPoints(HolePoints2, false);
-        List<XVector2> result = Poly.Conbine(points, points2);
+        List<XVector2> result = PolyUtility.Conbine(points, points2);
         m_NavMesh.AddConstraint(result);
         RefreshMeshArea();
     }
@@ -80,10 +80,11 @@ public partial class Test : MonoBehaviour
         m_NavMesh.CheckDataValid();
     }
 
+    private Poly m_Poly;
     public void AddHole2()
     {
         List<XVector2> points = GetAllPoints(HolePoints3, false);
-        m_NavMesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
+        m_Poly = m_NavMesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
         RefreshMeshArea();
         RefreshMeshArea2(newAreaData, Color.blue);
         RefreshLine(newOutLine);
@@ -100,7 +101,11 @@ public partial class Test : MonoBehaviour
 
     public void MoveHole()
     {
-        InnerMove(new XVector2(2f, 0f));
+        m_Poly.Move(new XVector2(2f, 0f), out HalfEdgeData newAreaData, out List<Edge> newOutLine);
+        RefreshMeshArea();
+        RefreshMeshArea2(newAreaData, Color.blue);
+        RefreshLine(newOutLine);
+        m_NavMesh.CheckDataValid();
     }
 
     public void Up()
