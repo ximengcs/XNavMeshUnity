@@ -1,16 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.AI;
+using Unity.VisualScripting;
 
 namespace XFrame.PathFinding
 {
     public partial class XNavMesh
     {
+        public static int s_PolyId;
+
         private AABB m_AABB;
         private Normalizer m_Normalizer;
         private HalfEdgeData m_Data;
         private List<XVector2> m_Rect;
-        private HashSet<Poly> m_Polies;
+        private Dictionary<int, Poly> m_Polies;
 
         public AABB AABB => m_AABB;
 
@@ -22,7 +25,7 @@ namespace XFrame.PathFinding
             m_Normalizer = new Normalizer(aabb);
             m_Data = new HalfEdgeData();
             m_Rect = new List<XVector2>();
-            m_Polies = new HashSet<Poly>();
+            m_Polies = new Dictionary<int, Poly>();
 
             Initialize();
         }
@@ -181,22 +184,6 @@ namespace XFrame.PathFinding
             return InnerChangeWithExtraData(poly, oldPoints, newPoints, out newAreaData, out newAreaOutEdges);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="poly"></param>
-        /// <param name="offset">原始偏移(非归一化)</param>
-        /// <param name="newAreaData"></param>
-        /// <param name="newAreaOutEdges"></param>
-        /// <returns></returns>
-        public bool ChangeWithExtraData(Poly poly, XVector2 offset, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
-        {
-            List<XVector2> newPoints = poly.Points;
-            List<XVector2> oldPoints = new List<XVector2>(newPoints);
-            AABB.Constraint(newPoints, offset);
-            return InnerChangeWithExtraData(poly, oldPoints, newPoints, out newAreaData, out newAreaOutEdges);
-        }
-
         private bool InnerChangeWithExtraData(Poly poly, List<XVector2> oldPoints, List<XVector2> newPoints, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
             newAreaData = null;
@@ -206,9 +193,6 @@ namespace XFrame.PathFinding
 
             Normalizer.Normalize(oldPoints);
             Normalizer.Normalize(newPoints);
-            Debug.LogWarning("check point");
-            foreach (XVector2 point in newPoints)
-                Debug.LogWarning(point);
 
             HashSet<HalfEdgeFace> relationFaces = new HashSet<HalfEdgeFace>();
             InnerFindRelationFaces(oldPoints, relationFaces);
@@ -216,11 +200,6 @@ namespace XFrame.PathFinding
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
                 return false;
-
-            Debug.LogWarning("check edge");
-            foreach (Edge edge in newAreaOutEdges)
-                DebugUtility.Print(edge, Normalizer);
-            Debug.LogWarning("check edge end");
 
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, newPoints);
             HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, newPoints);
@@ -300,7 +279,7 @@ namespace XFrame.PathFinding
 
         public Poly AddWithExtraData(List<XVector2> points, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
-            Poly poly = new Poly(this, new List<XVector2>(points), area);
+            Poly poly = new Poly(s_PolyId++, this, new List<XVector2>(points), area);
             m_Normalizer.Normalize(points);
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
@@ -313,7 +292,34 @@ namespace XFrame.PathFinding
 
             // 标记区域
             poly.SetFaces(faces);
+            m_Polies.Add(poly.Id, poly);
             return poly;
+        }
+
+        public bool Remove(Poly poly, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        {
+            if (!m_Polies.ContainsKey(poly.Id))
+            {
+                newAreaData = null;
+                newAreaOutEdges = null;
+                return false;
+            }
+
+            List<XVector2> points = poly.Points;
+            Normalizer.UnNormalize(points);
+            HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
+            newAreaOutEdges = InnerGetEdgeList3(relationFaces);
+            if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
+            {
+                newAreaData = null;
+                newAreaOutEdges = null;
+                return false;
+            }
+
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false);
+            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+            m_Polies.Remove(poly.Id);
+            return true;
         }
 
         public void AddConstraint(List<XVector2> points)

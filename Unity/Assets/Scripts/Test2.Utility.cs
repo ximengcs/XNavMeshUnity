@@ -34,6 +34,7 @@ public partial class Test2
         AddTestCommand();
         Console.Inst.AddCommand("navmesh-add", CreateNavMesh);
         Console.Inst.AddCommand("poly-add", CreatePoly);
+        Console.Inst.AddCommand("poly-remove", RemovePoly);
         Console.Inst.AddCommand("poly-move-x", MovePolyX);
         Console.Inst.AddCommand("poly-move-y", MovePolyY);
         Console.Inst.AddCommand("poly-rotate", RotatePoly);
@@ -49,6 +50,18 @@ public partial class Test2
                 points.Add(new XVector2(t.position.x, t.position.y));
         }
         return points;
+    }
+
+    private void InnerRemovePolyInfo(int id)
+    {
+        if (m_Polies.TryGetValue(id, out PolyInfo info))
+        {
+            if (m_ShowPoly == info)
+                m_ShowPoly = null;
+
+            m_Polies.Remove(id);
+            info.Dispose();
+        }
     }
 
     private PolyInfo InnerAddPolyInfo(int id, Poly poly, HalfEdgeData newAreaData, List<Edge> newOutLine)

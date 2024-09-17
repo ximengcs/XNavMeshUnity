@@ -1,10 +1,7 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
-using static UnityEngine.EventSystems.EventTrigger;
 
 public partial class Test2 : MonoBehaviour
 {
@@ -16,8 +13,8 @@ public partial class Test2 : MonoBehaviour
         Console.Inst.AddCommand("test-1", (param) =>
         {
             Console.Inst.ExecuteCommand("navmesh-add");
-            Console.Inst.ExecuteCommand("poly-add 1 2 true");
-            Console.Inst.ExecuteCommand("poly-add 1 2 true");
+            Console.Inst.ExecuteCommand("poly-add 2 true");
+            Console.Inst.ExecuteCommand("poly-add 2 true");
         });
         Console.Inst.AddCommand("test-2", (param) =>
         {
@@ -42,14 +39,29 @@ public partial class Test2 : MonoBehaviour
     {
         if (m_NavMesh == null)
             return;
-        if (ParamToIntIntBool(param, out int id, out int index, out bool includeNonActive))
+        if (ParamToIntBool(param, out int index, out bool includeNonActive))
         {
             if (index >= 0 && index < Holls.Count)
             {
                 List<XVector2> points = GetAllPoints(Holls[index], includeNonActive);
                 Poly poly = m_NavMesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
-                m_ShowPoly = InnerAddPolyInfo(id, poly, newAreaData, newOutLine);
+                m_ShowPoly = InnerAddPolyInfo(poly.Id, poly, newAreaData, newOutLine);
                 m_FullMeshArea.Refresh();
+            }
+        }
+    }
+
+    private void RemovePoly(string param)
+    {
+        if (m_NavMesh == null)
+            return;
+        if (ParamToInt(param, out int id))
+        {
+            if (m_Polies.TryGetValue(id, out PolyInfo polyInfo))
+            {
+                m_NavMesh.Remove(polyInfo.Poly, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
+                m_FullMeshArea.Refresh();
+                InnerRemovePolyInfo(id);
             }
         }
     }
@@ -98,6 +110,8 @@ public partial class Test2 : MonoBehaviour
 
     private void RotatePoly(string param)
     {
+        if (m_NavMesh == null)
+            return;
         if (ParamToIntFloat(param, out int id, out float angle))
         {
             if (m_Polies.TryGetValue(id, out PolyInfo info))
@@ -117,6 +131,8 @@ public partial class Test2 : MonoBehaviour
 
     private void ScalePoly(string param)
     {
+        if (m_NavMesh == null)
+            return;
         if (ParamToIntFloat(param, out int id, out float scale))
         {
             if (m_Polies.TryGetValue(id, out PolyInfo info))

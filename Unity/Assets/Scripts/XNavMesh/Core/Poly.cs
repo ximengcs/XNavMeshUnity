@@ -5,10 +5,13 @@ namespace XFrame.PathFinding
 {
     public class Poly
     {
+        private int m_Id;
         private XNavMesh m_NavMesh;
         private AreaType m_AreaType;
         private List<XVector2> m_Points;
         private HashSet<HalfEdgeFace> m_Faces;
+
+        public int Id => m_Id;
 
         public XVector2 CenterOfGravityPoint
         {
@@ -31,8 +34,10 @@ namespace XFrame.PathFinding
             set { m_Points = value; }
         }
 
-        internal Poly(XNavMesh navMesh, List<XVector2> points, AreaType areaType)
+        internal Poly(int id, XNavMesh navMesh, List<XVector2> points, AreaType areaType)
         {
+            Debug.Log($" new poly {id}");
+            m_Id = id;
             m_Points = points;
             m_NavMesh = navMesh;
             m_AreaType = areaType;
@@ -50,8 +55,6 @@ namespace XFrame.PathFinding
             foreach (HalfEdgeFace face in faces)
             {
                 face.Area = m_AreaType;
-                DebugUtility.Print(face, m_NavMesh.Normalizer);
-                Debug.LogWarning($"set face to {m_AreaType}");
             }
         }
 
@@ -122,7 +125,25 @@ namespace XFrame.PathFinding
 
         public bool Move(XVector2 offset, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
-            return m_NavMesh.ChangeWithExtraData(this, offset, out newAreaData, out newAreaOutEdges);
+            if (offset.Equals(XVector2.Zero))
+            {
+                newAreaData = null;
+                newAreaOutEdges = null;
+                return false;
+            }
+            List<XVector2> points = new List<XVector2>(m_Points.Count);
+            foreach (XVector2 point in m_Points)
+                points.Add(point + offset);
+
+            if (m_NavMesh.ChangeWithExtraData(this, points, out newAreaData, out newAreaOutEdges))
+            {
+                m_Points = points;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
