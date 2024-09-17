@@ -99,6 +99,11 @@ namespace XFrame.PathFinding
             return true;
         }
 
+        public bool Constraint(List<XVector2> points)
+        {
+            return Constraint(points, XVector2.Zero);
+        }
+
         public bool Constraint(List<XVector2> points, XVector2 offset)
         {
             XVector2 min = points[0] + offset;
@@ -189,6 +194,16 @@ namespace XFrame.PathFinding
                 XMath.Equals(point.X, Max.X) ||
                 XMath.Equals(point.Y, Min.Y) ||
                 XMath.Equals(point.Y, Max.Y);
+        }
+
+        public bool Contains(List<XVector2> points)
+        {
+            foreach (XVector2 point in points)
+            {
+                if (!Contains(point))
+                    return false;
+            }
+            return true;
         }
 
         public bool Contains(Triangle triangle)

@@ -768,6 +768,7 @@ GameObject:
   m_Component:
   - component: {fileID: 224416126}
   - component: {fileID: 224416127}
+  - component: {fileID: 224416128}
   m_Layer: 0
   m_Name: Controller
   m_TagString: Untagged
@@ -808,6 +809,23 @@ MonoBehaviour:
   HolePoints3: {fileID: 908590425}
   MeshPrefab: {fileID: 3543818729044566397, guid: 4d14253b7ce85aa418d2de6d5413a0d0, type: 3}
   FpsCom: {fileID: 567747016}
+--- !u!114 &224416128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 224416125}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93fb5be3c48a1bb4c8d084ec1e15c1f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  RectPoints: {fileID: 747238350}
+  Holls:
+  - {fileID: 1628818274}
+  - {fileID: 541977228}
+  - {fileID: 908590425}
 --- !u!1 &245646325
 GameObject:
   m_ObjectHideFlags: 0
@@ -2940,7 +2958,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &908590425
 Transform:
   m_ObjectHideFlags: 0

@@ -19,6 +19,16 @@ namespace XFrame.PathFinding
 
         public const float PI = (float)Math.PI;
 
+        public static float Cos(float angle)
+        {
+            return (float)Math.Cos(angle * Math.PI / 180.0);
+        }
+
+        public static float Sin(float angle)
+        {
+            return (float)Math.Sin(angle * Math.PI / 180.0);
+        }
+
         public static bool Equals(float a, float b)
         {
             float gap = a - b;

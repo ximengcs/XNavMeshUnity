@@ -1,7 +1,7 @@
 ﻿
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
 using XFrame.PathFinding;
 
 public partial class Test
@@ -71,20 +71,26 @@ public partial class Test
         }
     }
 
-    private class MeshArea
+    public class MeshArea
     {
+        private XNavMesh m_NavMesh;
+        private Color m_Color;
         private List<MeshInfo> m_Meshs;
 
         public List<MeshInfo> Meshs => m_Meshs;
 
         public MeshArea(XNavMesh navMesh, Color color)
         {
-            Refresh(navMesh, navMesh.ToTriangles(), color);
+            m_Color = color;
+            m_NavMesh = navMesh;
+            Refresh(navMesh.ToTriangles());
         }
 
         public MeshArea(XNavMesh navMesh, HalfEdgeData data, Color color)
         {
-            Refresh(navMesh, XNavMesh.ToTriangles(navMesh, data), color);
+            m_Color = color;
+            m_NavMesh = navMesh;
+            Refresh(XNavMesh.ToTriangles(navMesh, data));
         }
 
         public void Dispose()
@@ -94,8 +100,17 @@ public partial class Test
                 Pool.ReleaseMesh(m.Mesh);
             }
         }
+        public void Refresh()
+        {
+            Refresh(m_NavMesh.ToTriangles());
+        }
 
-        public void Refresh(XNavMesh navMesh, XNavMeshList<TriangleArea> triangles, Color color)
+        public void Refresh(HalfEdgeData data)
+        {
+            Refresh(XNavMesh.ToTriangles(m_NavMesh, data));
+        }
+
+        public void Refresh(XNavMeshList<TriangleArea> triangles)
         {
             m_Meshs = new List<MeshInfo>();
             foreach (TriangleArea triangle in triangles)
@@ -120,7 +135,7 @@ public partial class Test
                 mesh.RecalculateBounds();
                 mesh.RecalculateNormals();
 
-                Color origin = color;
+                Color origin = m_Color;
                 if (triangle.Area == AreaType.Obstacle)
                 {
                     origin = Color.red;

@@ -160,27 +160,59 @@ namespace XFrame.PathFinding
             return faces;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="poly"></param>
+        /// <param name="newPoints">原始点(非归一化)</param>
+        /// <param name="newAreaData"></param>
+        /// <param name="newAreaOutEdges"></param>
+        /// <returns></returns>
+        public bool ChangeWithExtraData(Poly poly, List<XVector2> newPoints, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        {
+            List<XVector2> oldPoints = new List<XVector2>(poly.Points);
+            if (!AABB.Contains(newPoints))
+            {
+                newAreaData = null;
+                newAreaOutEdges = null;
+                Debug.Log("rotate failure");
+                return false;
+            }
+            return InnerChangeWithExtraData(poly, oldPoints, newPoints, out newAreaData, out newAreaOutEdges);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="poly"></param>
+        /// <param name="offset">原始偏移(非归一化)</param>
+        /// <param name="newAreaData"></param>
+        /// <param name="newAreaOutEdges"></param>
+        /// <returns></returns>
         public bool ChangeWithExtraData(Poly poly, XVector2 offset, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
+        {
+            List<XVector2> newPoints = poly.Points;
+            List<XVector2> oldPoints = new List<XVector2>(newPoints);
+            AABB.Constraint(newPoints, offset);
+            return InnerChangeWithExtraData(poly, oldPoints, newPoints, out newAreaData, out newAreaOutEdges);
+        }
+
+        private bool InnerChangeWithExtraData(Poly poly, List<XVector2> oldPoints, List<XVector2> newPoints, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
             newAreaData = null;
             newAreaOutEdges = null;
-            List<XVector2> points = poly.Points;
-            List<XVector2> oldPoints = new List<XVector2>(points);
-            AABB.Constraint(points, offset);
-            Debug.LogWarning($" compare {points[0]} {oldPoints[0]} {offset} ");
-            if (points[0].Equals(oldPoints[0]))  // 点位没有发生变化直接返回失败
+            if (newPoints[0].Equals(oldPoints[0]))  // 点位没有发生变化直接返回失败
                 return false;
 
             Normalizer.Normalize(oldPoints);
-            Normalizer.Normalize(points);
+            Normalizer.Normalize(newPoints);
             Debug.LogWarning("check point");
-            foreach (XVector2 point in points)
+            foreach (XVector2 point in newPoints)
                 Debug.LogWarning(point);
-            Debug.LogWarning(offset);
 
             HashSet<HalfEdgeFace> relationFaces = new HashSet<HalfEdgeFace>();
             InnerFindRelationFaces(oldPoints, relationFaces);
-            InnerFindRelationFaces(points, relationFaces);
+            InnerFindRelationFaces(newPoints, relationFaces);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
                 return false;
@@ -190,12 +222,13 @@ namespace XFrame.PathFinding
                 DebugUtility.Print(edge, Normalizer);
             Debug.LogWarning("check edge end");
 
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, points);
-            HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, points);
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, newPoints);
+            HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, newPoints);
 
+            poly.ResetFaceArea();
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
             poly.SetFaces(faces);
-            Normalizer.UnNormalize(points);  // 还原点
+            Normalizer.UnNormalize(newPoints);  // 还原点
             return true;
         }
 
@@ -272,11 +305,6 @@ namespace XFrame.PathFinding
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
 
-            Debug.LogWarning("edge----------");
-            foreach (Edge edge in newAreaOutEdges)
-            {
-                DebugUtility.Print(edge.P1);
-            }
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, points);
 
             HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, points);
@@ -284,7 +312,6 @@ namespace XFrame.PathFinding
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
             // 标记区域
-            Debug.LogWarning($"face count {points.Count}");
             poly.SetFaces(faces);
             return poly;
         }
@@ -465,7 +492,7 @@ namespace XFrame.PathFinding
                 current = current.NextEdge;
             } while (current != startEdge);
 
-            return edgeList;
+            return InnerSortEdge(edgeList);
         }
 
         private void InnerCheckTriangleOut(Triangle triangle, HalfEdge e, List<Edge> edgeList)
@@ -497,7 +524,7 @@ namespace XFrame.PathFinding
 
         private List<Edge> InnerSortEdge(List<Edge> edgeList)
         {
-            int sortCount = 0;
+            int sortCount;
             List<Edge> sortEdge = new List<Edge>();
             int targetCount = edgeList.Count;
             Edge curEdge = edgeList[0];
@@ -646,7 +673,6 @@ namespace XFrame.PathFinding
 
                     if (!find)
                     {
-                        Debug.LogWarning($"insert {v}");
                         DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
                     }
                 }
