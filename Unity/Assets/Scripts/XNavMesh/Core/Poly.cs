@@ -43,6 +43,19 @@ namespace XFrame.PathFinding
             m_AreaType = areaType;
         }
 
+        internal bool Contains(HalfEdgeFace face)
+        {
+            if (m_Faces == null)
+                return false;
+
+            foreach (HalfEdgeFace tmp in m_Faces)
+            {
+                if (face == tmp)
+                    return true;
+            }
+            return false;
+        }
+
         internal void ResetFaceArea()
         {
             foreach (HalfEdgeFace face in m_Faces)

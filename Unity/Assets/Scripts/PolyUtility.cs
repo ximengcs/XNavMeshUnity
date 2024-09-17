@@ -18,7 +18,7 @@ public class PolyUtility
         }
     }
 
-    public static List<XVector2> Conbine(List<XVector2> points1, List<XVector2> points2)
+    public static List<XVector2> Conbine(List<XVector2> points1, List<XVector2> points2, out List<XVector2> newPoints1, out List<XVector2> newPoints2)
     {
         for (int i = 0; i < points1.Count; i++)
         {
@@ -115,7 +115,6 @@ public class PolyUtility
         Debug.LogWarning($" lfet bottom {min} {leftBottom}");
         List<XVector2> result = new List<XVector2>();
         //result.Add(leftBottom);
-        Debug.Log($"add {leftBottom}");
 
         Edge current = null;
         for (int i = 0; i < points1.Count; i++)
@@ -257,7 +256,9 @@ public class PolyUtility
         {
             edges.Add(new Edge(result[i], result[(i + 1) % result.Count]));
         }
-        Test.Inst.RefreshLine2(edges);
+
+        newPoints1 = points1;
+        newPoints2 = points2;
 
         return result;
     }

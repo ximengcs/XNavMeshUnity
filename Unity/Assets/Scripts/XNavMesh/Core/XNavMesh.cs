@@ -262,14 +262,6 @@ namespace XFrame.PathFinding
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
 
             newAreaOutEdges = InnerGetEdgeList(triangle, relationFaces);
-
-            Debug.LogWarning("relation edges");
-            foreach (Edge edge in newAreaOutEdges)
-            {
-                DebugUtility.Print(edge.P1);
-            }
-            Debug.LogWarning("-------------------");
-
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, triangle.ToPoints());
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
@@ -277,21 +269,65 @@ namespace XFrame.PathFinding
             InnerSetTriangleAreaType(triangle, area);
         }
 
+        private Dictionary<Poly, List<XVector2>> InnerFindRelationPolies(Poly poly, List<XVector2> points, HashSet<HalfEdgeFace> relationFaces, out List<XVector2> relationAllPoints)
+        {
+            Dictionary<Poly, List<XVector2>> relationlist = new Dictionary<Poly, List<XVector2>>();
+            HashSet<Poly> relationPolies = new HashSet<Poly>();
+            foreach (var entry in m_Polies)
+            {
+                Poly tmpPoly = entry.Value;
+                foreach (HalfEdgeFace face in relationFaces)
+                {
+                    if (!relationPolies.Contains(tmpPoly) && tmpPoly.Contains(face))
+                    {
+                        relationPolies.Add(tmpPoly);
+                    }
+                }
+            }
+
+            relationAllPoints = new List<XVector2>(points);
+            Debug.LogWarning($" relationPolies {relationPolies.Count} ");
+            if (relationPolies.Count > 0)
+            {
+                // 相交区域处理
+                foreach (Poly tmpPoly in relationPolies)
+                {
+                    List<XVector2> checkPoints = new List<XVector2>(tmpPoly.Points);
+                    Normalizer.Normalize(checkPoints);
+                    relationAllPoints = PolyUtility.Conbine(checkPoints, relationAllPoints, out List<XVector2> newPoints1, out List<XVector2> newPoints2);
+                    relationlist.Add(poly, newPoints1);
+                    relationlist.Add(tmpPoly, newPoints2);
+                }
+            }
+            else
+            {
+                relationlist.Add(poly, points);
+            }
+
+            return relationlist;
+        }
+
         public Poly AddWithExtraData(List<XVector2> points, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
             Poly poly = new Poly(s_PolyId++, this, new List<XVector2>(points), area);
             m_Normalizer.Normalize(points);
+
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
 
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, points);
+            Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, points, relationFaces, out List<XVector2> relationAllPoints);
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, relationAllPoints);
 
-            HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, points);
+            // 标记区域
+            foreach (var entry in relationlist)
+            {
+                Poly relationPoly = entry.Key;
+                HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, entry.Value);
+                relationPoly.SetFaces(faces);
+            }
 
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
-            // 标记区域
-            poly.SetFaces(faces);
             m_Polies.Add(poly.Id, poly);
             return poly;
         }
@@ -324,7 +360,6 @@ namespace XFrame.PathFinding
 
         public void AddConstraint(List<XVector2> points)
         {
-            Normalizer.Normalize(points);
             foreach (XVector2 point in points)
             {
                 bool find = false;
@@ -339,7 +374,6 @@ namespace XFrame.PathFinding
 
                 if (!find)
                 {
-                    Debug.LogWarning($"add111 {point}");
                     InnerAdd(point);
                 }
             }

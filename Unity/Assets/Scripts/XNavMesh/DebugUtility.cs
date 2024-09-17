@@ -18,21 +18,21 @@ public class DebugUtility
 
     public static void Print(HalfEdge edge)
     {
-        if (Debuger.Navmesh != null)
+        if (Test2.Navmesh != null)
         {
-            Debug.Log($" edge {Debuger.Navmesh.Normalizer.UnNormalize(edge.Vertex.Position)} {Debuger.Navmesh.Normalizer.UnNormalize(edge.NextEdge.Vertex.Position)} ");
+            Debug.Log($" edge {Test2.Navmesh.Normalizer.UnNormalize(edge.Vertex.Position)} {Test2.Navmesh.Normalizer.UnNormalize(edge.NextEdge.Vertex.Position)} ");
         }
     }
 
     public static void Print(XVector2 p)
     {
-        if (Debuger.Navmesh != null)
-            Debug.Log($" [{Debuger.Navmesh.Normalizer.UnNormalize(p)}] ");
+        if (Test2.Navmesh != null)
+            Debug.Log($" [{Test2.Navmesh.Normalizer.UnNormalize(p)}] ");
     }
 
     public static void Print(Triangle triangle)
     {
-        if (Debuger.Navmesh != null)
-            Debug.Log($" [{Debuger.Navmesh.Normalizer.UnNormalize(triangle.P1)},{Debuger.Navmesh.Normalizer.UnNormalize(triangle.P2)},{Debuger.Navmesh.Normalizer.UnNormalize(triangle.P3)}] ");
+        if (Test2.Navmesh != null)
+            Debug.Log($" [{Test2.Navmesh.Normalizer.UnNormalize(triangle.P1)},{Test2.Navmesh.Normalizer.UnNormalize(triangle.P2)},{Test2.Navmesh.Normalizer.UnNormalize(triangle.P3)}] ");
     }
 }

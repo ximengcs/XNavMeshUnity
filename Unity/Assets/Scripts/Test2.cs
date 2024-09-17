@@ -5,6 +5,9 @@ using static Test;
 
 public partial class Test2 : MonoBehaviour
 {
+    public static bool T1;
+    public static XNavMesh Navmesh;
+
     private PolyInfo m_ShowPoly;
     private bool m_DrawGizmosFullMeshArea = true;
 
@@ -13,12 +16,11 @@ public partial class Test2 : MonoBehaviour
         Console.Inst.AddCommand("test-1", (param) =>
         {
             Console.Inst.ExecuteCommand("navmesh-add");
-            Console.Inst.ExecuteCommand("poly-add 2 true");
-            Console.Inst.ExecuteCommand("poly-add 2 true");
+            Console.Inst.ExecuteCommand("poly-add 0 true");
         });
         Console.Inst.AddCommand("test-2", (param) =>
         {
-            Console.Inst.ExecuteCommand("poly-rotate 1 10");
+            Console.Inst.ExecuteCommand("poly-add 1 true");
         });
     }
 
@@ -28,8 +30,8 @@ public partial class Test2 : MonoBehaviour
             return;
         List<XVector2> points = GetAllPoints(RectPoints, false);
         m_NavMesh = new XNavMesh(new AABB(points));
-        Debuger.T1 = true;
-        Debuger.Navmesh = m_NavMesh;
+        T1 = true;
+        Navmesh = m_NavMesh;
         m_NavMesh.Add(points);
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
         m_FullMeshArea.Refresh();
