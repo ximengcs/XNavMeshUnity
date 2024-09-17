@@ -49,6 +49,7 @@ public partial class Test2 : MonoBehaviour
                 Poly poly = m_NavMesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
                 m_ShowPoly = InnerAddPolyInfo(poly.Id, poly, newAreaData, newOutLine);
                 m_FullMeshArea.Refresh();
+                m_NavMesh.CheckDataValid();
             }
         }
     }
@@ -64,6 +65,7 @@ public partial class Test2 : MonoBehaviour
                 m_NavMesh.Remove(polyInfo.Poly, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
                 m_FullMeshArea.Refresh();
                 InnerRemovePolyInfo(id);
+                m_NavMesh.CheckDataValid();
             }
         }
     }
@@ -80,6 +82,7 @@ public partial class Test2 : MonoBehaviour
                 {
                     m_ShowPoly = InnerAddPolyInfo(id, polyInfo.Poly, newAreaData, newOutLine);
                     m_FullMeshArea.Refresh();
+                    m_NavMesh.CheckDataValid();
                 }
                 else
                 {
@@ -101,6 +104,7 @@ public partial class Test2 : MonoBehaviour
                 {
                     m_ShowPoly = InnerAddPolyInfo(id, polyInfo.Poly, newAreaData, newOutLine);
                     m_FullMeshArea.Refresh();
+                    m_NavMesh.CheckDataValid();
                 }
                 else
                 {

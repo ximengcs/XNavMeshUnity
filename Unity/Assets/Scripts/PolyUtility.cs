@@ -245,11 +245,6 @@ public class PolyUtility
             }
         } while (!current.P1.Equals(leftBottom));
 
-        Debug.LogWarning("result----");
-        foreach (XVector2 p in result)
-        {
-            Debug.LogWarning(p);
-        }
 
         List<Edge> edges = new List<Edge>();
         for (int i = 0; i < result.Count; i++)

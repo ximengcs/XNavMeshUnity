@@ -201,12 +201,18 @@ namespace XFrame.PathFinding
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
                 return false;
 
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, newPoints);
-            HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, newPoints);
+            Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<XVector2> relationAllPoints);
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, relationAllPoints);
+            // 标记区域
+            foreach (var entry in relationlist)
+            {
+                Poly relationPoly = entry.Key;
+                HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, entry.Value);
+                relationPoly.ResetFaceArea();
+                relationPoly.SetFaces(faces);
+            }
 
-            poly.ResetFaceArea();
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
-            poly.SetFaces(faces);
             Normalizer.UnNormalize(newPoints);  // 还原点
             return true;
         }
@@ -286,17 +292,22 @@ namespace XFrame.PathFinding
             }
 
             relationAllPoints = new List<XVector2>(points);
-            Debug.LogWarning($" relationPolies {relationPolies.Count} ");
             if (relationPolies.Count > 0)
             {
-                // 相交区域处理
+                Poly lastPoly = poly;
+
+                // 相交区域处理 
                 foreach (Poly tmpPoly in relationPolies)
                 {
-                    List<XVector2> checkPoints = new List<XVector2>(tmpPoly.Points);
-                    Normalizer.Normalize(checkPoints);
-                    relationAllPoints = PolyUtility.Conbine(checkPoints, relationAllPoints, out List<XVector2> newPoints1, out List<XVector2> newPoints2);
-                    relationlist.Add(poly, newPoints1);
-                    relationlist.Add(tmpPoly, newPoints2);
+                    if (tmpPoly != lastPoly)
+                    {
+                        List<XVector2> checkPoints = new List<XVector2>(tmpPoly.Points);
+                        Normalizer.Normalize(checkPoints);
+                        relationAllPoints = PolyUtility.Conbine(checkPoints, relationAllPoints, out List<XVector2> newPoints1, out List<XVector2> newPoints2);
+                        relationlist.Add(lastPoly, newPoints1);
+                        relationlist.Add(tmpPoly, newPoints2);
+                        lastPoly = tmpPoly;
+                    }
                 }
             }
             else
@@ -492,10 +503,10 @@ namespace XFrame.PathFinding
             {
                 if (count++ >= 100)
                 {
-                    Debug.LogError("error");
-                    break;
+                    throw new System.Exception($"next edge opposite error");
                 }
 
+                int count2 = 0;
                 // 找到所有下一条边(因为临边不在面列表里，所以只需要从一个方向找)
                 List<HalfEdge> nextEdges = new List<HalfEdge>();
                 HalfEdge tmp = current.NextEdge.OppositeEdge;
@@ -503,6 +514,13 @@ namespace XFrame.PathFinding
                 {
                     nextEdges.Add(tmp);
                     tmp = tmp.NextEdge.OppositeEdge;
+
+                    if (count2++ >= 100)
+                    {
+                        throw new System.Exception($"next edge opposite error");
+                    }
+                    if (tmp != null)
+                        Debug.LogWarning($"[tmp] {tmp.Vertex.Position} {tmp.NextEdge.Vertex.Position}");
                 }
 
                 // 因为是同向，所以只需要计算角度最大的边即可, 只需计算单位向量点积
