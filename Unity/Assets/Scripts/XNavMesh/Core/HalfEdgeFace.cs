@@ -20,7 +20,7 @@ namespace XFrame.PathFinding
                 XVector2 p1 = Edge.Vertex.Position;
                 XVector2 p2 = Edge.NextEdge.Vertex.Position;
                 XVector2 p3 = Edge.PrevEdge.Vertex.Position;
-                return XMath.CheckPointsOnLine(p1, p2, p3);
+                return XMath.CheckPointsHasSame(p1, p2, p3);
             }
         }
 

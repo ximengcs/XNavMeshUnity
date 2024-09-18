@@ -97,8 +97,8 @@ namespace XFrame.PathFinding
         {
             Edge e1 = new Edge(P1, P2);
             Edge e2 = new Edge(P2, P3);
-            Edge e3 = new Edge(P2, P3);
-            Edge e4 = new Edge(P1, P2);
+            Edge e3 = new Edge(P3, P1);
+            Edge e4 = new Edge(p1, p2);
             if (XMath.LineLine(e1, e4, true)) return true;
             if (XMath.LineLine(e2, e4, true)) return true;
             if (XMath.LineLine(e3, e4, true)) return true;

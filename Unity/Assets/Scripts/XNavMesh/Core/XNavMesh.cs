@@ -71,9 +71,39 @@ namespace XFrame.PathFinding
             Debug.Log($"Edge count {data.Edges.Count}");
             Debug.Log($"Face count {data.Faces.Count}");
 
+            List<Triangle> triangles = new List<Triangle>();
+
             foreach (HalfEdgeFace face in data.Faces)
             {
                 DebugUtility.Print(face, normalizer);
+
+                Triangle triangle = new Triangle(face);
+                bool find = false;
+                foreach (Triangle triangle2 in triangles)
+                {
+                    if (triangle2.Equals(triangle))
+                        find = true;
+                }
+                if (!find)
+                    triangles.Add(triangle);
+                else
+                {
+                    Debug.LogError("same tri");
+                }
+
+                XVector2 p1 = normalizer.UnNormalize(face.Edge.Vertex.Position);
+                XVector2 p2 = normalizer.UnNormalize(face.Edge.NextEdge.Vertex.Position);
+                XVector2 p3 = normalizer.UnNormalize(face.Edge.PrevEdge.Vertex.Position);
+                Transform tf = new GameObject().transform;
+                Transform t1 = new GameObject().transform;
+                Transform t2 = new GameObject().transform;
+                Transform t3 = new GameObject().transform;
+                t1.position = p1.ToUnityVec3();
+                t2.position = p2.ToUnityVec3();
+                t3.position = p3.ToUnityVec3();
+                t1.SetParent(tf);
+                t2.SetParent(tf);
+                t3.SetParent(tf);
             }
         }
 
@@ -117,10 +147,13 @@ namespace XFrame.PathFinding
             foreach (HalfEdgeFace face in m_Data.Faces)
             {
                 Triangle triangle = new Triangle(face);
+                //Debug.LogWarning($"real InnerFindRelationFaces triangle {Normalizer.UnNormalize(triangle)} ");
+
                 for (int i = 0; i < points.Count; i++)
                 {
                     XVector2 p1 = points[i];
                     XVector2 p2 = points[(i + 1) % points.Count];
+                    //Debug.LogWarning($"real InnerFindRelationFaces {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {triangle.Intersect(p1, p2)} |||| {Normalizer.UnNormalize(triangle)} ");
                     if (triangle.Intersect(p1, p2))
                     {
                         if (!faces.Contains(face))
@@ -195,7 +228,9 @@ namespace XFrame.PathFinding
             Normalizer.Normalize(newPoints);
 
             HashSet<HalfEdgeFace> relationFaces = new HashSet<HalfEdgeFace>();
+            //Debug.LogWarning("InnerFindRelationFaces 1");
             InnerFindRelationFaces(oldPoints, relationFaces);
+            //Debug.LogWarning("InnerFindRelationFaces 2");
             InnerFindRelationFaces(newPoints, relationFaces);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
@@ -467,7 +502,9 @@ namespace XFrame.PathFinding
 
         private List<Edge> InnerGetEdgeList3(HashSet<HalfEdgeFace> faces)
         {
+            Debug.LogWarning($"relation face count {faces.Count}");
             List<Edge> edgeList = new List<Edge>();
+            HashSet<HalfEdge> faceEdges = new HashSet<HalfEdge>();
 
             HalfEdge startEdge = null;
             // 找一个没有临边的边，从这个边开始迭代
@@ -476,31 +513,41 @@ namespace XFrame.PathFinding
                 HalfEdge e1 = face.Edge;
                 HalfEdge e2 = e1.NextEdge;
                 HalfEdge e3 = e2.NextEdge;
+                faceEdges.Add(e1);
+                faceEdges.Add(e2);
+                faceEdges.Add(e3);
+                Debug.LogWarning($"face -> {Normalizer.UnNormalize(new Triangle(face))}");
 
-                if (e1.OppositeEdge == null || !faces.Contains(e1.OppositeEdge.Face))
+                if (startEdge == null)
                 {
-                    startEdge = e1;
-                    break;
-                }
+                    if (e1.OppositeEdge == null || !faces.Contains(e1.OppositeEdge.Face))
+                    {
+                        startEdge = e1;
+                    }
 
-                if (e2.OppositeEdge == null || !faces.Contains(e2.OppositeEdge.Face))
-                {
-                    startEdge = e2;
-                    break;
-                }
+                    if (e2.OppositeEdge == null || !faces.Contains(e2.OppositeEdge.Face))
+                    {
+                        startEdge = e2;
+                    }
 
-
-                if (e3.OppositeEdge == null || !faces.Contains(e3.OppositeEdge.Face))
-                {
-                    startEdge = e3;
-                    break;
+                    if (e3.OppositeEdge == null || !faces.Contains(e3.OppositeEdge.Face))
+                    {
+                        startEdge = e3;
+                    }
                 }
             }
 
             int count = 0;
             HalfEdge current = startEdge;
+
+            if (current.OppositeEdge != null)
+                Debug.LogWarning($"check contains {faces.Contains(current.OppositeEdge.Face)} {Normalizer.UnNormalize(new Triangle(current.Face))}");
+
+            Debug.LogWarning($"start edge {startEdge.GetHashCode()} {Normalizer.UnNormalize(startEdge.PrevEdge.Vertex.Position)} {Normalizer.UnNormalize(startEdge.Vertex.Position)}");
+
             do
             {
+                Debug.LogWarning($"current {Normalizer.UnNormalize(current.PrevEdge.Vertex.Position)} {Normalizer.UnNormalize(current.Vertex.Position)} =============== {current.GetHashCode()}");
                 if (count++ >= 100)
                 {
                     throw new System.Exception($"next edge opposite error");
@@ -509,41 +556,86 @@ namespace XFrame.PathFinding
                 int count2 = 0;
                 // 找到所有下一条边(因为临边不在面列表里，所以只需要从一个方向找)
                 List<HalfEdge> nextEdges = new List<HalfEdge>();
-                HalfEdge tmp = current.NextEdge.OppositeEdge;
+                HalfEdge tmp = current;
                 while (tmp != null)
                 {
-                    nextEdges.Add(tmp);
+                    if (faceEdges.Contains(tmp))
+                    {
+                        nextEdges.Add(tmp);
+                        Debug.LogWarning($"[tmp] {Normalizer.UnNormalize(tmp.Vertex.Position)} {Normalizer.UnNormalize(tmp.NextEdge.Vertex.Position)}");
+                    }
+                    else
+                        break;
                     tmp = tmp.NextEdge.OppositeEdge;
 
+                    if (nextEdges.Contains(tmp))
+                        break;
                     if (count2++ >= 100)
                     {
                         throw new System.Exception($"next edge opposite error");
                     }
-                    if (tmp != null)
-                        Debug.LogWarning($"[tmp] {tmp.Vertex.Position} {tmp.NextEdge.Vertex.Position}");
                 }
 
                 // 因为是同向，所以只需要计算角度最大的边即可, 只需计算单位向量点积
-                Edge curE = new Edge(current.Vertex.Position, current.NextEdge.Vertex.Position);
-                XVector2 n1 = XVector2.Normalize(curE.P2 - curE.P1);
+                Edge curE = new Edge(current.PrevEdge.Vertex.Position, current.Vertex.Position);
+                XVector2 n1 = XVector2.Normalize(curE.P1 - curE.P2);
 
                 float d = 1f;
+                float angle = 0;
+                Debug.LogWarning($"check nextEdges {nextEdges.Count}");
                 foreach (HalfEdge e in nextEdges)
                 {
                     XVector2 p1 = e.Vertex.Position;
                     XVector2 p2 = e.NextEdge.Vertex.Position;
-                    if (!p1.Equals(curE.P1))
+                    if (!p1.Equals(curE.P2))
                     {
-                        Debug.LogError("error happen");
+                        Debug.LogError($"error happen {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)}");
                     }
 
-                    XVector2 n2 = XVector2.Normalize(p2 - curE.P1);
+                    XVector2 n2 = XVector2.Normalize(p2 - curE.P2);
+                    float a = XMath.Angle(n1, n2);
                     float tmpD = XMath.Dot(n1, n2);
-                    if (tmpD < d)
+                    float tmpCross = XVector2.Cross(n1, n2);
+                    Debug.LogWarning($" check d {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {tmpD} {a} ");
+
+                    if (angle == 0)
                     {
-                        d = tmpD;
+                        angle = a;
                         current = e;
                     }
+                    else
+                    {
+                        if (a < 0)
+                        {
+                            if (angle < 0)
+                            {
+                                if(a > angle)
+                                {
+                                    angle = a;
+                                    current = e;
+                                }
+                            }
+                            else
+                            {
+                                angle = a;
+                                current = e;
+                            }
+                        }
+                        else
+                        {
+                            if (angle > 0 && a > angle)
+                            {
+                                angle = a;
+                                current = e;
+                            }
+                        }
+                    }
+
+                    //if (tmpD < d)
+                    //{
+                    //    d = tmpD;
+                    //    current = e;
+                    //}
                 }
 
                 edgeList.Add(new Edge(current.Vertex.Position, current.NextEdge.Vertex.Position));
@@ -604,7 +696,7 @@ namespace XFrame.PathFinding
                             XVector2 p1 = sortEdge[sortCount - 1].P1;
                             XVector2 p2 = sortEdge[sortCount - 2].P1;
                             XVector2 p3 = sortEdge[sortCount - 3].P1;
-                            if (XMath.CheckPointsOnLine(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                            if (XMath.CheckPointsHasSame(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
                             {
                                 sortEdge.RemoveAt(sortCount - 2);
                                 targetCount--;
@@ -624,7 +716,7 @@ namespace XFrame.PathFinding
                 XVector2 p1 = sortEdge[0].P1;
                 XVector2 p2 = sortEdge[sortCount - 1].P1;
                 XVector2 p3 = sortEdge[sortCount - 2].P1;
-                if (XMath.CheckPointsOnLine(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                if (XMath.CheckPointsHasSame(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
                     sortEdge.RemoveAt(sortCount - 1);
 
                 sortCount = sortEdge.Count;
@@ -633,7 +725,7 @@ namespace XFrame.PathFinding
                     p1 = sortEdge[1].P1;
                     p2 = sortEdge[0].P1;
                     p3 = sortEdge[sortCount - 1].P1;
-                    if (XMath.CheckPointsOnLine(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                    if (XMath.CheckPointsHasSame(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
                         sortEdge.RemoveAt(0);
                 }
             }
@@ -709,9 +801,14 @@ namespace XFrame.PathFinding
             foreach (Edge e in edgeList)
                 DelaunayIncrementalSloan.InsertNewPointInTriangulation(e.P1, tmpData);
 
+            Debug.LogWarning("------------------ edge list ------------------");
             List<XVector2> tmpList = new List<XVector2>();  // TO DO 
             foreach (Edge e in edgeList)
+            {
+                DebugUtility.Print(e, Normalizer);
                 tmpList.Add(e.P1);
+            }
+            Debug.LogWarning("------------------ edge list ------------------");
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
             if (extraPoints != null)

@@ -2,6 +2,7 @@
 using System;
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace XFrame.PathFinding
@@ -60,6 +61,14 @@ namespace XFrame.PathFinding
 
             oppositePoint = default;
             return false;
+        }
+
+        public static float Angle(XVector2 a, XVector2 b)
+        {
+            float dot = a.X*b.X + a.Y*b.Y;
+            float det = a.X*b.Y - a.Y*b.X;
+            float angle = (float)Math.Atan2(det, dot);
+            return angle;
         }
 
         public static float Dot(XVector2 a, XVector2 b)
@@ -163,8 +172,13 @@ namespace XFrame.PathFinding
             XVector2 v4 = e2.P2;
 
             float a = Det2(v1.X - v2.X, v1.Y - v2.Y, v3.X - v4.X, v3.Y - v4.Y);
-            if (Math.Abs(a) < float.Epsilon) // Lines are parallel
+            if (Math.Abs(a) < tolerance) // Lines are parallel
             {
+                if (Math.Abs(Det2(e1.P1, e2.P1)) < tolerance) // 两条线平行，且起点与原点组成的向量行列式为0，则一条线在另一条线上
+                {
+                    return true;
+                }
+
                 return false;
             }
 
@@ -330,7 +344,7 @@ namespace XFrame.PathFinding
             return intersectionPoint;
         }
 
-        public static bool CheckPointsOnLine(XVector2 p1, XVector2 p2, XVector2 p3)
+        public static bool CheckPointsHasSame(XVector2 p1, XVector2 p2, XVector2 p3)
         {
             return (Equals(p1.X, p2.X) && Equals(p2.X, p3.X)) || (Equals(p1.Y, p2.Y) && Equals(p2.Y, p3.Y));
         }

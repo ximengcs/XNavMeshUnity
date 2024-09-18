@@ -180,7 +180,7 @@ public partial class Test2
                 Handles.Label(t3, $"({t3.x},{t3.y})");
 #endif
 
-                if (!XMath.CheckPointsOnLine(item.Triangle.P1, item.Triangle.P2, item.Triangle.P3))
+                if (!XMath.CheckPointsHasSame(item.Triangle.P1, item.Triangle.P2, item.Triangle.P3))
                 {
                     Gizmos.DrawLine(p1, p2);
                     Gizmos.DrawLine(p2, p3);

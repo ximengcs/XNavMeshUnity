@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using XFrame.PathFinding;
@@ -10,6 +11,15 @@ public partial class Test2 : MonoBehaviour
 
     private PolyInfo m_ShowPoly;
     private bool m_DrawGizmosFullMeshArea = true;
+
+    enum E1
+    {
+        T1 = 1
+    }
+    enum E2
+    {
+        T2 = 1
+    }
 
     private void AddTestCommand()
     {
@@ -35,6 +45,7 @@ public partial class Test2 : MonoBehaviour
         m_NavMesh.Add(points);
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
         m_FullMeshArea.Refresh();
+        m_NavMesh.CheckDataValid();
     }
 
     private void CreatePoly(string param)
@@ -50,6 +61,7 @@ public partial class Test2 : MonoBehaviour
                 m_ShowPoly = InnerAddPolyInfo(poly.Id, poly, newAreaData, newOutLine);
                 m_FullMeshArea.Refresh();
                 m_NavMesh.CheckDataValid();
+                m_NavMesh.Test();
             }
         }
     }
@@ -83,6 +95,7 @@ public partial class Test2 : MonoBehaviour
                     m_ShowPoly = InnerAddPolyInfo(id, polyInfo.Poly, newAreaData, newOutLine);
                     m_FullMeshArea.Refresh();
                     m_NavMesh.CheckDataValid();
+                    m_NavMesh.Test();
                 }
                 else
                 {

@@ -53,6 +53,48 @@ namespace XFrame.PathFinding
                 HalfEdgeVertex v1 = e1.Vertex;
                 HalfEdgeVertex v2 = e2.Vertex;
                 HalfEdgeVertex v3 = e3.Vertex;
+
+                XVector2 p1 = v1.Position;
+                XVector2 p2 = v2.Position;
+                XVector2 p3 = v3.Position;
+                if (p1.Equals(p2) || p1.Equals(p3) || p2.Equals(p3))
+                {
+                    UnityEngine.Debug.LogError("check edge vertex valid error");
+                    return false;
+                }
+
+                HalfEdge e1Op = e1.OppositeEdge;
+                HalfEdge e2Op = e2.OppositeEdge;
+                HalfEdge e3Op = e3.OppositeEdge;
+
+                if (e1Op != null)
+                {
+                    XVector2 p4 = e1Op.Vertex.Position;
+                    XVector2 p5 = e1Op.PrevEdge.Vertex.Position;
+                    if (!p3.Equals(p4) || !p1.Equals(p5))
+                    {
+                        UnityEngine.Debug.LogError($"check edge opposite valid error {Test2.Navmesh.Normalizer.UnNormalize(p3)} {Test2.Navmesh.Normalizer.UnNormalize(p5)} --- {Test2.Navmesh.Normalizer.UnNormalize(p1)} {Test2.Navmesh.Normalizer.UnNormalize(p4)}");
+                    }
+                }
+                if (e2Op != null)
+                {
+                    XVector2 p4 = e2Op.Vertex.Position;
+                    XVector2 p5 = e2Op.PrevEdge.Vertex.Position;
+                    if (!p1.Equals(p4) || !p2.Equals(p5))
+                    {
+                        UnityEngine.Debug.LogError($"check edge opposite valid error {Test2.Navmesh.Normalizer.UnNormalize(p1)} {Test2.Navmesh.Normalizer.UnNormalize(p5)} --- {Test2.Navmesh.Normalizer.UnNormalize(p2)} {Test2.Navmesh.Normalizer.UnNormalize(p4)}");
+                    }
+                }
+                if (e3Op != null)
+                {
+                    XVector2 p4 = e3Op.Vertex.Position;
+                    XVector2 p5 = e3Op.PrevEdge.Vertex.Position;
+                    if (!p2.Equals(p4) || !p3.Equals(p5))
+                    {
+                        UnityEngine.Debug.LogError($"check edge opposite valid error {Test2.Navmesh.Normalizer.UnNormalize(p2)} {Test2.Navmesh.Normalizer.UnNormalize(p5)} --- {Test2.Navmesh.Normalizer.UnNormalize(p3)} {Test2.Navmesh.Normalizer.UnNormalize(p4)}");
+                    }
+                }
+
                 vertes.Add(v1);
                 vertes.Add(v2);
                 vertes.Add(v3);
