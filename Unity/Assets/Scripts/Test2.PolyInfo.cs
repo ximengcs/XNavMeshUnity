@@ -12,6 +12,7 @@ public partial class Test2
         public MeshArea MeshArea;
         public HalfEdgeData ChangeData;
         public List<Edge> ChangeLine;
+        public Updater Updater;
 
         public void Dispose()
         {

@@ -65,9 +65,11 @@ namespace XFrame.PathFinding
 
         internal void SetFaces(HashSet<HalfEdgeFace> faces)
         {
+            Debug.LogWarning($"set face ob {faces.Count}");
             m_Faces = faces;
             foreach (HalfEdgeFace face in faces)
             {
+                Debug.LogWarning($"set face to ob {Test2.Navmesh.Normalizer.UnNormalize(new Triangle(face))}");
                 face.Area = m_AreaType;
             }
         }

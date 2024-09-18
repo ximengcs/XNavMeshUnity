@@ -70,7 +70,7 @@ namespace XFrame.PathFinding
         {
             Debug.Log($"Edge count {data.Edges.Count}");
             Debug.Log($"Face count {data.Faces.Count}");
-
+            return;
             List<Triangle> triangles = new List<Triangle>();
 
             foreach (HalfEdgeFace face in data.Faces)
@@ -236,8 +236,20 @@ namespace XFrame.PathFinding
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
                 return false;
 
+            Debug.LogWarning($"outline count {newAreaOutEdges.Count}");
+            foreach (Edge edge in newAreaOutEdges)
+                Debug.LogWarning($" edge {Normalizer.UnNormalize(edge.P1)}");
+
+            Debug.LogWarning($"relation face count {relationFaces.Count}");
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<XVector2> relationAllPoints);
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, relationAllPoints);
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
+
+            Debug.LogWarning($" new area data {newAreaData.Faces.Count}");
+            foreach (HalfEdgeFace face in newAreaData.Faces)
+            {
+                Debug.LogWarning($" face---- {Normalizer.UnNormalize(new Triangle(face))}");
+            }
+
             // 标记区域
             foreach (var entry in relationlist)
             {
@@ -339,9 +351,14 @@ namespace XFrame.PathFinding
                         List<XVector2> checkPoints = new List<XVector2>(tmpPoly.Points);
                         Normalizer.Normalize(checkPoints);
                         relationAllPoints = PolyUtility.Conbine(checkPoints, relationAllPoints, out List<XVector2> newPoints1, out List<XVector2> newPoints2);
-                        relationlist.Add(lastPoly, newPoints1);
-                        relationlist.Add(tmpPoly, newPoints2);
+
+                        relationlist[lastPoly] = newPoints1;
+                        relationlist[tmpPoly] = newPoints2;
                         lastPoly = tmpPoly;
+                    }
+                    else
+                    {
+                        relationlist.Add(tmpPoly, points);
                     }
                 }
             }
@@ -362,7 +379,13 @@ namespace XFrame.PathFinding
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
 
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, points, relationFaces, out List<XVector2> relationAllPoints);
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, false, relationAllPoints);
+            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
+
+            Debug.LogWarning($" new area data {newAreaData.Faces.Count}");
+            foreach (HalfEdgeFace face in newAreaData.Faces)
+            {
+                Debug.LogWarning($" face---- {Normalizer.UnNormalize(new Triangle(face))}");
+            }
 
             // 标记区域
             foreach (var entry in relationlist)
@@ -609,7 +632,7 @@ namespace XFrame.PathFinding
                         {
                             if (angle < 0)
                             {
-                                if(a > angle)
+                                if (a > angle)
                                 {
                                     angle = a;
                                     current = e;

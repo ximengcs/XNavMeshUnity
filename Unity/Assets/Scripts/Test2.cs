@@ -148,6 +148,30 @@ public partial class Test2 : MonoBehaviour
         }
     }
 
+    private void RotateLoopPoly(string param)
+    {
+        if (m_NavMesh == null)
+            return;
+        if (ParamToIntFloat(param, out int id, out float angle))
+        {
+            if (m_Polies.TryGetValue(id, out PolyInfo info))
+            {
+                info.Updater = new Updater(() =>
+                {
+                    if (info.Poly.Rotate(angle, out HalfEdgeData newAreaData, out List<Edge> newOutLine))
+                    {
+                        m_ShowPoly = InnerAddPolyInfo(id, info.Poly, newAreaData, newOutLine);
+                        m_FullMeshArea.Refresh();
+                    }
+                    else
+                    {
+                        Debug.Log($"move poly {id} with y failure");
+                    }
+                });
+            }
+        }
+    }
+
     private void ScalePoly(string param)
     {
         if (m_NavMesh == null)

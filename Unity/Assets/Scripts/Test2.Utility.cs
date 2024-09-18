@@ -38,7 +38,17 @@ public partial class Test2
         Console.Inst.AddCommand("poly-move-x", MovePolyX);
         Console.Inst.AddCommand("poly-move-y", MovePolyY);
         Console.Inst.AddCommand("poly-rotate", RotatePoly);
+        Console.Inst.AddCommand("poly-rotate-loop", RotateLoopPoly);
         Console.Inst.AddCommand("poly-scale", ScalePoly);
+    }
+
+    private void Update()
+    {
+        foreach (var entry in m_Polies)
+        {
+            if (entry.Value.Updater != null)
+                entry.Value.Updater.OnUpdate();
+        }
     }
 
     public List<XVector2> GetAllPoints(Transform tf, bool checkActive)
