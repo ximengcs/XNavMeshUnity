@@ -238,10 +238,20 @@ namespace XFrame.PathFinding
 
             Debug.LogWarning($"outline count {newAreaOutEdges.Count}");
             foreach (Edge edge in newAreaOutEdges)
-                Debug.LogWarning($" edge {Normalizer.UnNormalize(edge.P1)}");
+                Debug.LogWarning($"outline count edge {Normalizer.UnNormalize(edge.P1)}");
 
             Debug.LogWarning($"relation face count {relationFaces.Count}");
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<XVector2> relationAllPoints);
+
+            foreach (var entry in relationlist)
+            {
+                Debug.LogWarning($"[poly] poly {entry.Key.Id}");
+                foreach (XVector2 p in entry.Value)
+                {
+                    Debug.LogWarning($"[poly] point {Normalizer.UnNormalize(p)}");
+                }
+                Debug.LogWarning("---------------------");
+            }
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
 
             Debug.LogWarning($" new area data {newAreaData.Faces.Count}");
@@ -329,11 +339,14 @@ namespace XFrame.PathFinding
             foreach (var entry in m_Polies)
             {
                 Poly tmpPoly = entry.Value;
-                foreach (HalfEdgeFace face in relationFaces)
+                if (tmpPoly != poly)
                 {
-                    if (!relationPolies.Contains(tmpPoly) && tmpPoly.Contains(face))
+                    foreach (HalfEdgeFace face in relationFaces)
                     {
-                        relationPolies.Add(tmpPoly);
+                        if (!relationPolies.Contains(tmpPoly) && tmpPoly.Contains(face))
+                        {
+                            relationPolies.Add(tmpPoly);
+                        }
                     }
                 }
             }
@@ -342,24 +355,21 @@ namespace XFrame.PathFinding
             if (relationPolies.Count > 0)
             {
                 Poly lastPoly = poly;
+                List<XVector2> lastPoints = new List<XVector2>(points);
 
                 // 相交区域处理 
                 foreach (Poly tmpPoly in relationPolies)
                 {
-                    if (tmpPoly != lastPoly)
-                    {
-                        List<XVector2> checkPoints = new List<XVector2>(tmpPoly.Points);
-                        Normalizer.Normalize(checkPoints);
-                        relationAllPoints = PolyUtility.Conbine(checkPoints, relationAllPoints, out List<XVector2> newPoints1, out List<XVector2> newPoints2);
+                    List<XVector2> checkPoints = new List<XVector2>(tmpPoly.Points);
+                    Normalizer.Normalize(checkPoints);
 
-                        relationlist[lastPoly] = newPoints1;
-                        relationlist[tmpPoly] = newPoints2;
-                        lastPoly = tmpPoly;
-                    }
-                    else
-                    {
-                        relationlist.Add(tmpPoly, points);
-                    }
+                    Debug.LogWarning($"combine {lastPoly.Id} {tmpPoly.Id} ");
+                    relationAllPoints = PolyUtility.Conbine(checkPoints, lastPoints, out List<XVector2> newPoints1, out List<XVector2> newPoints2);
+
+                    relationlist[lastPoly] = newPoints1;
+                    relationlist[tmpPoly] = newPoints2;
+                    lastPoly = tmpPoly;
+                    lastPoints = new List<XVector2>(tmpPoly.Points);
                 }
             }
             else

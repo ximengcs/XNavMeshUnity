@@ -1,8 +1,8 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using XFrame.PathFinding;
 using static Test;
+
 
 public partial class Test2 : MonoBehaviour
 {
@@ -11,15 +11,6 @@ public partial class Test2 : MonoBehaviour
 
     private PolyInfo m_ShowPoly;
     private bool m_DrawGizmosFullMeshArea = true;
-
-    enum E1
-    {
-        T1 = 1
-    }
-    enum E2
-    {
-        T2 = 1
-    }
 
     private void AddTestCommand()
     {

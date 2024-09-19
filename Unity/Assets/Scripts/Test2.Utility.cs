@@ -40,6 +40,18 @@ public partial class Test2
         Console.Inst.AddCommand("poly-rotate", RotatePoly);
         Console.Inst.AddCommand("poly-rotate-loop", RotateLoopPoly);
         Console.Inst.AddCommand("poly-scale", ScalePoly);
+        Console.Inst.AddCommand("main-show", ShowMainArea);
+        Console.Inst.AddCommand("main-hide", HideMainArea);
+    }
+
+    private void ShowMainArea(string param)
+    {
+        m_DrawGizmosFullMeshArea = true;
+    }
+
+    private void HideMainArea(string param)
+    {
+        m_DrawGizmosFullMeshArea = false;
     }
 
     private void Update()
