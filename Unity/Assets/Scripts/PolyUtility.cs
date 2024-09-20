@@ -18,6 +18,13 @@ public class PolyUtility
         }
     }
 
+    /// <summary>
+    /// </summary>
+    /// <param name="points1"></param>
+    /// <param name="points2"></param>
+    /// <param name="newPoints1"></param>
+    /// <param name="newPoints2"></param>
+    /// <returns></returns>
     public static List<XVector2> Conbine(List<XVector2> points1, List<XVector2> points2, out List<XVector2> newPoints1, out List<XVector2> newPoints2)
     {
         for (int i = 0; i < points1.Count; i++)
