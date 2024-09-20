@@ -174,11 +174,6 @@ namespace XFrame.PathFinding
             float a = Det2(v1.X - v2.X, v1.Y - v2.Y, v3.X - v4.X, v3.Y - v4.Y);
             if (Math.Abs(a) < tolerance) // Lines are parallel
             {
-                if (Math.Abs(Det2(e1.P1, e2.P1)) < tolerance) // 两条线平行，且起点与原点组成的向量行列式为0，则一条线在另一条线上
-                {
-                    return true;
-                }
-
                 return false;
             }
 

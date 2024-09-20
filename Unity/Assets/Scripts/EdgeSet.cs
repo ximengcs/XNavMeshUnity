@@ -1,5 +1,6 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Text;
+using UnityEngine;
 using XFrame.PathFinding;
 
 public class EdgeSet
@@ -17,6 +18,78 @@ public class EdgeSet
         End = end;
         Normalized = XVector2.Normalize(end - Start);
         Vertices = new List<XVector2>() { start, end };
+    }
+
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+        foreach (XVector2 p in Vertices)
+            sb.Append($" {p} ");
+        return sb.ToString();
+    }
+
+    public bool InSameLine(EdgeSet edge)
+    {
+        return InSameLine(edge.Start, edge.End);
+    }
+
+    public bool InSameLine(XVector2 start, XVector2 end)
+    {
+        float c2;
+        if (start.Equals(Start))
+        {
+            if (end.Equals(End))
+                return true;
+            else
+                c2 = XVector2.Cross(start, End);
+        }
+        else
+        {
+            if (start.Equals(End) && end.Equals(Start))
+            {
+                return true;
+            }
+            c2 = XVector2.Cross(start, Start);
+        }
+
+        float c1 = XVector2.Cross(end - start, Normalized);
+        Debug.LogWarning($" samelin {start} {end} {Start} {End} {c1} {c2} ");
+        if (XMath.Equals(c1, c2) && XMath.Equals(c1, 0))  // 两条线平行
+        {
+            float d1 = XMath.Dot(start - Start, Normalized);
+            float d2 = XMath.Dot(end - Start, Normalized);
+            float d3 = XMath.Dot(End - Start, Normalized);
+            if (d1 < 0 && d2 < 0)
+                return false;
+            if (d1 <= 0 && d2 >= 0)  // 假设边的两个点不相同
+                return true;
+            if (d1 >= 0 && d2 <= 0)
+                return true;
+            if (d1 > 0 && d2 > 0)
+            {
+                if (d3 >= d2 && d3 <= d1)
+                    return true;
+                if (d3 >= d1 && d3 <= d2)
+                    return true;
+            }
+
+            Debug.LogWarning($" InSameLine!! {start} {end} {Start} {End} {d1} {d2} {d3} ");
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public bool Intersect(EdgeSet e, out XVector2 newPoint)
+    {
+        return Intersect(e.Start, e.End, out newPoint);
+    }
+
+    public bool Intersect(XVector2 start, XVector2 end, out XVector2 newPoint)
+    {
+        return XMath.LineLine2(new Edge(Start, End), new Edge(start, end), true, out newPoint);
     }
 
     public bool Next(XVector2 point, out XVector2 target)
@@ -40,27 +113,32 @@ public class EdgeSet
         if (point.Equals(Start)) return;
         if (point.Equals(End)) return;
 
-        float dot = XVector2.Dot(point - Start, Normalized);
-        if (dot < 0)
+        float c1 = XVector2.Cross(point - Start, Normalized);
+        Debug.LogWarning($" edgeset [{Start} {End}] {point} {c1}");
+        if (XMath.Equals(c1, 0))
         {
-            Start = point;
-            Vertices.Insert(0, point);
-        }
-        else
-        {
-            for (int i = 1; i < Vertices.Count; i++)
+            float dot = XVector2.Dot(point - Start, Normalized);
+            if (dot < 0)
             {
-                float vDot = XVector2.Dot(Vertices[i] - Start, Normalized);
-                if (XMath.Equals(vDot, dot))
-                    return;
-                if (dot < vDot)
-                {
-                    Vertices.Insert(i, point);
-                    return;
-                }
+                Start = point;
+                Vertices.Insert(0, point);
             }
-            Vertices.Add(point);
-            End = point;
+            else
+            {
+                for (int i = 1; i < Vertices.Count; i++)
+                {
+                    float vDot = XVector2.Dot(Vertices[i] - Start, Normalized);
+                    if (XMath.Equals(vDot, dot))
+                        return;
+                    if (dot < vDot)
+                    {
+                        Vertices.Insert(i, point);
+                        return;
+                    }
+                }
+                Vertices.Add(point);
+                End = point;
+            }
         }
     }
 }

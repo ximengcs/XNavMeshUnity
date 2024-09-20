@@ -15,6 +15,7 @@ public partial class Test2
     private XNavMesh m_NavMesh;
     private MeshArea m_FullMeshArea;
     private Dictionary<int, PolyInfo> m_Polies;
+    private List<List<Edge>> m_Edges;
 
     private void OnDrawGizmos()
     {
@@ -25,10 +26,18 @@ public partial class Test2
             InnerDrawMesh(m_ShowPoly.MeshArea);
             InnerDrawLine(m_ShowPoly.ChangeLine);
         }
+        if (m_Edges != null)
+        {
+            foreach (List<Edge> edges in m_Edges)
+            {
+                InnerDrawLine(edges);
+            }
+        }
     }
 
     void Start()
     {
+        m_Edges = new List<List<Edge>>();
         m_Polies = new Dictionary<int, PolyInfo>();
         Application.targetFrameRate = 60;
         AddTestCommand();
@@ -42,6 +51,7 @@ public partial class Test2
         Console.Inst.AddCommand("poly-scale", ScalePoly);
         Console.Inst.AddCommand("main-show", ShowMainArea);
         Console.Inst.AddCommand("main-hide", HideMainArea);
+        Console.Inst.AddCommand("edge-test", TestEdge);
     }
 
     private void ShowMainArea(string param)
@@ -168,7 +178,7 @@ public partial class Test2
 
                 Color color = Gizmos.color;
                 Gizmos.color = Color.green;
-                Gizmos.DrawSphere(p1, 0.2f);
+                Gizmos.DrawSphere(p1, 0.05f);
                 Gizmos.color = color;
                 Handles.DrawAAPolyLine(10, p1, p2);
             }
