@@ -95,9 +95,12 @@ public partial class Test
 
         public void Dispose()
         {
-            foreach (MeshInfo m in m_Meshs)
+            if (m_Meshs != null)
             {
-                Pool.ReleaseMesh(m.Mesh);
+                foreach (MeshInfo m in m_Meshs)
+                {
+                    Pool.ReleaseMesh(m.Mesh);
+                }
             }
         }
         public void Refresh()
@@ -112,6 +115,7 @@ public partial class Test
 
         public void Refresh(XNavMeshList<TriangleArea> triangles)
         {
+            Dispose();
             m_Meshs = new List<MeshInfo>();
             foreach (TriangleArea triangle in triangles)
             {
