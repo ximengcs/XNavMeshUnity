@@ -53,6 +53,16 @@ namespace XFrame.PathFinding
                 }
             }
 
+            public static bool FindVert(XVector2 p, HalfEdgeData triangulationData)
+            {
+                foreach (HalfEdgeVertex vert in triangulationData.Vertices)
+                {
+                    if (vert.Position.Equals(p))
+                        return true;
+                }
+                return false;
+            }
+
             /// <summary>
             /// 插入一个新点
             /// </summary>
@@ -160,8 +170,12 @@ namespace XFrame.PathFinding
                 Stack<HalfEdge> trianglesToInvestigate = new Stack<HalfEdge>();
                 AddTrianglesOppositePToStack(p, trianglesToInvestigate, triangulationData);
 
+                int count = 0;
                 while (trianglesToInvestigate.Count > 0)
                 {
+                    if (count++ > 1000)
+                        throw new Exception("loop error");
+
                     HalfEdge edgeToTest = trianglesToInvestigate.Pop();
 
                     // 当p点在这个三角形的外接圆上，或者外接圆外面时，则处理下一个
@@ -201,11 +215,15 @@ namespace XFrame.PathFinding
                     }
                 }
 
+                int count = 0;
                 // 起始面，然后围绕一圈
                 HalfEdgeFace tStart = rotateAroundThis.Edge.Face;
                 HalfEdgeFace tCurrent = null;
                 while (tCurrent != tStart)
                 {
+                    if (count++ > 1000)
+                        throw new Exception("loop error");
+
                     //点对向的边
                     HalfEdge edgeOppositeRotateVertex = rotateAroundThis.Edge.NextEdge.OppositeEdge;
 
@@ -254,6 +272,9 @@ namespace XFrame.PathFinding
                             break;
                         }
 
+                        if (i > 1000)
+                            throw new Exception("loop error");
+
                         i++;
                     }
                 }
@@ -263,9 +284,13 @@ namespace XFrame.PathFinding
                     return null;
                 }
 
+                int count = 0;
                 // 从上面随机到的起始点开始寻找 点所在的三角形面
                 while (true)
                 {
+                    if (count++ > 1000)
+                        throw new Exception("loop exec");
+
                     // 如果这个点在三角形的三边的右侧，则它就在三角形内，如果不是，则移动到下一个三角形
                     HalfEdge e1 = currentTriangle.Edge;
                     HalfEdge e2 = e1.NextEdge;

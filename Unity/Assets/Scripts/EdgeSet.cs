@@ -28,6 +28,73 @@ public class EdgeSet
         return sb.ToString();
     }
 
+    public List<XVector2> GetPoints(XVector2 start, XVector2 end, List<XVector2> points)
+    {
+        XVector2 nor = end - start;
+        float c = XVector2.Cross(nor, Normalized);
+        if (!XMath.Equals(c, 0))
+        {
+            Debug.LogError("error happen");
+            return null;
+        }
+
+        float d = XVector2.Dot(nor, Normalized);
+        if (d > 0)  // 同向
+        {
+            int index = -1;
+            int vertCount = Vertices.Count;
+            for (int i = 0; i < vertCount; i++)
+            {
+                if (Vertices[i].Equals(start))
+                {
+                    index = i;
+                }
+            }
+
+            if (index == -1)
+            {
+                Debug.LogError("error happen");
+                return null;
+            }
+            for (int i = 0; i < vertCount; i++)
+            {
+                XVector2 v = Vertices[(i + index) % vertCount];
+                if (v.Equals(end))
+                    break;
+                points.Add(v);
+            }
+            return points;
+        }
+        else // 反向
+        {
+            int index = -1;
+            int vertCount = Vertices.Count;
+            for (int i = 0; i < vertCount; i++)
+            {
+                if (Vertices[i].Equals(start))
+                {
+                    index = i;
+                }
+            }
+
+            if (index == -1)
+            {
+                Debug.LogError("error happen");
+                return null;
+            }
+
+            index += vertCount;
+            for (int i = 0; i < vertCount; i++)
+            {
+                XVector2 v = Vertices[index-- % vertCount];
+                if (v.Equals(end))
+                    break;
+                points.Add(v);
+            }
+            return points;
+        }
+    }
+
     public bool InSameLine(EdgeSet edge)
     {
         return InSameLine(edge.Start, edge.End);
@@ -53,7 +120,6 @@ public class EdgeSet
         }
 
         float c1 = XVector2.Cross(end - start, Normalized);
-        Debug.LogWarning($" samelin {start} {end} {Start} {End} {c1} {c2} ");
         if (XMath.Equals(c1, c2) && XMath.Equals(c1, 0))  // 两条线平行
         {
             float d1 = XMath.Dot(start - Start, Normalized);
@@ -73,7 +139,6 @@ public class EdgeSet
                     return true;
             }
 
-            Debug.LogWarning($" InSameLine!! {start} {end} {Start} {End} {d1} {d2} {d3} ");
             return false;
         }
         else
@@ -114,7 +179,6 @@ public class EdgeSet
         if (point.Equals(End)) return;
 
         float c1 = XVector2.Cross(point - Start, Normalized);
-        Debug.LogWarning($" edgeset [{Start} {End}] {point} {c1}");
         if (XMath.Equals(c1, 0))
         {
             float dot = XVector2.Dot(point - Start, Normalized);

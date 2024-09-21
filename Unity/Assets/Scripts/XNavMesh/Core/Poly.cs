@@ -37,11 +37,32 @@ namespace XFrame.PathFinding
 
         internal Poly(int id, XNavMesh navMesh, List<XVector2> points, AreaType areaType)
         {
-            Debug.Log($" new poly {id}");
             m_Id = id;
             m_Points = points;
             m_NavMesh = navMesh;
             m_AreaType = areaType;
+        }
+
+        internal static bool Intersect(List<XVector2> points, List<XVector2> points2)
+        {
+            for (int i = 0; i < points2.Count; i++)
+            {
+                XVector2 p1 = points2[i];
+                XVector2 p2 = points2[(i + 1) % points2.Count];
+                Edge e1 = new Edge(p1, p2);
+                for (int j = 0; j < points.Count; j++)
+                {
+                    XVector2 p3 = points[j];
+                    XVector2 p4 = points[(j + 1) % points.Count];
+                    Edge e2 = new Edge(p3, p4);
+                    if (XMath.LineLine2(e1, e2, true, out XVector2 newPoint))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         internal bool Contains(HalfEdgeFace face)
@@ -65,11 +86,9 @@ namespace XFrame.PathFinding
 
         internal void SetFaces(HashSet<HalfEdgeFace> faces)
         {
-            Debug.LogWarning($"set face ob {faces.Count}");
             m_Faces = faces;
             foreach (HalfEdgeFace face in faces)
             {
-                Debug.LogWarning($"set face to ob {Test2.Navmesh.Normalizer.UnNormalize(new Triangle(face))}");
                 face.Area = m_AreaType;
             }
         }

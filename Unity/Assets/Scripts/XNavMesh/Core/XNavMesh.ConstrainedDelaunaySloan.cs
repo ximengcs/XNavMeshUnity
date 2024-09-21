@@ -135,8 +135,12 @@ namespace XFrame.PathFinding
                 //Step 2. Find the rest of the triangles within the constraint by using a flood-fill algorithm
                 List<HalfEdge> edgesToCheck = new List<HalfEdge>();
 
+                int count = 0;
                 while (true)
                 {
+                    if (count++ > 1000)
+                        throw new System.Exception("loop error");
+
                     //Stop if we are out of neighbors
                     if (trianglesToCheck.Count == 0)
                     {
@@ -249,10 +253,14 @@ namespace XFrame.PathFinding
             //This step can maybe be skipped if you just want a triangulation and Ive noticed its often not flipping any triangles
             private static void RestoreDelaunayTriangulation(XVector2 c_p1, XVector2 c_p2, List<HalfEdge> newEdges)
             {
+                int count = 0;
                 int flippedEdges = 0;
                 //Repeat 4.1 - 4.3 until no further swaps take place
                 while (true)
                 {
+                    if (count++ > 1000)
+                        throw new System.Exception("loop error");
+
                     bool hasFlippedEdge = false;
 
                     //Step 4.1. Loop over each edge in the list of newly created edges
@@ -418,11 +426,16 @@ namespace XFrame.PathFinding
             {
                 List<HalfEdge> newEdges = new List<HalfEdge>();
 
+                int count = 0;
                 //While some edges still cross the constrained edge, do steps 3.1 and 3.2
                 while (intersectingEdges.Count > 0)
                 {
+                    if (count++ > 1000)
+                        ;// throw new System.Exception("loop error");
                     //Step 3.1. Remove an edge from the list of edges that intersects the constrained edge
                     HalfEdge e = intersectingEdges.Dequeue();
+                    if (count > 950)
+                        Debug.LogWarning($" remove intersect {Test2.Navmesh.Normalizer.UnNormalize(e.Vertex.Position)} {Test2.Navmesh.Normalizer.UnNormalize(e.NextEdge.Vertex.Position)} ");
 
                     //The vertices belonging to the two triangles
                     XVector2 v_k = e.Vertex.Position;

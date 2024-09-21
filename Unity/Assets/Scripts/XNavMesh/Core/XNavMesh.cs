@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine.AI;
-using Unity.VisualScripting;
 
 namespace XFrame.PathFinding
 {
@@ -68,7 +66,6 @@ namespace XFrame.PathFinding
         }
         public static void Test(HalfEdgeData data, Normalizer normalizer)
         {
-            Debug.Log($"Edge count {data.Edges.Count}");
             Debug.Log($"Face count {data.Faces.Count}");
             return;
             List<Triangle> triangles = new List<Triangle>();
@@ -228,37 +225,15 @@ namespace XFrame.PathFinding
             Normalizer.Normalize(newPoints);
 
             HashSet<HalfEdgeFace> relationFaces = new HashSet<HalfEdgeFace>();
-            //Debug.LogWarning("InnerFindRelationFaces 1");
             InnerFindRelationFaces(oldPoints, relationFaces);
-            //Debug.LogWarning("InnerFindRelationFaces 2");
             InnerFindRelationFaces(newPoints, relationFaces);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
                 return false;
 
-            Debug.LogWarning($"outline count {newAreaOutEdges.Count}");
-            foreach (Edge edge in newAreaOutEdges)
-                Debug.LogWarning($"outline count edge {Normalizer.UnNormalize(edge.P1)}");
+            Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<List<XVector2>> relationAllPoints);
 
-            Debug.LogWarning($"relation face count {relationFaces.Count}");
-            Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<XVector2> relationAllPoints);
-
-            foreach (var entry in relationlist)
-            {
-                Debug.LogWarning($"[poly] poly {entry.Key.Id}");
-                foreach (XVector2 p in entry.Value)
-                {
-                    Debug.LogWarning($"[poly] point {Normalizer.UnNormalize(p)}");
-                }
-                Debug.LogWarning("---------------------");
-            }
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
-
-            Debug.LogWarning($" new area data {newAreaData.Faces.Count}");
-            foreach (HalfEdgeFace face in newAreaData.Faces)
-            {
-                Debug.LogWarning($" face---- {Normalizer.UnNormalize(new Triangle(face))}");
-            }
 
             // 标记区域
             foreach (var entry in relationlist)
@@ -268,46 +243,10 @@ namespace XFrame.PathFinding
                 relationPoly.ResetFaceArea();
                 relationPoly.SetFaces(faces);
             }
-
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+
             Normalizer.UnNormalize(newPoints);  // 还原点
             return true;
-        }
-
-        public bool ChangeWithExtraData(Triangle triangle, Triangle tarTriangle, out Triangle newTriangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
-        {
-            newAreaData = null;
-            newAreaOutEdges = null;
-            newTriangle = triangle;
-
-            tarTriangle = AABB.Constraint(tarTriangle);
-            if (tarTriangle.Equals(triangle))
-            {
-                return false;
-            }
-
-            tarTriangle = m_Normalizer.Normalize(tarTriangle);
-            triangle = m_Normalizer.Normalize(triangle);
-
-            AreaType areaType = InnerGetTriangleAreaType(triangle);
-            HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
-            InnerFindRelationFaces(tarTriangle, relationFaces);
-            newAreaOutEdges = InnerGetEdgeList2(triangle, tarTriangle, relationFaces);
-            if (newAreaOutEdges.Count < 3)
-            {
-                return false;
-            }
-
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, tarTriangle.ToPoints());
-            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
-            InnerSetTriangleAreaType(tarTriangle, areaType);
-            newTriangle = m_Normalizer.UnNormalize(tarTriangle);
-            return true;
-        }
-
-        public bool MoveWithExtraData(Triangle triangle, XVector2 offset, out Triangle newTriangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
-        {
-            return ChangeWithExtraData(triangle, triangle + offset, out newTriangle, out newAreaData, out newAreaOutEdges);
         }
 
         public void RemoveWithExtraData(Triangle triangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
@@ -319,20 +258,7 @@ namespace XFrame.PathFinding
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
         }
 
-        public void AddWithExtraData(Triangle triangle, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
-        {
-            triangle = m_Normalizer.Normalize(triangle);
-            HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
-
-            newAreaOutEdges = InnerGetEdgeList(triangle, relationFaces);
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, triangle.ToPoints());
-            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
-
-            // 标记区域
-            InnerSetTriangleAreaType(triangle, area);
-        }
-
-        private Dictionary<Poly, List<XVector2>> InnerFindRelationPolies(Poly poly, List<XVector2> points, HashSet<HalfEdgeFace> relationFaces, out List<XVector2> relationAllPoints)
+        private Dictionary<Poly, List<XVector2>> InnerFindRelationPolies(Poly poly, List<XVector2> points, HashSet<HalfEdgeFace> relationFaces, out List<List<XVector2>> relationAllPoints)
         {
             Dictionary<Poly, List<XVector2>> relationlist = new Dictionary<Poly, List<XVector2>>();
             HashSet<Poly> relationPolies = new HashSet<Poly>();
@@ -351,29 +277,54 @@ namespace XFrame.PathFinding
                 }
             }
 
-            relationAllPoints = new List<XVector2>(points);
-            if (relationPolies.Count > 0)
+            if (relationPolies.Count > 0) // 相交区域处理 
             {
-                Poly lastPoly = poly;
-                List<XVector2> lastPoints = new List<XVector2>(points);
+                List<AreaCollection> allAreaList = new List<AreaCollection>();
+                AreaCollection thisArea = new AreaCollection();
+                thisArea.Add(poly, points);
+                allAreaList.Add(thisArea);
 
-                // 相交区域处理 
                 foreach (Poly tmpPoly in relationPolies)
                 {
-                    List<XVector2> checkPoints = new List<XVector2>(tmpPoly.Points);
-                    Normalizer.Normalize(checkPoints);
+                    AreaCollection targetArea = null;
+                    List<XVector2> tmpPoints = new List<XVector2>(tmpPoly.Points);
+                    Normalizer.Normalize(tmpPoints);
 
-                    Debug.LogWarning($"combine {lastPoly.Id} {tmpPoly.Id} ");
-                    relationAllPoints = PolyUtility.Conbine(checkPoints, lastPoints, out List<XVector2> newPoints1, out List<XVector2> newPoints2);
+                    foreach (AreaCollection area in allAreaList)
+                    {
+                        if (area.Intersect(tmpPoints))
+                        {
+                            targetArea = area;
+                            break;
+                        }
+                    }
 
-                    relationlist[lastPoly] = newPoints1;
-                    relationlist[tmpPoly] = newPoints2;
-                    lastPoly = tmpPoly;
-                    lastPoints = new List<XVector2>(tmpPoly.Points);
+                    if (targetArea == null)
+                    {
+                        targetArea = new AreaCollection();
+                        allAreaList.Add(targetArea);
+                    }
+
+                    targetArea.Add(tmpPoly, tmpPoints);
+                }
+
+                relationAllPoints = new List<List<XVector2>>();
+                foreach (AreaCollection area in allAreaList)
+                {
+                    List<Poly> polies = area.Polies;
+                    List<List<XVector2>> allList = area.PolyPoints;
+                    var areaRelationAllPoints = PolyUtility.Combine(allList, out allList);
+                    relationAllPoints.Add(areaRelationAllPoints);
+
+                    for (int i = 0; i < polies.Count; i++)
+                    {
+                        relationlist.Add(polies[i], allList[i]);
+                    }
                 }
             }
             else
             {
+                relationAllPoints = new List<List<XVector2>>() { new List<XVector2>(points) };
                 relationlist.Add(poly, points);
             }
 
@@ -388,14 +339,8 @@ namespace XFrame.PathFinding
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
 
-            Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, points, relationFaces, out List<XVector2> relationAllPoints);
+            Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, points, relationFaces, out List<List<XVector2>> relationAllPoints);
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
-
-            Debug.LogWarning($" new area data {newAreaData.Faces.Count}");
-            foreach (HalfEdgeFace face in newAreaData.Faces)
-            {
-                Debug.LogWarning($" face---- {Normalizer.UnNormalize(new Triangle(face))}");
-            }
 
             // 标记区域
             foreach (var entry in relationlist)
@@ -535,7 +480,6 @@ namespace XFrame.PathFinding
 
         private List<Edge> InnerGetEdgeList3(HashSet<HalfEdgeFace> faces)
         {
-            Debug.LogWarning($"relation face count {faces.Count}");
             List<Edge> edgeList = new List<Edge>();
             HashSet<HalfEdge> faceEdges = new HashSet<HalfEdge>();
 
@@ -549,7 +493,6 @@ namespace XFrame.PathFinding
                 faceEdges.Add(e1);
                 faceEdges.Add(e2);
                 faceEdges.Add(e3);
-                Debug.LogWarning($"face -> {Normalizer.UnNormalize(new Triangle(face))}");
 
                 if (startEdge == null)
                 {
@@ -573,14 +516,8 @@ namespace XFrame.PathFinding
             int count = 0;
             HalfEdge current = startEdge;
 
-            if (current.OppositeEdge != null)
-                Debug.LogWarning($"check contains {faces.Contains(current.OppositeEdge.Face)} {Normalizer.UnNormalize(new Triangle(current.Face))}");
-
-            Debug.LogWarning($"start edge {startEdge.GetHashCode()} {Normalizer.UnNormalize(startEdge.PrevEdge.Vertex.Position)} {Normalizer.UnNormalize(startEdge.Vertex.Position)}");
-
             do
             {
-                Debug.LogWarning($"current {Normalizer.UnNormalize(current.PrevEdge.Vertex.Position)} {Normalizer.UnNormalize(current.Vertex.Position)} =============== {current.GetHashCode()}");
                 if (count++ >= 100)
                 {
                     throw new System.Exception($"next edge opposite error");
@@ -595,7 +532,6 @@ namespace XFrame.PathFinding
                     if (faceEdges.Contains(tmp))
                     {
                         nextEdges.Add(tmp);
-                        Debug.LogWarning($"[tmp] {Normalizer.UnNormalize(tmp.Vertex.Position)} {Normalizer.UnNormalize(tmp.NextEdge.Vertex.Position)}");
                     }
                     else
                         break;
@@ -615,7 +551,6 @@ namespace XFrame.PathFinding
 
                 float d = 1f;
                 float angle = 0;
-                Debug.LogWarning($"check nextEdges {nextEdges.Count}");
                 foreach (HalfEdge e in nextEdges)
                 {
                     XVector2 p1 = e.Vertex.Position;
@@ -629,7 +564,6 @@ namespace XFrame.PathFinding
                     float a = XMath.Angle(n1, n2);
                     float tmpD = XMath.Dot(n1, n2);
                     float tmpCross = XVector2.Cross(n1, n2);
-                    Debug.LogWarning($" check d {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {tmpD} {a} ");
 
                     if (angle == 0)
                     {
@@ -663,12 +597,6 @@ namespace XFrame.PathFinding
                             }
                         }
                     }
-
-                    //if (tmpD < d)
-                    //{
-                    //    d = tmpD;
-                    //    current = e;
-                    //}
                 }
 
                 edgeList.Add(new Edge(current.Vertex.Position, current.NextEdge.Vertex.Position));
@@ -711,8 +639,11 @@ namespace XFrame.PathFinding
             List<Edge> sortEdge = new List<Edge>();
             int targetCount = edgeList.Count;
             Edge curEdge = edgeList[0];
+            int count = 0;
             do
             {
+                if (count++ > 1000)
+                    throw new System.Exception("loop error");
                 Edge tmp = curEdge;
                 curEdge = null;
                 foreach (Edge e in edgeList)
@@ -826,49 +757,55 @@ namespace XFrame.PathFinding
                 m_Data.Faces.Add(f);
         }
 
-        public HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, bool removeEdgeConstraint = true, List<XVector2> extraPoints = null)
+        public HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, bool removeEdgeConstraint = true, List<List<XVector2>> extraPointsList = null)
         {
+            //Debug.LogWarning("----------------------------------------");
             HalfEdgeData tmpData = new HalfEdgeData();
             Triangle superTriangle = GeometryUtility.SuperTriangle;
             tmpData.AddTriangle(superTriangle);
             foreach (Edge e in edgeList)
+            {
+                //Debug.LogWarning($"add point {Normalizer.UnNormalize(e.P1)}");
                 DelaunayIncrementalSloan.InsertNewPointInTriangulation(e.P1, tmpData);
+            }
 
-            Debug.LogWarning("------------------ edge list ------------------");
             List<XVector2> tmpList = new List<XVector2>();  // TO DO 
             foreach (Edge e in edgeList)
             {
-                DebugUtility.Print(e, Normalizer);
                 tmpList.Add(e.P1);
             }
-            Debug.LogWarning("------------------ edge list ------------------");
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
-            if (extraPoints != null)
+            if (extraPointsList != null)
             {
-                foreach (XVector2 v in extraPoints)
+                foreach (List<XVector2> extraPoints in extraPointsList)
                 {
-                    // TO DO 剔除重复的
-                    bool find = false;
-                    foreach (XVector2 tmp in tmpList)
+                    foreach (XVector2 v in extraPoints)
                     {
-                        if (tmp.Equals(v))
+                        // TO DO 剔除重复的
+                        bool find = false;
+                        foreach (XVector2 tmp in tmpList)
                         {
-                            find = true;
-                            break;
+                            if (tmp.Equals(v))
+                            {
+                                find = true;
+                                break;
+                            }
+                        }
+
+                        if (!find)
+                        {
+                            //Debug.LogWarning($"add point - {Normalizer.UnNormalize(v)}");
+                            DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
                         }
                     }
-
-                    if (!find)
-                    {
-                        DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
-                    }
+                    ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
                 }
-                ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
             }
 
             ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
+            //Debug.LogWarning("----------------------------------------");
             return tmpData;
         }
 

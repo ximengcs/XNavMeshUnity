@@ -1,5 +1,7 @@
 ﻿
+using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using XFrame.PathFinding;
 
@@ -8,14 +10,235 @@ using XFrame.PathFinding;
 /// </summary>
 public class PolyUtility
 {
-    private class PolyVertex
+    public static List<XVector2> Combine(List<List<XVector2>> list, out List<List<XVector2>> newList)
     {
-        public XVector2 Point;
-
-        public PolyVertex(XVector2 point)
+        if (list == null || list.Count == 0)
         {
-            Point = point;
+            Debug.LogError("list is null");
+            newList = null;
+            return null;
         }
+
+        if (Test2.T1)
+        {
+            foreach (var item in list)
+                Test2.Inst.AddLines(item);
+        }
+
+        List<EdgeSet> edges = new List<EdgeSet>();
+        for (int j = 0; j < list.Count - 1; j++)
+        {
+            List<XVector2> points = list[j];
+            for (int i = 0; i < points.Count; i++)
+            {
+                XVector2 p1 = points[i];
+                XVector2 p2 = points[(i + 1) % points.Count];
+                EdgeSet e1 = FindEdge(edges, p1, p2);
+                for (int k = j + 1; k < list.Count; k++)
+                {
+                    List<XVector2> points2 = list[k];
+                    for (int l = 0; l < points2.Count; l++)
+                    {
+                        XVector2 p3 = points2[l];
+                        XVector2 p4 = points2[(l + 1) % points2.Count];
+                        EdgeSet e2 = FindEdge(edges, p3, p4);
+
+                        if (e2.Intersect(e1, out XVector2 newPoint))
+                        {
+                            e1.Add(newPoint);
+                            e2.Add(newPoint);
+                        }
+                        else if (e2.InSameLine(e1))
+                        {
+                            e1.Add(p3);
+                            e1.Add(p4);
+                            e2.Add(p1);
+                            e2.Add(p2);
+                        }
+                    }
+                }
+            }
+
+        }
+
+        newList = new List<List<XVector2>>(list.Count);
+        foreach (List<XVector2> points in list)
+        {
+            List<XVector2> target = new List<XVector2>();
+            newList.Add(target);
+            for (int i = 0; i < points.Count; i++)
+            {
+                XVector2 p1 = points[i];
+                XVector2 p2 = points[(i + 1) % points.Count];
+
+                EdgeSet edge = FindEdge(edges, p1, p2);
+                edge.GetPoints(p1, p2, target);
+            }
+        }
+
+        return FindOutLine(newList);
+    }
+
+    private static EdgeSet FindEdge(List<EdgeSet> edges, XVector2 start, XVector2 end)
+    {
+        XVector2 p1 = start;
+        XVector2 p2 = end;
+        EdgeSet target = null;
+        foreach (EdgeSet edge in edges)
+        {
+            XVector2 p3 = edge.Start;
+            XVector2 p4 = edge.End;
+
+            if (edge.InSameLine(p1, p2))
+            {
+                target = edge;
+                break;
+            }
+        }
+
+        if (target != null)
+        {
+            target.Add(p1);
+            target.Add(p2);
+        }
+        else
+        {
+            target = new EdgeSet(p1, p2);
+            edges.Add(target);
+        }
+        return target;
+    }
+
+    public static List<XVector2> FindOutLine(List<List<XVector2>> list)
+    {
+        // 找最小点
+        XVector2 min = new XVector2(float.MaxValue, float.MaxValue);
+
+        foreach (List<XVector2> points in list)
+        {
+            foreach (XVector2 p in points)
+            {
+                if (p.X < min.X) min.X = p.X;
+                if (p.Y < min.Y) min.Y = p.Y;
+            }
+        }
+
+        float distance = float.MaxValue;
+        XVector2 leftBottom = default;
+        foreach (List<XVector2> points in list)
+        {
+            foreach (XVector2 p in points)
+            {
+                float dis = XVector2.Distance(p, min);
+                if (dis < distance)
+                {
+                    distance = dis;
+                    leftBottom = p;
+                }
+            }
+        }
+
+        List<XVector2> result = new List<XVector2>();
+        Edge current = null;
+        foreach (List<XVector2> points in list)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (points[i].Equals(leftBottom))
+                {
+                    current = new Edge(points[(i + 1) % points.Count], leftBottom);
+                    break;
+                }
+            }
+        }
+        result.Add(current.P1);
+
+        int calCount = 0;
+        do
+        {
+            if (calCount++ >= 100)
+            {
+                Debug.LogError("Error happen");
+                break;
+            }
+
+            List<Edge> edges = new List<Edge>();
+            foreach (List<XVector2> points in list)
+            {
+                for (int i = 0; i < points.Count; i++)
+                {
+                    XVector2 p = points[i];
+                    if (p.Equals(current.P1))
+                    {
+                        Edge e = new Edge(points[(i + 1) % points.Count], current.P1);
+                        edges.Add(e);
+                        break;
+                    }
+                }
+            }
+
+            if (edges.Count == 0)
+            {
+                Debug.LogError($"error happen {current.P1} ");
+                break;
+            }
+            else if (edges.Count == 1)
+            {
+                current = edges[0];
+                result.Add(current.P1);
+            }
+            else
+            {
+                Edge e1 = edges[0];
+
+                XVector2 cur = XVector2.Normalize(current.P2 - current.P1);
+                XVector2 n1 = XVector2.Normalize(e1.P1 - e1.P2);
+                float c1 = XVector2.Cross(cur, n1);
+                float d1 = XVector2.Dot(cur, n1);
+
+                for (int i = 1; i < edges.Count; i++)
+                {
+                    Edge e2 = edges[i];
+                    XVector2 n2 = XVector2.Normalize(e2.P1 - e2.P2);
+
+                    // 用来判断方向是否相同
+                    float c2 = XVector2.Cross(cur, n2);
+
+                    // 用来判断角度
+                    float d2 = XVector2.Dot(cur, n2);
+
+                    if (c1 > 0 && c2 > 0)
+                    {
+                        if (d1 > d2)
+                        {
+                            e1 = e2;
+                            c1 = c2;
+                            d1 = d2;
+                        }
+                    }
+                    else if (c1 < 0 && c2 < 0)
+                    {
+                        if (d1 < d2)
+                        {
+                            e1 = e2;
+                            c1 = c2;
+                            d1 = d2;
+                        }
+                    }
+                    else if (c2 < 0)
+                    {
+                        e1 = e2;
+                        c1 = c2;
+                        d1 = d2;
+                    }
+                }
+
+                current = e1;
+                result.Add(e1.P1);
+            }
+        } while (!current.P1.Equals(leftBottom));
+
+        return result;
     }
 
     /// <summary>
@@ -121,8 +344,6 @@ public class PolyUtility
 
         Debug.LogWarning($" lfet bottom {min} {leftBottom}");
         List<XVector2> result = new List<XVector2>();
-        //result.Add(leftBottom);
-
         Edge current = null;
         for (int i = 0; i < points1.Count; i++)
         {
@@ -198,7 +419,7 @@ public class PolyUtility
                 XVector2 n2 = XVector2.Normalize(e2.P1 - e2.P2);
 
                 // 用来判断方向是否相同
-                float c1 = XVector2.Cross(cur, n1);  
+                float c1 = XVector2.Cross(cur, n1);
                 float c2 = XVector2.Cross(cur, n2);
 
                 // 用来判断角度

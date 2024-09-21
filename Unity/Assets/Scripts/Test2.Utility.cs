@@ -9,6 +9,8 @@ using static Test;
 
 public partial class Test2
 {
+    public static Test2 Inst;
+
     public Transform RectPoints;
     public List<Transform> Holls;
 
@@ -37,6 +39,7 @@ public partial class Test2
 
     void Start()
     {
+        Inst = this;
         m_Edges = new List<List<Edge>>();
         m_Polies = new Dictionary<int, PolyInfo>();
         Application.targetFrameRate = 60;
@@ -52,6 +55,30 @@ public partial class Test2
         Console.Inst.AddCommand("main-show", ShowMainArea);
         Console.Inst.AddCommand("main-hide", HideMainArea);
         Console.Inst.AddCommand("edge-test", TestEdge);
+        Console.Inst.AddCommand("t1-on", OnT1);
+        Console.Inst.AddCommand("t1-off", OffT1);
+    }
+
+    public void OnT1(string param)
+    {
+        T1 = true;
+    }
+
+    public void OffT1(string param)
+    {
+        T1 = false;
+    }
+
+    public void AddLines(List<XVector2> points)
+    {
+        List<Edge> tmpEdges = new List<Edge>();
+        for (int i = 0; i < points.Count; i++)
+        {
+            XVector2 p1 = points[i];
+            XVector2 p2 = points[(i + 1) % points.Count];
+            tmpEdges.Add(new Edge(p1, p2));
+        }
+        m_Edges.Add(tmpEdges);
     }
 
     private void ShowMainArea(string param)
