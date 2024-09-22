@@ -157,6 +157,21 @@ namespace XFrame.PathFinding
                             faces.Add(face);
                     }
                 }
+
+                // 检查是否存在Poly中没有加入的面
+                foreach (var entry in m_Polies)
+                {
+                    Poly poly = entry.Value;
+                    if (poly.Contains(face))
+                    {
+                        foreach (HalfEdgeFace polyFace in poly.Faces)
+                        {
+                            if (!faces.Contains(polyFace))
+                                faces.Add(polyFace);
+                        }
+                        break;
+                    }
+                }
             }
             return faces;
         }
@@ -340,6 +355,7 @@ namespace XFrame.PathFinding
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
 
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, points, relationFaces, out List<List<XVector2>> relationAllPoints);
+
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
 
             // 标记区域

@@ -14,6 +14,8 @@ namespace XFrame.PathFinding
 
         public int Id => m_Id;
 
+        public IEnumerable<HalfEdgeFace> Faces => m_Faces;
+
         public XVector2 CenterOfGravityPoint
         {
             get

@@ -1,5 +1,7 @@
 ﻿
+using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace XFrame.PathFinding
 {
@@ -59,7 +61,8 @@ namespace XFrame.PathFinding
                 XVector2 p3 = v3.Position;
                 if (p1.Equals(p2) || p1.Equals(p3) || p2.Equals(p3))
                 {
-                    UnityEngine.Debug.LogError("check edge vertex valid error");
+                    Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                    UnityEngine.Debug.LogError($"check edge vertex valid error {f(p1)} {f(p2)} {f(p3)} ");
                     return false;
                 }
 

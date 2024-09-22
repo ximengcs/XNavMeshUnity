@@ -81,6 +81,11 @@ namespace XFrame.PathFinding
                     return;
                 }
 
+                if (FindVert(p, triangulationData))
+                {
+                    return;
+                }
+
                 // 如果点落在三角形边上,并且所在边对边为空(即在边缘上)，则直接连接此点到对点
                 if (XMath.CheckPointOnTriangleLine(new Triangle(f), p, out XVector2 oppositePoint))
                 {
@@ -309,17 +314,56 @@ namespace XFrame.PathFinding
                             else
                             {
                                 // 不在此三角形内，移动到左边的三角形
+                                if (e3.OppositeEdge == null)
+                                {
+                                    if (Test2.Navmesh != null)
+                                    {
+                                        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                                        Debug.LogError($" {e3.GetHashCode()}  {f(e3.Vertex.Position)} {f(e3.NextEdge.Vertex.Position)} opposite edge is null ");
+                                        DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
+                                    }
+                                    else
+                                    {
+                                        Debug.LogError($" {(e3.Vertex.Position)} {(e3.NextEdge.Vertex.Position)} opposite edge is null ");
+                                    }
+                                }
                                 currentTriangle = e3.OppositeEdge.Face;
                             }
                         }
                         else
                         {
+                            if (e2.OppositeEdge == null)
+                            {
+                                if (Test2.Navmesh != null)
+                                {
+                                    Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                                    Debug.LogError($" {e2.GetHashCode()} {f(e2.Vertex.Position)} {f(e2.NextEdge.Vertex.Position)} opposite edge is null ");
+                                    DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
+                                }
+                                else
+                                {
+                                    Debug.LogError($" {(e2.Vertex.Position)} {(e2.NextEdge.Vertex.Position)} opposite edge is null ");
+                                }
+                            }
                             // 不在此三角形内，移动到左边的三角形
                             currentTriangle = e2.OppositeEdge.Face;
                         }
                     }
                     else
                     {
+                        if (e1.OppositeEdge == null)
+                        {
+                            if (Test2.Navmesh != null)
+                            {
+                                Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                                Debug.LogError($" {e1.GetHashCode()}  {f(e1.Vertex.Position)} {f(e1.NextEdge.Vertex.Position)} opposite edge is null ");
+                                DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
+                            }
+                            else
+                            {
+                                Debug.LogError($" {(e1.Vertex.Position)} {(e1.NextEdge.Vertex.Position)} opposite edge is null ");
+                            }
+                        }
                         // 不在此三角形内，移动到左边的三角形
                         currentTriangle = e1.OppositeEdge.Face;
                     }

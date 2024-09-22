@@ -57,6 +57,12 @@ public partial class Test2
         Console.Inst.AddCommand("edge-test", TestEdge);
         Console.Inst.AddCommand("t1-on", OnT1);
         Console.Inst.AddCommand("t1-off", OffT1);
+        Console.Inst.AddCommand("check-valid", CheckValid);
+    }
+
+    private void CheckValid(string param)
+    {
+        m_NavMesh.CheckDataValid();
     }
 
     public void OnT1(string param)
