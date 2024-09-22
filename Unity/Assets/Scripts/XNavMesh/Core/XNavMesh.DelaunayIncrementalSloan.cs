@@ -277,9 +277,6 @@ namespace XFrame.PathFinding
                             break;
                         }
 
-                        if (i > 1000)
-                            throw new Exception("loop error");
-
                         i++;
                     }
                 }
@@ -319,7 +316,7 @@ namespace XFrame.PathFinding
                                     if (Test2.Navmesh != null)
                                     {
                                         Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
-                                        Debug.LogError($" {e3.GetHashCode()}  {f(e3.Vertex.Position)} {f(e3.NextEdge.Vertex.Position)} opposite edge is null ");
+                                        Debug.LogError($" {e3.GetHashCode()}  {f(e3.Vertex.Position)} {f(e3.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
                                         DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
                                     }
                                     else
@@ -337,7 +334,7 @@ namespace XFrame.PathFinding
                                 if (Test2.Navmesh != null)
                                 {
                                     Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
-                                    Debug.LogError($" {e2.GetHashCode()} {f(e2.Vertex.Position)} {f(e2.NextEdge.Vertex.Position)} opposite edge is null ");
+                                    Debug.LogError($" {e2.GetHashCode()} {f(e2.Vertex.Position)} {f(e2.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
                                     DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
                                 }
                                 else
@@ -356,7 +353,7 @@ namespace XFrame.PathFinding
                             if (Test2.Navmesh != null)
                             {
                                 Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
-                                Debug.LogError($" {e1.GetHashCode()}  {f(e1.Vertex.Position)} {f(e1.NextEdge.Vertex.Position)} opposite edge is null ");
+                                Debug.LogError($" {e1.GetHashCode()}  {f(e1.Vertex.Position)} {f(e1.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
                                 DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
                             }
                             else

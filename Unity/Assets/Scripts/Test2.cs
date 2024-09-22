@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
 
@@ -49,6 +50,7 @@ public partial class Test2 : MonoBehaviour
             Debug.LogWarning($" {p1} ");
             tmpEdges.Add(new Edge(p1, p2));
         }
+        Navmesh.Normalizer.UnNormalize(tmpEdges);
         m_Edges.Add(tmpEdges);
         Debug.LogWarning("===============================");
     }

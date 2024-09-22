@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 using UnityEngine;
 
 namespace XFrame.PathFinding
@@ -12,6 +14,8 @@ namespace XFrame.PathFinding
         private AABB m_BoundingBox;
 
         public AABB AABB => m_BoundingBox;
+
+        public float MinGap => 0.1f / m_DMax;
 
         public Normalizer(List<XVector2> points)
         {

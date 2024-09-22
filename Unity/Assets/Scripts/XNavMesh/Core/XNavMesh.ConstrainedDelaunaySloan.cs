@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -375,7 +376,16 @@ namespace XFrame.PathFinding
                     XVector2 e_p1 = e.PrevEdge.Vertex.Position;
 
                     //Has this edge been added, but in the opposite direction?
-                    if (edgesInQueue.Contains(new Edge(e_p2, e_p1)))
+                    bool find = false;
+                    foreach (Edge queueE in edgesInQueue)
+                    {
+                        if (queueE.Equals(e_p1, e_p2))
+                        {
+                            find = true;
+                            break;
+                        }
+                    }
+                    if (find)
                     {
                         continue;
                     }
@@ -428,14 +438,27 @@ namespace XFrame.PathFinding
 
                 int count = 0;
                 //While some edges still cross the constrained edge, do steps 3.1 and 3.2
+                int lastTry = -1;
                 while (intersectingEdges.Count > 0)
                 {
+                    if (lastTry == -1)
+                    {
+                        if (intersectingEdges.Count <= 4)
+                        {
+                            lastTry = 1;
+                        }
+                    }
+                    else
+                    {
+                        lastTry--;
+                        if (lastTry == 0)
+                            break;
+                    }
+
                     if (count++ > 1000)
-                        ;// throw new System.Exception("loop error");
+                        throw new System.Exception("loop error");
                     //Step 3.1. Remove an edge from the list of edges that intersects the constrained edge
                     HalfEdge e = intersectingEdges.Dequeue();
-                    if (count > 950)
-                        Debug.LogWarning($" remove intersect {Test2.Navmesh.Normalizer.UnNormalize(e.Vertex.Position)} {Test2.Navmesh.Normalizer.UnNormalize(e.NextEdge.Vertex.Position)} ");
 
                     //The vertices belonging to the two triangles
                     XVector2 v_k = e.Vertex.Position;
@@ -444,12 +467,20 @@ namespace XFrame.PathFinding
                     //The vertex belonging to the opposite triangle and isn't shared by the current edge
                     XVector2 v_opposite_pos = e.OppositeEdge.NextEdge.Vertex.Position;
 
+                    if (count > 950)
+                    {
+                        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                        Debug.LogWarning($" remove intersect {f(v_i)} {f(v_j)} {f(v_k)} {f(v_3rd)} {f(v_l)} {f(v_opposite_pos)} {GeometryUtility.IsQuadrilateralConvex(v_k, v_l, v_3rd, v_opposite_pos)} ");
+                        Debug.LogWarning($" in same line {EdgeSet.InSameLine(new Edge(v_3rd, v_l), new Edge(v_3rd, v_opposite_pos))}");
+                    }
+
                     //Step 3.2. If the two triangles don't form a convex quadtrilateral
                     //place the edge back on the list of intersecting edges (because this edge cant be flipped) 
                     //and go to step 3.1
                     if (!GeometryUtility.IsQuadrilateralConvex(v_k, v_l, v_3rd, v_opposite_pos))
                     {
-                        intersectingEdges.Enqueue(e);
+                        if (intersectingEdges.Count > 0)
+                            intersectingEdges.Enqueue(e);
 
                         continue;
                     }

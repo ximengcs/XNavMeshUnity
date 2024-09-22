@@ -76,6 +76,9 @@ public class PolyUtility
             }
         }
 
+        // 精简点位，将小于某个值的点合并为一个
+        ClipPoints(newList, list);
+
         return FindOutLine(newList);
     }
 
@@ -109,6 +112,173 @@ public class PolyUtility
         return target;
     }
 
+    public static void ClipPoints(List<List<XVector2>> list, List<List<XVector2>> mainList)
+    {
+        float gap = Test2.Navmesh.Normalizer.MinGap;
+        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        //Debug.LogWarning($"gap {gap}");
+        for (int k = 0; k < list.Count; k++)
+        {
+            List<XVector2> points = list[k];
+            //Debug.LogWarning("clip points -----------------------");
+            for (int i = 0; i < points.Count; i++)
+            {
+                XVector2 cur = points[i];
+                // 如果有，从主点列表中找到距离最近的点
+                XVector2 mainPointTarget = default;
+                float toMainDis = float.MaxValue;
+                bool findMainPoint = false;
+                List<XVector2> mainPoints = mainList[k];
+                foreach (XVector2 mainPoint in mainPoints)
+                {
+                    float dis = XVector2.Distance(mainPoint, cur);
+                    if (dis < gap && dis < toMainDis)
+                    {
+                        mainPointTarget = mainPoint;
+                        findMainPoint = true;
+                        toMainDis = dis;
+                    }
+                }
+                if (findMainPoint)
+                {
+                    //Debug.LogWarning($" to main point {f(cur)} -> {f(mainPointTarget)} ");
+                    cur = mainPointTarget;
+                    points[i] = cur;
+                }
+
+                ConstraintSamePoint(gap, points, i, cur);
+
+                foreach (List<XVector2> otherPoints in list)
+                {
+                    if (otherPoints == points)
+                        continue;
+                    bool lastEquals = false;
+                    for (int j = 0; j < otherPoints.Count; j++)
+                    {
+                        XVector2 p = otherPoints[j];
+                        bool equals = XVector2.Distance(p, cur) < gap;
+                        if (j > 0)
+                        {
+                            if (equals)
+                            {
+                                if (lastEquals)
+                                {
+                                    //Debug.LogWarning($"remove at");
+                                    otherPoints.RemoveAt(j);
+                                    j--;
+                                }
+                                else
+                                {
+                                    otherPoints[j] = cur;
+                                    if (j == otherPoints.Count - 1 && otherPoints.Count > 1)
+                                    {
+                                        bool nextEquals = XVector2.Distance(otherPoints[0], cur) < gap;
+                                        if (nextEquals)
+                                        {
+                                            //Debug.LogWarning($"remove at");
+                                            otherPoints.RemoveAt(j);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (equals)
+                                otherPoints[j] = cur;
+                        }
+                        lastEquals = equals;
+                    }
+                }
+            }
+        }
+
+        // 去掉"小"三角形
+        foreach (List<XVector2> points in list)
+        {
+            if (points.Count > 2)
+            {
+                for (int i = points.Count - 1; i >= 0; i--)
+                {
+                    int j = (points.Count + i - 2) % points.Count;
+                    if (i == j)
+                        break;
+
+                    XVector2 cur = points[i];
+                    XVector2 next = points[j];
+                    if (cur.Equals(next))
+                    {
+                        points.RemoveAt((points.Count + i - 1) % points.Count);
+                        points.RemoveAt((points.Count + i - 2) % points.Count);
+                    }
+                }
+            }
+        }
+
+        //Debug.LogWarning("======================");
+        //foreach (List<XVector2> points in list)
+        //{
+        //    Debug.LogWarning("----------------------");
+        //    foreach (XVector2 p in points)
+        //        Debug.LogWarning($" {Test2.Navmesh.Normalizer.UnNormalize(p)} ");
+        //}
+        //Debug.LogWarning("====================== after");
+    }
+
+    private static void ConstraintSamePoint(float gap, List<XVector2> points, int offset, XVector2 cur)
+    {
+        int count = points.Count;
+        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        // 下一个点
+        for (int j = 0; j < count - 1; j++)
+        {
+            int index = (j + offset + 1) % count;
+            XVector2 next = points[index];
+            //Debug.LogWarning($" distance {f(cur)} {f(next)} {XVector2.Distance(cur, next)} ");
+            if (XVector2.Distance(cur, next) < gap)
+            {
+                if (j != 0)
+                {
+                    points.RemoveAt(index);
+                    j--;
+                    count--;
+                }
+                else
+                {
+                    points[index] = cur;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        // 上一个点
+        count = points.Count;
+        for (int j = 0; j < count - 1; j++)
+        {
+            int index = (offset + count - j - 1) % count;
+            XVector2 next = points[index];
+            if (XVector2.Distance(cur, next) < gap)
+            {
+                if (j != 0)
+                {
+                    points.RemoveAt(index);
+                    count--;
+                }
+                else
+                {
+                    points[index] = cur;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
     public static List<XVector2> FindOutLine(List<List<XVector2>> list)
     {
         // 找最小点
@@ -129,11 +299,14 @@ public class PolyUtility
         {
             foreach (XVector2 p in points)
             {
-                float dis = XVector2.Distance(p, min);
-                if (dis < distance)
+                if (XMath.Equals(p.X, min.X) || XMath.Equals(p.Y, min.Y))  //至少有一个点在边界上
                 {
-                    distance = dis;
-                    leftBottom = p;
+                    float dis = XVector2.Distance(p, min);
+                    if (dis < distance)
+                    {
+                        distance = dis;
+                        leftBottom = p;
+                    }
                 }
             }
         }
@@ -152,16 +325,25 @@ public class PolyUtility
             }
         }
         result.Add(current.P1);
-
+        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        //Debug.LogWarning($" left botttom {f(leftBottom)} ");
         int calCount = 0;
         do
         {
-            if (calCount++ >= 100)
+            if (calCount++ >= 1000)
             {
-                Debug.LogError("Error happen");
+                foreach (List<XVector2> points in list)
+                {
+                    Debug.LogWarning("======================");
+                    foreach (XVector2 p in points)
+                    {
+                        Debug.LogWarning($" {Test2.Navmesh.Normalizer.UnNormalize(p)} ");
+                    }
+                }
+                Debug.LogError($"Error happen {current.P1} {list.Count} ");
                 break;
             }
-
+            //Debug.LogWarning($"current {f(current.P1)} {f(current.P2)}");
             List<Edge> edges = new List<Edge>();
             foreach (List<XVector2> points in list)
             {
@@ -184,8 +366,13 @@ public class PolyUtility
             }
             else if (edges.Count == 1)
             {
+
                 current = edges[0];
                 result.Add(current.P1);
+                if (calCount++ >= 950)
+                {
+                    Debug.LogWarning($"Start check edge count is zero {f(current.P1)} {f(current.P2)}");
+                }
             }
             else
             {
@@ -196,6 +383,10 @@ public class PolyUtility
                 float c1 = XVector2.Cross(cur, n1);
                 float d1 = XVector2.Dot(cur, n1);
 
+                if (calCount++ >= 950)
+                {
+                    Debug.LogWarning($"Start check {f(current.P1)} {f(current.P2)}");
+                }
                 for (int i = 1; i < edges.Count; i++)
                 {
                     Edge e2 = edges[i];
@@ -207,7 +398,12 @@ public class PolyUtility
                     // 用来判断角度
                     float d2 = XVector2.Dot(cur, n2);
 
-                    if (c1 > 0 && c2 > 0)
+                    if (calCount++ >= 950)
+                    {
+                        Debug.LogWarning($"check e {f(e1.P1)} {f(e1.P2)} {f(e2.P1)} {f(e2.P2)} {c1} {d1} {c2} {d2} ");
+                    }
+
+                    if (c1 >= 0 && c2 >= 0)
                     {
                         if (d1 > d2)
                         {

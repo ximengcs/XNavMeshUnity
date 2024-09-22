@@ -250,6 +250,67 @@ namespace XFrame.PathFinding
 
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
 
+            if (newAreaData.Faces.Count == 0)
+            {
+                Debug.LogWarning($"relationAllPoints -------------------------- {relationAllPoints.Count}");
+                foreach (List<XVector2> l in relationAllPoints)
+                {
+                    Debug.LogWarning("=========================");
+                    foreach (XVector2 l2 in l)
+                    {
+                        Debug.LogWarning($" {Normalizer.UnNormalize(l2)} ");
+                    }
+                }
+                Debug.LogWarning($"relationAllPoints -------------------------- after");
+
+                Debug.LogWarning($"polies--------");
+                foreach (var item in m_Polies)
+                {
+                    Poly p = item.Value;
+                    Debug.LogWarning($" poly id {p.Id} ");
+                    foreach (XVector2 po in p.Points)
+                    {
+                        Debug.LogWarning($" point {po} ");
+                    }
+                }
+                Debug.LogWarning($"polies--------after");
+
+                Debug.LogWarning("poly points---------------");
+                foreach (XVector2 p in poly.Points)
+                {
+                    Debug.LogWarning($" {p} ");
+                }
+                Debug.LogWarning("old points---------------after");
+
+                Debug.LogWarning("old points---------------");
+                foreach (XVector2 p in oldPoints)
+                {
+                    Debug.LogWarning($" {Normalizer.UnNormalize(p)} ");
+                }
+                Debug.LogWarning("old points---------------after");
+
+                Debug.LogWarning("new points---------------");
+                foreach (XVector2 p in newPoints)
+                {
+                    Debug.LogWarning($" {Normalizer.UnNormalize(p)} ");
+                }
+                Debug.LogWarning("new points---------------after");
+
+                Debug.LogWarning($"newAreaOutEdges ------------------- {newAreaOutEdges.Count}");
+                foreach (var e in newAreaOutEdges)
+                {
+                    Debug.LogWarning($" {Normalizer.UnNormalize(e.P1)} ");
+                }
+                Debug.LogWarning("newAreaOutEdges--------------- after");
+
+                Debug.LogWarning($" newAreaData {newAreaData.Faces.Count} ----------------------");
+                foreach (var f in newAreaData.Faces)
+                {
+                    DebugUtility.Print(f, Normalizer);
+                }
+                Debug.LogWarning($" newAreaData ---------------------- after");
+            }
+
             // 标记区域
             foreach (var entry in relationlist)
             {
@@ -815,15 +876,32 @@ namespace XFrame.PathFinding
                             DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
                         }
                     }
+
+                }
+
+                // 最好等所有点添加完后再添加限制
+                foreach (List<XVector2> extraPoints in extraPointsList)
+                {
                     ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
                 }
             }
 
+            lastLimit = tmpList;
             ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
             //Debug.LogWarning("----------------------------------------");
             return tmpData;
         }
+
+        public void ShowLastLimit()
+        {
+            Debug.LogWarning($"ShowLastLimit ----------------- {lastLimit.Count}");
+            foreach (XVector2 v in lastLimit)
+                Debug.LogWarning($" {Normalizer.UnNormalize(v)} ");
+            Debug.LogWarning("==============");
+        }
+
+        public static List<XVector2> lastLimit = null;
 
         public void Add(List<XVector2> points)
         {

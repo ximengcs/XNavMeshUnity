@@ -100,6 +100,59 @@ public class EdgeSet
         return InSameLine(edge.Start, edge.End);
     }
 
+    public static bool InSameLine(Edge e1, Edge e2)
+    {
+        XVector2 s1 = e1.P1;
+        XVector2 s2 = e1.P2;
+        XVector2 s3 = e2.P1;
+        XVector2 s4 = e2.P2;
+        XVector2 normalized = XVector2.Normalize(s2 - s1);
+
+        float c2;
+        if (s3.Equals(s1))
+        {
+            if (s4.Equals(s2))
+                return true;
+            else
+                c2 = XVector2.Cross(s3, s2);
+        }
+        else
+        {
+            if (s3.Equals(s2) && s4.Equals(s1))
+            {
+                return true;
+            }
+            c2 = XVector2.Cross(s3, s1);
+        }
+
+        float c1 = XVector2.Cross(s4 - s3, normalized);
+        if (XMath.Equals(c1, c2) && XMath.Equals(c1, 0))  // 两条线平行
+        {
+            float d1 = XMath.Dot(s3 - s1, normalized);
+            float d2 = XMath.Dot(s4 - s1, normalized);
+            float d3 = XMath.Dot(s2 - s1, normalized);
+            if (d1 < 0 && d2 < 0)
+                return false;
+            if (d1 <= 0 && d2 >= 0)  // 假设边的两个点不相同
+                return true;
+            if (d1 >= 0 && d2 <= 0)
+                return true;
+            if (d1 > 0 && d2 > 0)
+            {
+                if (d3 >= d2 && d3 <= d1)
+                    return true;
+                if (d3 >= d1 && d3 <= d2)
+                    return true;
+            }
+
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     public bool InSameLine(XVector2 start, XVector2 end)
     {
         float c2;
