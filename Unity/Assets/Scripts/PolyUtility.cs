@@ -10,6 +10,38 @@ using XFrame.PathFinding;
 /// </summary>
 public class PolyUtility
 {
+    public static List<XVector2> InsertPoint(List<XVector2> list, HashSet<XVector2> newPoints)
+    {
+        if (newPoints == null || newPoints.Count == 0)
+            return list;
+
+        List<EdgeSet> newEdges = new List<EdgeSet>();
+        for (int i = 0; i < list.Count; i++)
+        {
+            XVector2 p1 = list[i];
+            XVector2 p2 = list[(i + 1) % list.Count];
+            EdgeSet e = FindEdge(newEdges, p1, p2);
+            foreach (XVector2 p in newPoints)
+            {
+                if (e.InSameLine(p))
+                {
+                    e.Add(p);
+                }
+            }
+        }
+
+        List<XVector2> result = new List<XVector2>();
+        foreach (EdgeSet e in newEdges)
+        {
+            for (int i = 0; i < e.Vertices.Count - 1; i++)
+            {
+                result.Add(e.Vertices[i]);
+            }
+        }
+
+        return result;
+    }
+
     public static List<XVector2> Combine(List<List<XVector2>> list, out List<List<XVector2>> newList)
     {
         if (list == null || list.Count == 0)
@@ -17,12 +49,6 @@ public class PolyUtility
             Debug.LogError("list is null");
             newList = null;
             return null;
-        }
-
-        if (Test2.T1)
-        {
-            foreach (var item in list)
-                Test2.Inst.AddLines(item);
         }
 
         List<EdgeSet> newEdges = new List<EdgeSet>();

@@ -161,6 +161,25 @@ public class EdgeSet
         }
     }
 
+    public bool InSameLine(XVector2 point)
+    {
+        if (point.Equals(Start) || point.Equals(End)) return true;
+
+        float c = XVector2.Cross(point - Start, Normalized);
+        if (XMath.Equals(c, 0))
+        {
+            float d1 = XMath.Dot(point - Start, Normalized);
+            float d2 = XMath.Dot(End - Start, Normalized);
+            if (d1 >= 0 && d1 <= d2)
+                return true;
+            return false;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     public bool InSameLine(XVector2 start, XVector2 end)
     {
         float c2;

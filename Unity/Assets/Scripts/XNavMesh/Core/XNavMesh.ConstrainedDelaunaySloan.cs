@@ -101,8 +101,7 @@ namespace XFrame.PathFinding
                 //Delete the triangles
                 foreach (HalfEdgeFace t in trianglesToBeDeleted)
                 {
-                    if (!Test2.T1)
-                        DelaunayIncrementalSloan.DeleteTriangleFace(t, triangleData, true);
+                    DelaunayIncrementalSloan.DeleteTriangleFace(t, triangleData, true);
                 }
             }
 

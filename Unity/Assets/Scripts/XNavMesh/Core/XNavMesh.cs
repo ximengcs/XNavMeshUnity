@@ -144,14 +144,14 @@ namespace XFrame.PathFinding
             foreach (HalfEdgeFace face in m_Data.Faces)
             {
                 Triangle triangle = new Triangle(face);
-                //Debug.LogWarning($"real InnerFindRelationFaces triangle {Normalizer.UnNormalize(triangle)} ");
+                Debug.LogWarning($"real InnerFindRelationFaces triangle {Normalizer.UnNormalize(triangle)} ");
 
                 for (int i = 0; i < points.Count; i++)
                 {
                     XVector2 p1 = points[i];
                     XVector2 p2 = points[(i + 1) % points.Count];
-                    //Debug.LogWarning($"real InnerFindRelationFaces {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {triangle.Intersect(p1, p2)} |||| {Normalizer.UnNormalize(triangle)} ");
-                    if (triangle.Intersect(p1, p2))
+                    Debug.LogWarning($"real InnerFindRelationFaces {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {triangle.Intersect(p1, p2)} {triangle.Intersect2(p1, p2)} |||| {Normalizer.UnNormalize(triangle)} ");
+                    if (triangle.Intersect2(p1, p2))
                     {
                         if (!faces.Contains(face))
                             faces.Add(face);
@@ -241,6 +241,7 @@ namespace XFrame.PathFinding
 
             HashSet<HalfEdgeFace> relationFaces = new HashSet<HalfEdgeFace>();
             InnerFindRelationFaces(oldPoints, relationFaces);
+            Debug.LogWarning("check new points intersect");
             InnerFindRelationFaces(newPoints, relationFaces);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
@@ -257,6 +258,7 @@ namespace XFrame.PathFinding
                         newEdgeList.Add(point);
                 }
             }
+
             Debug.LogWarning($" newEdgeList ------------------------- {newEdgeList.Count} ");
             foreach (XVector2 point in newEdgeList)
             {
@@ -351,8 +353,8 @@ namespace XFrame.PathFinding
                 relationPoly.ResetFaceArea();
                 relationPoly.SetFaces(faces);
             }
-            if (!Test2.T1)
-                InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+
+            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
             Normalizer.UnNormalize(newPoints);  // 还原点
             return true;
@@ -921,14 +923,6 @@ namespace XFrame.PathFinding
             }
 
             lastLimit = tmpList;
-
-            if (Test2.T1)
-            {
-                Debug.LogWarning("edgelist-------------------");
-                foreach (XVector2 v in tmpList)
-                    Debug.LogWarning($" {Normalizer.UnNormalize(v)} ");
-                Debug.LogWarning("-------------------");
-            }
 
             ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 

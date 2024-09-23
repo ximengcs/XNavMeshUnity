@@ -27,7 +27,6 @@ public partial class Test2 : MonoBehaviour
         {
             Console.Inst.ExecuteCommand("t1-on");
             Console.Inst.ExecuteCommand("poly-rotate 1 0.1");
-            Console.Inst.ExecuteCommand("main-hide");
         });
     }
 
