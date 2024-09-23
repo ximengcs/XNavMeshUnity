@@ -63,8 +63,7 @@ public partial class Test2
 
     private void CreateObject(string param)
     {
-        param = param.TrimStart('(').TrimEnd(')');
-        Debug.LogWarning(param);
+        param = param.Trim(')', '(', ' ');
         string[] values = param.Split(',');
         float[] vs = new float[values.Length];
         for (int i = 0; i < values.Length; i++)
@@ -76,6 +75,7 @@ public partial class Test2
             }
         }
         GameObject inst = new GameObject(param);
+        inst.transform.position = new Vector3(vs[0], vs[1]);
     }
 
     private void CheckValid(string param)
