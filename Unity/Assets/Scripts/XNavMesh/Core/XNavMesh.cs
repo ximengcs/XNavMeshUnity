@@ -248,10 +248,49 @@ namespace XFrame.PathFinding
 
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<List<XVector2>> relationAllPoints);
 
+            HashSet<XVector2> newEdgeList = new HashSet<XVector2>();
+            foreach (var entry in relationlist)
+            {
+                foreach (XVector2 point in entry.Value)
+                {
+                    if (!newEdgeList.Contains(point))
+                        newEdgeList.Add(point);
+                }
+            }
+            Debug.LogWarning($" newEdgeList ------------------------- {newEdgeList.Count} ");
+            foreach (XVector2 point in newEdgeList)
+            {
+                Debug.LogWarning($" {Normalizer.UnNormalize(point)} ");
+            }
+            Debug.LogWarning($" ------------------------- after ");
+
+
+            Debug.LogWarning($"newAreaOutEdges ------------------- {newAreaOutEdges.Count}");
+            foreach (var e in newAreaOutEdges)
+            {
+                Debug.LogWarning($" {Normalizer.UnNormalize(e.P1)} ");
+            }
+            Debug.LogWarning("newAreaOutEdges--------------- after");
+
+
+            // TO DO 当点落在旧边上时 需要根据点拆分边
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
 
             if (newAreaData.Faces.Count == 0)
             {
+                Debug.LogWarning($" relationlist ---------------------------------- {relationlist.Count}");
+                foreach (var entry in relationlist)
+                {
+                    Debug.LogWarning("==============================");
+                    foreach (XVector2 v in entry.Value)
+                    {
+                        Debug.LogWarning($" {Normalizer.UnNormalize(v)} ");
+                    }
+                    List<XVector2> vs = new List<XVector2>(entry.Value);
+                    Normalizer.UnNormalize(vs);
+                    Test2.Inst.AddLines(vs);
+                }
+                Debug.LogWarning("--------------------------------------");
                 Debug.LogWarning($"relationAllPoints -------------------------- {relationAllPoints.Count}");
                 foreach (List<XVector2> l in relationAllPoints)
                 {
@@ -296,13 +335,6 @@ namespace XFrame.PathFinding
                 }
                 Debug.LogWarning("new points---------------after");
 
-                Debug.LogWarning($"newAreaOutEdges ------------------- {newAreaOutEdges.Count}");
-                foreach (var e in newAreaOutEdges)
-                {
-                    Debug.LogWarning($" {Normalizer.UnNormalize(e.P1)} ");
-                }
-                Debug.LogWarning("newAreaOutEdges--------------- after");
-
                 Debug.LogWarning($" newAreaData {newAreaData.Faces.Count} ----------------------");
                 foreach (var f in newAreaData.Faces)
                 {
@@ -319,7 +351,8 @@ namespace XFrame.PathFinding
                 relationPoly.ResetFaceArea();
                 relationPoly.SetFaces(faces);
             }
-            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+            if (!Test2.T1)
+                InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
             Normalizer.UnNormalize(newPoints);  // 还原点
             return true;
@@ -851,6 +884,7 @@ namespace XFrame.PathFinding
             {
                 tmpList.Add(e.P1);
             }
+
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
             if (extraPointsList != null)
@@ -887,6 +921,15 @@ namespace XFrame.PathFinding
             }
 
             lastLimit = tmpList;
+
+            if (Test2.T1)
+            {
+                Debug.LogWarning("edgelist-------------------");
+                foreach (XVector2 v in tmpList)
+                    Debug.LogWarning($" {Normalizer.UnNormalize(v)} ");
+                Debug.LogWarning("-------------------");
+            }
+
             ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
             //Debug.LogWarning("----------------------------------------");

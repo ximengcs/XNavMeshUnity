@@ -25,7 +25,7 @@ public class PolyUtility
                 Test2.Inst.AddLines(item);
         }
 
-        List<EdgeSet> edges = new List<EdgeSet>();
+        List<EdgeSet> newEdges = new List<EdgeSet>();
         for (int j = 0; j < list.Count - 1; j++)
         {
             List<XVector2> points = list[j];
@@ -33,7 +33,7 @@ public class PolyUtility
             {
                 XVector2 p1 = points[i];
                 XVector2 p2 = points[(i + 1) % points.Count];
-                EdgeSet e1 = FindEdge(edges, p1, p2);
+                EdgeSet e1 = FindEdge(newEdges, p1, p2);
                 for (int k = j + 1; k < list.Count; k++)
                 {
                     List<XVector2> points2 = list[k];
@@ -41,7 +41,7 @@ public class PolyUtility
                     {
                         XVector2 p3 = points2[l];
                         XVector2 p4 = points2[(l + 1) % points2.Count];
-                        EdgeSet e2 = FindEdge(edges, p3, p4);
+                        EdgeSet e2 = FindEdge(newEdges, p3, p4);
 
                         if (e2.Intersect(e1, out XVector2 newPoint))
                         {
@@ -71,7 +71,7 @@ public class PolyUtility
                 XVector2 p1 = points[i];
                 XVector2 p2 = points[(i + 1) % points.Count];
 
-                EdgeSet edge = FindEdge(edges, p1, p2);
+                EdgeSet edge = FindEdge(newEdges, p1, p2);
                 edge.GetPoints(p1, p2, target);
             }
         }

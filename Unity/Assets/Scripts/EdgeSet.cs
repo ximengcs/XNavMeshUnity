@@ -28,6 +28,14 @@ public class EdgeSet
         return sb.ToString();
     }
 
+    public string ToString(Normalizer normalizer)
+    {
+        StringBuilder sb = new StringBuilder();
+        foreach (XVector2 p in Vertices)
+            sb.Append($" {normalizer.UnNormalize(p)} ");
+        return sb.ToString();
+    }
+
     public List<XVector2> GetPoints(XVector2 start, XVector2 end, List<XVector2> points)
     {
         XVector2 nor = end - start;

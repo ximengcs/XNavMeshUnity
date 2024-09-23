@@ -101,7 +101,8 @@ namespace XFrame.PathFinding
                 //Delete the triangles
                 foreach (HalfEdgeFace t in trianglesToBeDeleted)
                 {
-                    DelaunayIncrementalSloan.DeleteTriangleFace(t, triangleData, true);
+                    if (!Test2.T1)
+                        DelaunayIncrementalSloan.DeleteTriangleFace(t, triangleData, true);
                 }
             }
 
@@ -123,14 +124,25 @@ namespace XFrame.PathFinding
                 //Is also needed when flood-filling so we dont jump over a constraint
                 HashSet<HalfEdge> constraintEdges = FindAllConstraintEdges(constraints, triangleData);
 
+                Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
                 //Each edge is associated with a face which should be deleted
                 foreach (HalfEdge e in constraintEdges)
                 {
+                    Debug.LogWarning($"eee {e.GetHashCode()} {f(e.PrevEdge.Vertex.Position)} {f(e.Vertex.Position)}");
                     if (!trianglesToCheck.Contains(e.Face))
                     {
+                        Debug.LogWarning($" {e.GetHashCode()} ");
+                        DebugUtility.Print(e.Face, Test2.Navmesh.Normalizer);
                         trianglesToCheck.Enqueue(e.Face);
                     }
                 }
+
+                Debug.LogWarning($"constraintEdges -------- {constraintEdges.Count} {trianglesToCheck.Count}");
+                foreach (HalfEdge e in constraintEdges)
+                {
+                    DebugUtility.Print(e);
+                }
+                Debug.LogWarning("constraintEdges -------- after ");
 
 
                 //Step 2. Find the rest of the triangles within the constraint by using a flood-fill algorithm
@@ -150,9 +162,14 @@ namespace XFrame.PathFinding
 
                     //Pick the first triangle in the list and investigate its neighbors
                     HalfEdgeFace t = trianglesToCheck.Dequeue();
+                    Debug.LogWarning("t-------------");
+                    DebugUtility.Print(t, Test2.Navmesh.Normalizer);
+                    Debug.LogWarning("t-------------");
+
 
                     //Add it for deletion
                     trianglesToDelete.Add(t);
+                    Debug.LogWarning("add delete");
 
                     //Investigate the triangles on the opposite sides of these edges
                     edgesToCheck.Clear();
@@ -167,6 +184,15 @@ namespace XFrame.PathFinding
                     //- If the edge between the neighbor and this triangle is not a constraint
                     foreach (HalfEdge e in edgesToCheck)
                     {
+                        string nei = null;
+                        if (e.OppositeEdge == null)
+                            nei = "isnull";
+                        else
+                        {
+                            DebugUtility.Print(e.OppositeEdge.Face, Test2.Navmesh.Normalizer);
+                            nei = $"{f(e.OppositeEdge.PrevEdge.Vertex.Position)}  {f(e.OppositeEdge.Vertex.Position)}  hash{e.OppositeEdge.Face.GetHashCode()} ";
+                        }
+                        Debug.LogWarning($" neighbor hash{e.Face.GetHashCode()} {f(e.PrevEdge.Vertex.Position)} {f(e.Vertex.Position)} {nei} ");
                         //No neighbor exists
                         if (e.OppositeEdge == null)
                         {
@@ -175,6 +201,8 @@ namespace XFrame.PathFinding
 
                         HalfEdgeFace neighbor = e.OppositeEdge.Face;
 
+                        Debug.LogWarning($"Contains {e.GetHashCode()} {trianglesToDelete.Contains(neighbor)} {trianglesToCheck.Contains(neighbor)} {constraintEdges.Contains(e)} ");
+
                         //We have already visited this neighbor
                         if (trianglesToDelete.Contains(neighbor) || trianglesToCheck.Contains(neighbor))
                         {
@@ -182,7 +210,7 @@ namespace XFrame.PathFinding
                         }
 
                         //This edge is a constraint and we can't jump across constraints 
-                        if (constraintEdges.Contains(e))
+                        if (constraintEdges.Contains(e)) // 所有边都在列表中，当另外一条边不在列表中时，将其林边加入并删除
                         {
                             continue;
                         }
@@ -190,6 +218,13 @@ namespace XFrame.PathFinding
                         trianglesToCheck.Enqueue(neighbor);
                     }
                 }
+
+                Debug.LogWarning("will delete --------");
+                foreach (HalfEdgeFace ff in trianglesToDelete)
+                {
+                    DebugUtility.Print(ff, Test2.Navmesh.Normalizer);
+                }
+                Debug.LogWarning("will delete -------- after ");
 
                 return trianglesToDelete;
             }

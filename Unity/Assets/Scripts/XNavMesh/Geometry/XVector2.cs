@@ -42,6 +42,11 @@ namespace XFrame.PathFinding
             }
         }
 
+        public override bool Equals(object obj)
+        {
+            return Equals((XVector2)obj);
+        }
+
         /// <summary>
         /// µ„≥À‘ÀÀ„ a°§b
         /// </summary>
