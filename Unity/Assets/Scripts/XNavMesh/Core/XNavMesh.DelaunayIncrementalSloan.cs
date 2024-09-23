@@ -298,6 +298,18 @@ namespace XFrame.PathFinding
                     HalfEdge e2 = e1.NextEdge;
                     HalfEdge e3 = e2.NextEdge;
 
+                    if (count > 950)
+                    {
+                        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                        Debug.LogWarning($"[walk] {f(p)} {f(e1.Vertex.Position)} {f(e2.Vertex.Position)} {e3.Vertex.Position} ");
+                        if (e1.OppositeEdge != null)
+                            Debug.LogWarning($"[walk]--e1-- {f(e1.OppositeEdge.Vertex.Position)} {f(e1.OppositeEdge.PrevEdge.Vertex.Position)} ");
+                        if (e2.OppositeEdge != null)
+                            Debug.LogWarning($"[walk]--e2-- {f(e2.OppositeEdge.Vertex.Position)} {f(e2.OppositeEdge.PrevEdge.Vertex.Position)} ");
+                        if (e3.OppositeEdge != null)
+                            Debug.LogWarning($"[walk]--e3-- {f(e3.OppositeEdge.Vertex.Position)} {f(e3.OppositeEdge.PrevEdge.Vertex.Position)} ");
+                    }
+
                     if (IsPointToTheRightOrOnLine(e1.PrevEdge.Vertex.Position, e1.Vertex.Position, p))
                     {
                         if (IsPointToTheRightOrOnLine(e2.PrevEdge.Vertex.Position, e2.Vertex.Position, p))

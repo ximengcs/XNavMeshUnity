@@ -112,6 +112,8 @@ namespace XFrame.PathFinding
         /// <returns>½á¹û</returns>
         public static XVector2 Normalize(XVector2 v)
         {
+            if (Math.Abs(v.X) <= float.Epsilon && Math.Abs(v.Y) <= float.Epsilon)
+                return XVector2.Zero;
             float magnitude = Magnitude(v);
             return new XVector2(v.X / magnitude, v.Y / magnitude);
         }

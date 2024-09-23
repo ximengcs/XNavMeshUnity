@@ -51,6 +51,17 @@ public class PolyUtility
             return null;
         }
 
+        //Debug.LogWarning($" Combine -------------------------- ");
+        //foreach (List<XVector2> e in list)
+        //{
+        //    Debug.LogWarning("==============");
+        //    foreach (XVector2 p in e)
+        //    {
+        //        Debug.LogWarning($" {Test2.Navmesh.Normalizer.UnNormalize(p)} ");
+        //    }
+        //}
+        //Debug.LogWarning($" ------------------------------- ");
+
         List<EdgeSet> newEdges = new List<EdgeSet>();
         for (int j = 0; j < list.Count - 1; j++)
         {
@@ -87,13 +98,6 @@ public class PolyUtility
 
         }
 
-        Debug.LogWarning($" newEdges ---------------------------{newEdges.Count}");
-        foreach (EdgeSet e in newEdges)
-        {
-            Debug.LogWarning(e.ToString(Test2.Navmesh.Normalizer));
-        }
-        Debug.LogWarning($" ------------------");
-
         newList = new List<List<XVector2>>(list.Count);
         foreach (List<XVector2> points in list)
         {
@@ -110,9 +114,18 @@ public class PolyUtility
         }
 
         // 精简点位，将小于某个值的点合并为一个
-        ClipPoints(newList, list);
+        // ClipPoints(newList, list);
 
-        return FindOutLine(newList);
+        List<XVector2> result = FindOutLine(newList);
+
+        //Debug.LogWarning($" result ---------------------------{result.Count}");
+        //foreach (XVector2 e in result)
+        //{
+        //    Debug.LogWarning(Test2.Navmesh.Normalizer.UnNormalize(e));
+        //}
+        //Debug.LogWarning($" ------------------");
+
+        return result;
     }
 
     private static EdgeSet FindEdge(List<EdgeSet> edges, XVector2 start, XVector2 end)
@@ -416,6 +429,11 @@ public class PolyUtility
                 float c1 = XVector2.Cross(cur, n1);
                 float d1 = XVector2.Dot(cur, n1);
 
+                if (cur.Equals(XVector2.Zero))
+                {
+                    Debug.LogError($" nan error {current.P2} {current.P1}");
+                }
+
                 if (calCount++ >= 950)
                 {
                     Debug.LogWarning($"Start check {f(current.P1)} {f(current.P2)}");
@@ -433,7 +451,7 @@ public class PolyUtility
 
                     if (calCount++ >= 950)
                     {
-                        Debug.LogWarning($"check e {f(e1.P1)} {f(e1.P2)} {f(e2.P1)} {f(e2.P2)} {c1} {d1} {c2} {d2} ");
+                        Debug.LogWarning($"check e {f(e1.P1)} {f(e1.P2)} {f(e2.P1)} {f(e2.P2)} {cur.X} {cur.Y} {c1} {d1} {c2} {d2} ");
                     }
 
                     if (c1 >= 0 && c2 >= 0)
@@ -467,6 +485,7 @@ public class PolyUtility
             }
         } while (!current.P1.Equals(leftBottom));
 
+        //Debug.LogWarning($"end--------------------------");
         return result;
     }
 

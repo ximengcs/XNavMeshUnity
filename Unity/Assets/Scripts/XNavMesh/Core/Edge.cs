@@ -19,7 +19,7 @@ namespace XFrame.PathFinding
 
         public bool Equals(XVector2 p1, XVector2 p2)
         {
-            return P1.Equals(p1) && P2.Equals(p2);
+            return (P1.Equals(p1) && P2.Equals(p2)) || (P1.Equals(p2) && P2.Equals(p1));
         }
 
         public static bool operator ==(Edge left, Edge right)

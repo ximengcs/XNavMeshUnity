@@ -50,12 +50,13 @@ namespace XFrame.PathFinding
                     // 找到所有与之(约束)相交的边
                     Queue<HalfEdge> intersectingEdges = FindIntersectingEdges_BruteForce(edges, c_p1, c_p2);
                     //timer.Stop();
-
+                    
                     //Debug.Log("Intersecting edges: " + intersectingEdges.Count);
 
                     //Step 3. Remove intersecting edges by flipping triangles
                     //This takes 0 seconds so is not bottleneck
                     //timer.Start();
+
                     List<HalfEdge> newEdges = RemoveIntersectingEdges(c_p1, c_p2, intersectingEdges);
                     //timer.Stop();
 
@@ -127,20 +128,20 @@ namespace XFrame.PathFinding
                 //Each edge is associated with a face which should be deleted
                 foreach (HalfEdge e in constraintEdges)
                 {
-                    Debug.LogWarning($"eee {e.GetHashCode()} {f(e.PrevEdge.Vertex.Position)} {f(e.Vertex.Position)}");
+                    //Debug.LogWarning($"eee {e.GetHashCode()} {f(e.PrevEdge.Vertex.Position)} {f(e.Vertex.Position)}");
                     if (!trianglesToCheck.Contains(e.Face))
                     {
-                        DebugUtility.Print(e.Face, Test2.Navmesh.Normalizer);
+                        //DebugUtility.Print(e.Face, Test2.Navmesh.Normalizer);
                         trianglesToCheck.Enqueue(e.Face);
                     }
                 }
 
-                Debug.LogWarning($"constraintEdges -------- {constraintEdges.Count} {trianglesToCheck.Count}");
-                foreach (HalfEdge e in constraintEdges)
-                {
-                    DebugUtility.Print(e);
-                }
-                Debug.LogWarning("constraintEdges -------- after ");
+                //Debug.LogWarning($"constraintEdges -------- {constraintEdges.Count} {trianglesToCheck.Count}");
+                //foreach (HalfEdge e in constraintEdges)
+                //{
+                //    DebugUtility.Print(e);
+                //}
+                //Debug.LogWarning("constraintEdges -------- after ");
 
 
                 //Step 2. Find the rest of the triangles within the constraint by using a flood-fill algorithm
@@ -471,23 +472,8 @@ namespace XFrame.PathFinding
 
                 int count = 0;
                 //While some edges still cross the constrained edge, do steps 3.1 and 3.2
-                int lastTry = -1;
                 while (intersectingEdges.Count > 0)
                 {
-                    if (lastTry == -1)
-                    {
-                        if (intersectingEdges.Count <= 4)
-                        {
-                            lastTry = 1;
-                        }
-                    }
-                    else
-                    {
-                        lastTry--;
-                        if (lastTry == 0)
-                            break;
-                    }
-
                     if (count++ > 1000)
                         throw new System.Exception("loop error");
                     //Step 3.1. Remove an edge from the list of edges that intersects the constrained edge
@@ -503,8 +489,8 @@ namespace XFrame.PathFinding
                     if (count > 950)
                     {
                         Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
-                        Debug.LogWarning($" remove intersect {f(v_i)} {f(v_j)} {f(v_k)} {f(v_3rd)} {f(v_l)} {f(v_opposite_pos)} {GeometryUtility.IsQuadrilateralConvex(v_k, v_l, v_3rd, v_opposite_pos)} ");
-                        Debug.LogWarning($" in same line {EdgeSet.InSameLine(new Edge(v_3rd, v_l), new Edge(v_3rd, v_opposite_pos))}");
+                        Debug.LogWarning($"[constraint] remove intersect {f(v_i)} {f(v_j)} [[ {f(v_k)} {f(v_l)} {f(v_3rd)} ]] {f(v_opposite_pos)} {GeometryUtility.IsQuadrilateralConvex(v_k, v_l, v_3rd, v_opposite_pos)} ");
+                        Debug.LogWarning($"[constraint] in same line {EdgeSet.InSameLine(new Edge(v_3rd, v_l), new Edge(v_3rd, v_opposite_pos))}");
                     }
 
                     //Step 3.2. If the two triangles don't form a convex quadtrilateral
@@ -512,6 +498,7 @@ namespace XFrame.PathFinding
                     //and go to step 3.1
                     if (!GeometryUtility.IsQuadrilateralConvex(v_k, v_l, v_3rd, v_opposite_pos))
                     {
+                        //Debug.LogWarning("[constraint] no flip");
                         if (intersectingEdges.Count > 0)
                             intersectingEdges.Enqueue(e);
 
@@ -519,6 +506,7 @@ namespace XFrame.PathFinding
                     }
                     else
                     {
+                        //Debug.LogWarning("[constraint] flip");
                         //Flip the edge like we did when we created the delaunay triangulation
                         HalfEdgeUtility.FlipTriangleEdge(e);
 
