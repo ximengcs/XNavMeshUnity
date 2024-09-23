@@ -93,23 +93,6 @@ namespace XFrame.PathFinding
             return index;
         }
 
-        public static bool CheckLineOutOfTriangle(Triangle triangle, HalfEdge e)
-        {
-            return CheckLineOutOfTriangle(triangle, e.ToEdge());
-        }
-
-        public static bool CheckLineOutOfTriangle(Triangle triangle, Edge lineEdge)
-        {
-            if (!LineLine(triangle.E1, lineEdge, true) &&
-                !LineLine(triangle.E2, lineEdge, true) &&
-                !LineLine(triangle.E3, lineEdge, true))
-            {
-                if (!triangle.Contains(lineEdge.P1))
-                    return true;
-            }
-            return false;
-        }
-
         //
         // Are two lines intersecting?
         //

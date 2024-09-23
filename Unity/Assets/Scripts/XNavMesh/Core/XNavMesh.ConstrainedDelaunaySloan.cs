@@ -130,7 +130,6 @@ namespace XFrame.PathFinding
                     Debug.LogWarning($"eee {e.GetHashCode()} {f(e.PrevEdge.Vertex.Position)} {f(e.Vertex.Position)}");
                     if (!trianglesToCheck.Contains(e.Face))
                     {
-                        Debug.LogWarning($" {e.GetHashCode()} ");
                         DebugUtility.Print(e.Face, Test2.Navmesh.Normalizer);
                         trianglesToCheck.Enqueue(e.Face);
                     }
@@ -161,14 +160,14 @@ namespace XFrame.PathFinding
 
                     //Pick the first triangle in the list and investigate its neighbors
                     HalfEdgeFace t = trianglesToCheck.Dequeue();
-                    Debug.LogWarning("t-------------");
-                    DebugUtility.Print(t, Test2.Navmesh.Normalizer);
-                    Debug.LogWarning("t-------------");
+                    //Debug.LogWarning("t-------------");
+                    //DebugUtility.Print(t, Test2.Navmesh.Normalizer);
+                    //Debug.LogWarning("t-------------");
 
 
                     //Add it for deletion
                     trianglesToDelete.Add(t);
-                    Debug.LogWarning("add delete");
+                    //Debug.LogWarning("add delete");
 
                     //Investigate the triangles on the opposite sides of these edges
                     edgesToCheck.Clear();
@@ -188,10 +187,10 @@ namespace XFrame.PathFinding
                             nei = "isnull";
                         else
                         {
-                            DebugUtility.Print(e.OppositeEdge.Face, Test2.Navmesh.Normalizer);
+                            //DebugUtility.Print(e.OppositeEdge.Face, Test2.Navmesh.Normalizer);
                             nei = $"{f(e.OppositeEdge.PrevEdge.Vertex.Position)}  {f(e.OppositeEdge.Vertex.Position)}  hash{e.OppositeEdge.Face.GetHashCode()} ";
                         }
-                        Debug.LogWarning($" neighbor hash{e.Face.GetHashCode()} {f(e.PrevEdge.Vertex.Position)} {f(e.Vertex.Position)} {nei} ");
+                        //Debug.LogWarning($" neighbor hash{e.Face.GetHashCode()} {f(e.PrevEdge.Vertex.Position)} {f(e.Vertex.Position)} {nei} ");
                         //No neighbor exists
                         if (e.OppositeEdge == null)
                         {
@@ -200,7 +199,7 @@ namespace XFrame.PathFinding
 
                         HalfEdgeFace neighbor = e.OppositeEdge.Face;
 
-                        Debug.LogWarning($"Contains {e.GetHashCode()} {trianglesToDelete.Contains(neighbor)} {trianglesToCheck.Contains(neighbor)} {constraintEdges.Contains(e)} ");
+                        //Debug.LogWarning($"Contains {e.GetHashCode()} {trianglesToDelete.Contains(neighbor)} {trianglesToCheck.Contains(neighbor)} {constraintEdges.Contains(e)} ");
 
                         //We have already visited this neighbor
                         if (trianglesToDelete.Contains(neighbor) || trianglesToCheck.Contains(neighbor))
@@ -218,12 +217,12 @@ namespace XFrame.PathFinding
                     }
                 }
 
-                Debug.LogWarning("will delete --------");
-                foreach (HalfEdgeFace ff in trianglesToDelete)
-                {
-                    DebugUtility.Print(ff, Test2.Navmesh.Normalizer);
-                }
-                Debug.LogWarning("will delete -------- after ");
+                //Debug.LogWarning("will delete --------");
+                //foreach (HalfEdgeFace ff in trianglesToDelete)
+                //{
+                //    DebugUtility.Print(ff, Test2.Navmesh.Normalizer);
+                //}
+                //Debug.LogWarning("will delete -------- after ");
 
                 return trianglesToDelete;
             }

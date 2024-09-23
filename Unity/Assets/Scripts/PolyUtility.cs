@@ -87,6 +87,13 @@ public class PolyUtility
 
         }
 
+        Debug.LogWarning($" newEdges ---------------------------{newEdges.Count}");
+        foreach (EdgeSet e in newEdges)
+        {
+            Debug.LogWarning(e.ToString(Test2.Navmesh.Normalizer));
+        }
+        Debug.LogWarning($" ------------------");
+
         newList = new List<List<XVector2>>(list.Count);
         foreach (List<XVector2> points in list)
         {

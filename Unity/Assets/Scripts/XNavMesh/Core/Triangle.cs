@@ -93,18 +93,6 @@ namespace XFrame.PathFinding
             }
         }
 
-        public bool Intersect(XVector2 p1, XVector2 p2)
-        {
-            Edge e1 = new Edge(P1, P2);
-            Edge e2 = new Edge(P2, P3);
-            Edge e3 = new Edge(P3, P1);
-            Edge e4 = new Edge(p1, p2);
-            if (XMath.LineLine(e1, e4, true)) return true;
-            if (XMath.LineLine(e2, e4, true)) return true;
-            if (XMath.LineLine(e3, e4, true)) return true;
-            return false;
-        }
-
         public bool Intersect2(XVector2 p1, XVector2 p2)
         {
             Edge e1 = new Edge(P1, P2);
@@ -114,52 +102,6 @@ namespace XFrame.PathFinding
             if (XMath.LineLine2(e1, e4, true, out XVector2 intersectPoint)) return true;
             if (XMath.LineLine2(e2, e4, true, out intersectPoint)) return true;
             if (XMath.LineLine2(e3, e4, true, out intersectPoint)) return true;
-            return false;
-        }
-
-        public bool Intersect(Triangle triangle)
-        {
-            Edge e1 = new Edge(P1, P2);
-            Edge e2 = new Edge(P2, P3);
-            Edge e3 = new Edge(P2, P3);
-            Edge e4 = new Edge(triangle.P1, triangle.P2);
-            Edge e5 = new Edge(triangle.P2, triangle.P3);
-            Edge e6 = new Edge(triangle.P3, triangle.P1);
-
-            if (XMath.LineLine(e1, e4, true)) return true;
-            if (XMath.LineLine(e1, e5, true)) return true;
-            if (XMath.LineLine(e1, e6, true)) return true;
-            if (XMath.LineLine(e2, e4, true)) return true;
-            if (XMath.LineLine(e2, e5, true)) return true;
-            if (XMath.LineLine(e2, e6, true)) return true;
-            if (XMath.LineLine(e3, e4, true)) return true;
-            if (XMath.LineLine(e3, e5, true)) return true;
-            if (XMath.LineLine(e3, e6, true)) return true;
-            return false;
-        }
-
-        public bool Intersect(HalfEdgeFace face)
-        {
-            Edge e1 = new Edge(P1, P2);
-            Edge e2 = new Edge(P2, P3);
-            Edge e3 = new Edge(P3, P1);
-
-            XVector2 p1 = face.Edge.Vertex.Position;
-            XVector2 p2 = face.Edge.NextEdge.Vertex.Position;
-            XVector2 p3 = face.Edge.PrevEdge.Vertex.Position;
-            Edge e4 = new Edge(p1, p2);
-            Edge e5 = new Edge(p2, p3);
-            Edge e6 = new Edge(p3, p1);
-
-            if (XMath.LineLine(e1, e4, true)) return true;
-            if (XMath.LineLine(e1, e5, true)) return true;
-            if (XMath.LineLine(e1, e6, true)) return true;
-            if (XMath.LineLine(e2, e4, true)) return true;
-            if (XMath.LineLine(e2, e5, true)) return true;
-            if (XMath.LineLine(e2, e6, true)) return true;
-            if (XMath.LineLine(e3, e4, true)) return true;
-            if (XMath.LineLine(e3, e5, true)) return true;
-            if (XMath.LineLine(e3, e6, true)) return true;
             return false;
         }
 

@@ -119,25 +119,6 @@ namespace XFrame.PathFinding
             face.Area = area;
         }
 
-        /// <summary>
-        /// 寻找与三角形相关联的面
-        /// </summary>
-        /// <param name="triangle">三角形(归一化)</param>
-        /// <returns>相关联的面集合</returns>
-        private HashSet<HalfEdgeFace> InnerFindRelationFaces(Triangle triangle, HashSet<HalfEdgeFace> result = null)
-        {
-            HashSet<HalfEdgeFace> faces = result != null ? result : new HashSet<HalfEdgeFace>();
-            foreach (HalfEdgeFace face in m_Data.Faces)
-            {
-                if (triangle.Intersect(face))
-                {
-                    if (!faces.Contains(face))
-                        faces.Add(face);
-                }
-            }
-            return faces;
-        }
-
         private HashSet<HalfEdgeFace> InnerFindRelationFaces(List<XVector2> points, HashSet<HalfEdgeFace> result = null)
         {
             HashSet<HalfEdgeFace> faces = result != null ? result : new HashSet<HalfEdgeFace>();
@@ -150,7 +131,7 @@ namespace XFrame.PathFinding
                 {
                     XVector2 p1 = points[i];
                     XVector2 p2 = points[(i + 1) % points.Count];
-                    Debug.LogWarning($"real InnerFindRelationFaces {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {triangle.Intersect(p1, p2)} {triangle.Intersect2(p1, p2)} |||| {Normalizer.UnNormalize(triangle)} ");
+                    Debug.LogWarning($"real InnerFindRelationFaces {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {triangle.Intersect2(p1, p2)} |||| {Normalizer.UnNormalize(triangle)} ");
                     if (triangle.Intersect2(p1, p2))
                     {
                         if (!faces.Contains(face))
@@ -259,27 +240,26 @@ namespace XFrame.PathFinding
                 }
             }
 
-            Debug.LogWarning($" newEdgeList ------------------------- {newEdgeList.Count} ");
-            foreach (XVector2 point in newEdgeList)
-            {
-                Debug.LogWarning($" {Normalizer.UnNormalize(point)} ");
-            }
-            Debug.LogWarning($" ------------------------- after ");
-
-
-            Debug.LogWarning($"newAreaOutEdges ------------------- {newAreaOutEdges.Count}");
-            foreach (var e in newAreaOutEdges)
-            {
-                Debug.LogWarning($" {Normalizer.UnNormalize(e.P1)} ");
-            }
-            Debug.LogWarning("newAreaOutEdges--------------- after");
-
-
             // TO DO 当点落在旧边上时 需要根据点拆分边
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
 
             if (newAreaData.Faces.Count == 0)
             {
+                Debug.LogWarning($" newEdgeList ------------------------- {newEdgeList.Count} ");
+                foreach (XVector2 point in newEdgeList)
+                {
+                    Debug.LogWarning($" {Normalizer.UnNormalize(point)} ");
+                }
+                Debug.LogWarning($" ------------------------- after ");
+
+
+                Debug.LogWarning($"newAreaOutEdges ------------------- {newAreaOutEdges.Count}");
+                foreach (var e in newAreaOutEdges)
+                {
+                    Debug.LogWarning($" {Normalizer.UnNormalize(e.P1)} ");
+                }
+                Debug.LogWarning("newAreaOutEdges--------------- after");
+
                 Debug.LogWarning($" relationlist ---------------------------------- {relationlist.Count}");
                 foreach (var entry in relationlist)
                 {
@@ -343,6 +323,7 @@ namespace XFrame.PathFinding
                     DebugUtility.Print(f, Normalizer);
                 }
                 Debug.LogWarning($" newAreaData ---------------------- after");
+                Debug.LogError("error");
             }
 
             // 标记区域
@@ -354,19 +335,11 @@ namespace XFrame.PathFinding
                 relationPoly.SetFaces(faces);
             }
 
-            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+            if (!Test2.T1)
+                InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
             Normalizer.UnNormalize(newPoints);  // 还原点
             return true;
-        }
-
-        public void RemoveWithExtraData(Triangle triangle, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
-        {
-            triangle = m_Normalizer.Normalize(triangle);
-            HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(triangle);
-            newAreaOutEdges = InnerGetEdgeList(triangle, relationFaces);
-            newAreaData = GenerateHalfEdgeData2(newAreaOutEdges);
-            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
         }
 
         private Dictionary<Poly, List<XVector2>> InnerFindRelationPolies(Poly poly, List<XVector2> points, HashSet<HalfEdgeFace> relationFaces, out List<List<XVector2>> relationAllPoints)
@@ -535,61 +508,6 @@ namespace XFrame.PathFinding
             }
         }
 
-        private List<Edge> InnerGetEdgeList(Triangle triangle, HashSet<HalfEdgeFace> faces)
-        {
-            List<Edge> edgeList = new List<Edge>();
-            foreach (HalfEdgeFace face in faces)
-            {
-                HalfEdge e1 = face.Edge;
-                HalfEdge e2 = e1.NextEdge;
-                HalfEdge e3 = e1.PrevEdge;
-
-                // 边界必然加入
-                if (e1.NextEdge.OppositeEdge == null) TryAddEdgeList(e1, edgeList);
-                if (e2.NextEdge.OppositeEdge == null) TryAddEdgeList(e2, edgeList);
-                if (e3.NextEdge.OppositeEdge == null) TryAddEdgeList(e3, edgeList);
-
-                // 与三角形不相交且在外面则加入
-                InnerCheckTriangleOut(triangle, e1, edgeList);
-                InnerCheckTriangleOut(triangle, e2, edgeList);
-                InnerCheckTriangleOut(triangle, e3, edgeList);
-            }
-
-            return InnerSortEdge(edgeList);
-        }
-
-        private List<Edge> InnerGetEdgeList2(Triangle triangle, Triangle triangle2, HashSet<HalfEdgeFace> faces)
-        {
-            List<Edge> edgeList = new List<Edge>();
-            foreach (HalfEdgeFace face in faces)
-            {
-                HalfEdge e1 = face.Edge;
-                HalfEdge e2 = e1.NextEdge;
-                HalfEdge e3 = e1.PrevEdge;
-
-                // 边界必然加入
-                if (e1.NextEdge.OppositeEdge == null) TryAddEdgeList(e1, edgeList);
-                if (e2.NextEdge.OppositeEdge == null) TryAddEdgeList(e2, edgeList);
-                if (e3.NextEdge.OppositeEdge == null) TryAddEdgeList(e3, edgeList);
-
-                // 与三角形不相交且在外面则加入
-                if (XMath.CheckLineOutOfTriangle(triangle, e1))
-                {
-                    InnerCheckTriangleOut(triangle2, e1, edgeList);
-                }
-                if (XMath.CheckLineOutOfTriangle(triangle, e2))
-                {
-                    InnerCheckTriangleOut(triangle2, e2, edgeList);
-                }
-                if (XMath.CheckLineOutOfTriangle(triangle, e3))
-                {
-                    InnerCheckTriangleOut(triangle2, e3, edgeList);
-                }
-            }
-
-            return InnerSortEdge(edgeList);
-        }
-
         private List<Edge> InnerGetEdgeList3(HashSet<HalfEdgeFace> faces)
         {
             List<Edge> edgeList = new List<Edge>();
@@ -716,14 +634,6 @@ namespace XFrame.PathFinding
             } while (current != startEdge);
 
             return InnerSortEdge(edgeList);
-        }
-
-        private void InnerCheckTriangleOut(Triangle triangle, HalfEdge e, List<Edge> edgeList)
-        {
-            if (XMath.CheckLineOutOfTriangle(triangle, e))
-            {
-                TryAddEdgeList(e, edgeList);
-            }
         }
 
         private void TryAddEdgeList(HalfEdge e, List<Edge> edgeList)

@@ -58,6 +58,24 @@ public partial class Test2
         Console.Inst.AddCommand("t1-on", OnT1);
         Console.Inst.AddCommand("t1-off", OffT1);
         Console.Inst.AddCommand("check-valid", CheckValid);
+        Console.Inst.AddCommand("entity", CreateObject);
+    }
+
+    private void CreateObject(string param)
+    {
+        param = param.TrimStart('(').TrimEnd(')');
+        Debug.LogWarning(param);
+        string[] values = param.Split(',');
+        float[] vs = new float[values.Length];
+        for (int i = 0; i < values.Length; i++)
+        {
+            if (!float.TryParse(values[i], out vs[i]))
+            {
+                Debug.LogError($"bad param {values[i]}");
+                return;
+            }
+        }
+        GameObject inst = new GameObject(param);
     }
 
     private void CheckValid(string param)
