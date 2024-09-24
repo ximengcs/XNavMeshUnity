@@ -1,5 +1,7 @@
 ﻿
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
 
@@ -19,6 +21,20 @@ public partial class Test2
             MeshArea.Dispose();
             MeshArea = null;
             ChangeLine = null;
+        }
+    }
+
+    private class HalfEdgeInfo
+    {
+        public HalfEdgeData Data;
+        public List<MeshInfo> m_Meshs;
+
+        public HalfEdgeInfo(HalfEdgeData data, Color color)
+        {
+            Data = data;
+
+            List<TriangleArea> triangles = XNavMesh.ToTriangles(Test2.Navmesh, data);
+            m_Meshs = MeshArea.GenerateMesh(triangles, color);
         }
     }
 }

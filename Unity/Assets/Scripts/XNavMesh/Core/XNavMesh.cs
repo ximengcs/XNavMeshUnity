@@ -10,19 +10,18 @@ namespace XFrame.PathFinding
         private AABB m_AABB;
         private Normalizer m_Normalizer;
         private HalfEdgeData m_Data;
-        private List<XVector2> m_Rect;
         private Dictionary<int, Poly> m_Polies;
 
         public AABB AABB => m_AABB;
 
         public Normalizer Normalizer => m_Normalizer;
+        public HalfEdgeData Data => m_Data;
 
         public XNavMesh(AABB aabb)
         {
             m_AABB = aabb;
             m_Normalizer = new Normalizer(aabb);
             m_Data = new HalfEdgeData();
-            m_Rect = new List<XVector2>();
             m_Polies = new Dictionary<int, Poly>();
 
             Initialize();
@@ -35,10 +34,6 @@ namespace XFrame.PathFinding
 
             XVector2 min = m_AABB.Min;
             XVector2 max = m_AABB.Max;
-            m_Rect.Add(new XVector2(min.X, min.Y));
-            m_Rect.Add(new XVector2(min.X, max.Y));
-            m_Rect.Add(new XVector2(max.X, max.Y));
-            m_Rect.Add(new XVector2(max.X, min.Y));
             Add(new XVector2(min.X, min.Y));
             Add(new XVector2(min.X, max.Y));
             Add(new XVector2(max.X, min.Y));

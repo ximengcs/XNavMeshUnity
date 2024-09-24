@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
@@ -18,15 +19,23 @@ public partial class Test2
     private MeshArea m_FullMeshArea;
     private Dictionary<int, PolyInfo> m_Polies;
     private List<List<Edge>> m_Edges;
+    private HalfEdgeInfo HalfDataTest;
 
     private void OnDrawGizmos()
     {
-        if (m_DrawGizmosFullMeshArea)
-            InnerDrawMesh(m_FullMeshArea);
+        if (m_FullMeshArea != null)
+        {
+            if (m_DrawGizmosFullMeshArea)
+                InnerDrawMesh(m_FullMeshArea.Meshs);
+        }
+        
         if (m_ShowPoly != null)
         {
-            InnerDrawMesh(m_ShowPoly.MeshArea);
-            InnerDrawLine(m_ShowPoly.ChangeLine);
+            if (m_DrawGizmosPoly)
+            {
+                InnerDrawMesh(m_ShowPoly.MeshArea.Meshs);
+                InnerDrawLine(m_ShowPoly.ChangeLine);
+            }
         }
         if (m_Edges != null)
         {
@@ -34,6 +43,10 @@ public partial class Test2
             {
                 InnerDrawLine(edges);
             }
+        }
+        if (HalfDataTest != null)
+        {
+            InnerDrawMesh(HalfDataTest.m_Meshs);
         }
     }
 
@@ -54,12 +67,33 @@ public partial class Test2
         Console.Inst.AddCommand("poly-scale", ScalePoly);
         Console.Inst.AddCommand("main-show", ShowMainArea);
         Console.Inst.AddCommand("main-hide", HideMainArea);
+        Console.Inst.AddCommand("main-save", SaveMain);
+        Console.Inst.AddCommand("main-open", OpenMain);
         Console.Inst.AddCommand("edge-test", TestEdge);
         Console.Inst.AddCommand("t1-on", OnT1);
         Console.Inst.AddCommand("t1-off", OffT1);
         Console.Inst.AddCommand("check-valid", CheckValid);
         Console.Inst.AddCommand("entity", CreateObject);
         Console.Inst.AddCommand("record-show", Recorder.Show);
+        Console.Inst.AddCommand("record-show", Recorder.Show);
+        Console.Inst.AddCommand("poly-show", ShowPoly);
+        Console.Inst.AddCommand("poly-hide", HidePoly);
+    }
+
+    private void SaveMain(string param)
+    {
+        byte[] bytes = DataUtility.ToBytes(Navmesh.Data);
+        File.WriteAllBytes("Assets/Data/main.bytes", bytes);
+        AssetDatabase.Refresh();
+        Debug.Log($"save success, size {bytes.Length}");
+    }
+
+    private void OpenMain(string param)
+    {
+        byte[] bytes = File.ReadAllBytes("Assets/Data/main.bytes");
+        HalfEdgeData data = DataUtility.FromBytes(bytes);
+        HalfDataTest = new HalfEdgeInfo(data, Color.cyan);
+        Debug.Log($"read success, face count {data.Faces.Count}");
     }
 
     private void CreateObject(string param)
@@ -116,6 +150,15 @@ public partial class Test2
         m_DrawGizmosFullMeshArea = false;
     }
 
+    private void ShowPoly(string param)
+    {
+        m_DrawGizmosPoly = true;
+    }
+
+    private void HidePoly(string param)
+    {
+        m_DrawGizmosPoly = false;
+    }
     private void Update()
     {
         foreach (var entry in m_Polies)
@@ -239,11 +282,11 @@ public partial class Test2
     }
 
     #region Draw Gizmos MeshArea
-    private void InnerDrawMesh(MeshArea area)
+    private void InnerDrawMesh(List<MeshInfo> area)
     {
         if (area != null)
         {
-            foreach (MeshInfo item in area.Meshs)
+            foreach (MeshInfo item in area)
             {
                 Color color = item.Color;
                 Gizmos.color = color;

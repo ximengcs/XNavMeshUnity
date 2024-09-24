@@ -116,7 +116,12 @@ public partial class Test
         public void Refresh(XNavMeshList<TriangleArea> triangles)
         {
             Dispose();
-            m_Meshs = new List<MeshInfo>();
+            m_Meshs = GenerateMesh(triangles, m_Color);
+        }
+
+        public static List<MeshInfo> GenerateMesh(IEnumerable<TriangleArea> triangles, Color originColor)
+        {
+            List<MeshInfo> meshes = new List<MeshInfo>();
             foreach (TriangleArea triangle in triangles)
             {
                 XVector2 v1 = triangle.Shape.P1;
@@ -139,13 +144,14 @@ public partial class Test
                 mesh.RecalculateBounds();
                 mesh.RecalculateNormals();
 
-                Color origin = m_Color;
+                Color origin = originColor;
                 if (triangle.Area == AreaType.Obstacle)
                 {
                     origin = Color.red;
                 }
-                m_Meshs.Add(new(triangle, mesh, origin));
+                meshes.Add(new(triangle, mesh, origin));
             }
+            return meshes;
         }
     }
 }

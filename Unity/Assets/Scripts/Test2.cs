@@ -14,6 +14,7 @@ public partial class Test2 : MonoBehaviour
 
     private PolyInfo m_ShowPoly;
     private bool m_DrawGizmosFullMeshArea = true;
+    private bool m_DrawGizmosPoly = true;
 
     private void AddTestCommand()
     {
