@@ -28,7 +28,7 @@ public partial class Test2
             if (m_DrawGizmosFullMeshArea)
                 InnerDrawMesh(m_FullMeshArea.Meshs);
         }
-        
+
         if (m_ShowPoly != null)
         {
             if (m_DrawGizmosPoly)
@@ -78,6 +78,18 @@ public partial class Test2
         Console.Inst.AddCommand("record-show", Recorder.Show);
         Console.Inst.AddCommand("poly-show", ShowPoly);
         Console.Inst.AddCommand("poly-hide", HidePoly);
+        Console.Inst.AddCommand("open", OpenData);
+        Console.Inst.AddCommand("test-tri", TestTri);
+    }
+
+    private void OpenData(string param)
+    {
+        param = param.TrimEnd(' ');
+        byte[] bytes = File.ReadAllBytes($"Assets/Data/{param}.bytes");
+        HalfEdgeData data = DataUtility.FromBytes(bytes);
+        HalfDataTest = new HalfEdgeInfo(data, Color.cyan);
+        Debug.Log($"read success, face count {data.Faces.Count}");
+        Debug.Log(data.CheckValid());
     }
 
     private void SaveMain(string param)
@@ -90,10 +102,7 @@ public partial class Test2
 
     private void OpenMain(string param)
     {
-        byte[] bytes = File.ReadAllBytes("Assets/Data/main.bytes");
-        HalfEdgeData data = DataUtility.FromBytes(bytes);
-        HalfDataTest = new HalfEdgeInfo(data, Color.cyan);
-        Debug.Log($"read success, face count {data.Faces.Count}");
+        OpenData("main");
     }
 
     private void CreateObject(string param)

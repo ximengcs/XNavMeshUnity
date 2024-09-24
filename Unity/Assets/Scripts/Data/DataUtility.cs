@@ -3,6 +3,8 @@ using System.IO;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEditor;
+using UnityEngine.AI;
 
 namespace XFrame.PathFinding
 {
@@ -75,6 +77,14 @@ namespace XFrame.PathFinding
             data = Marshal.PtrToStructure<T>(p);
             Marshal.FreeHGlobal(p);
             return offset + infoSize;
+        }
+
+        public static void Save(string name, HalfEdgeData data)
+        {
+            byte[] bytes = DataUtility.ToBytes(data);
+            File.WriteAllBytes($"Assets/Data/{name}-{DateTime.Now.ToString("yyyy-mm-dd")}.bytes", bytes);
+            AssetDatabase.Refresh();
+            Debug.Log($"save success, size {bytes.Length}");
         }
 
         public static byte[] ToBytes(HalfEdgeData data)

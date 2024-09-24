@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 namespace XFrame.PathFinding
@@ -33,92 +34,23 @@ namespace XFrame.PathFinding
             Edges = new HashSet<HalfEdge>();
         }
 
-        public bool CheckValid()
+        public string CheckValid()
         {
-            HashSet<HalfEdge> edges = new HashSet<HalfEdge>();
-            HashSet<HalfEdgeVertex> vertes = new HashSet<HalfEdgeVertex>();
-            foreach (HalfEdgeFace face in Faces)
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("half edge data check valid start-----");
+            sb.AppendLine($"faces count {Faces.Count}");
+            sb.AppendLine($"edges count {Edges.Count}");
+            sb.AppendLine($"vert count {Vertices.Count}");
+
+            if (Edges.Count != Faces.Count * 3)
             {
-                HalfEdge e1 = face.Edge;
-                HalfEdge e2 = e1.NextEdge;
-                HalfEdge e3 = e2.NextEdge;
-                edges.Add(e1);
-                edges.Add(e2);
-                edges.Add(e3);
-
-                if (!Edges.Contains(e1) || !Edges.Contains(e2) || !Edges.Contains(e3))
-                {
-                    UnityEngine.Debug.LogError("check edge valid error");
-                    return false;
-                }
-
-                HalfEdgeVertex v1 = e1.Vertex;
-                HalfEdgeVertex v2 = e2.Vertex;
-                HalfEdgeVertex v3 = e3.Vertex;
-
-                XVector2 p1 = v1.Position;
-                XVector2 p2 = v2.Position;
-                XVector2 p3 = v3.Position;
-                if (p1.Equals(p2) || p1.Equals(p3) || p2.Equals(p3))
-                {
-                    Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
-                    UnityEngine.Debug.LogError($"check edge vertex valid error {f(p1)} {f(p2)} {f(p3)} ");
-                    return false;
-                }
-
-                HalfEdge e1Op = e1.OppositeEdge;
-                HalfEdge e2Op = e2.OppositeEdge;
-                HalfEdge e3Op = e3.OppositeEdge;
-
-                if (e1Op != null)
-                {
-                    XVector2 p4 = e1Op.Vertex.Position;
-                    XVector2 p5 = e1Op.PrevEdge.Vertex.Position;
-                    if (!p3.Equals(p4) || !p1.Equals(p5))
-                    {
-                        UnityEngine.Debug.LogError($"check edge opposite valid error {Test2.Navmesh.Normalizer.UnNormalize(p3)} {Test2.Navmesh.Normalizer.UnNormalize(p5)} --- {Test2.Navmesh.Normalizer.UnNormalize(p1)} {Test2.Navmesh.Normalizer.UnNormalize(p4)}");
-                    }
-                }
-                if (e2Op != null)
-                {
-                    XVector2 p4 = e2Op.Vertex.Position;
-                    XVector2 p5 = e2Op.PrevEdge.Vertex.Position;
-                    if (!p1.Equals(p4) || !p2.Equals(p5))
-                    {
-                        UnityEngine.Debug.LogError($"check edge opposite valid error {Test2.Navmesh.Normalizer.UnNormalize(p1)} {Test2.Navmesh.Normalizer.UnNormalize(p5)} --- {Test2.Navmesh.Normalizer.UnNormalize(p2)} {Test2.Navmesh.Normalizer.UnNormalize(p4)}");
-                    }
-                }
-                if (e3Op != null)
-                {
-                    XVector2 p4 = e3Op.Vertex.Position;
-                    XVector2 p5 = e3Op.PrevEdge.Vertex.Position;
-                    if (!p2.Equals(p4) || !p3.Equals(p5))
-                    {
-                        UnityEngine.Debug.LogError($"check edge opposite valid error {Test2.Navmesh.Normalizer.UnNormalize(p2)} {Test2.Navmesh.Normalizer.UnNormalize(p5)} --- {Test2.Navmesh.Normalizer.UnNormalize(p3)} {Test2.Navmesh.Normalizer.UnNormalize(p4)}");
-                    }
-                }
-
-                vertes.Add(v1);
-                vertes.Add(v2);
-                vertes.Add(v3);
-                if (!Vertices.Contains(v1) || !Vertices.Contains(v2) || !Vertices.Contains(v3))
-                {
-                    UnityEngine.Debug.LogError("check vert valid error");
-                    return false;
-                }
+                sb.AppendLine("edge or face count is error");
             }
-
-            if (edges.Count != Edges.Count)
+            if (Vertices.Count != Edges.Count)
             {
-                UnityEngine.Debug.LogError("check edge count valid error");
-                return false;
+                sb.AppendLine("vert or edge count is error");
             }
-            if (vertes.Count != Vertices.Count)
-            {
-                UnityEngine.Debug.LogError("check vert count valid error");
-                return false;
-            }
-            return true;
+            return sb.ToString();
         }
 
         /// <summary>

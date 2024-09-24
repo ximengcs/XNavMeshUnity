@@ -44,10 +44,7 @@ namespace XFrame.PathFinding
 
         public void CheckDataValid()
         {
-            if (m_Data.CheckValid())
-            {
-                Debug.Log($"data is valid {m_Data.Faces.Count}");
-            }
+
         }
 
         public void Test()

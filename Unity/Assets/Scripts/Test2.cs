@@ -29,6 +29,18 @@ public partial class Test2 : MonoBehaviour
             //Console.Inst.ExecuteCommand("t1-on");
             Console.Inst.ExecuteCommand("poly-rotate-loop 1 0.1");
         });
+        Console.Inst.AddCommand("test-3", (param) =>
+        {
+            Console.Inst.ExecuteCommand("navmesh-add");
+            Console.Inst.ExecuteCommand("main-hide");
+            Console.Inst.ExecuteCommand("open walk-error-2024-17-24");
+            Console.Inst.ExecuteCommand("test-tri");
+        });
+    }
+
+    private void TestTri(string param)
+    {
+        XNavMesh.DelaunayIncrementalSloan.TriangulationWalk(new XVector2(-0.9968367f, -6.047449f), null, HalfDataTest.Data);
     }
 
     private void TestEdge(string param)

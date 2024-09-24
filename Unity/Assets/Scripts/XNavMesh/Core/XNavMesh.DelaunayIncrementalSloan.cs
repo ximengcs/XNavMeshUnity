@@ -10,7 +10,7 @@ namespace XFrame.PathFinding
         /// <summary>
         /// Delaunay三角形算法
         /// </summary>
-        private class DelaunayIncrementalSloan
+        public class DelaunayIncrementalSloan
         {
             /// <summary>
             /// 移除大三角形
@@ -305,6 +305,7 @@ namespace XFrame.PathFinding
                         Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
                         Triangle start = new Triangle(startTriangle);
                         Debug.LogError($"TriangulationWalk error {f(p)} <{f(start.P1)} {f(start.P2)} {f(start.P3)}>");
+                        DataUtility.Save("walk-error", triangulationData);
                         throw new Exception("loop exec");
                     }
 
