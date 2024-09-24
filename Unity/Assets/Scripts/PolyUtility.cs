@@ -46,6 +46,7 @@ public class PolyUtility
     {
         if (list == null || list.Count == 0)
         {
+            Recorder.Show(null);
             Debug.LogError("list is null");
             newList = null;
             return null;
@@ -378,6 +379,7 @@ public class PolyUtility
         {
             if (calCount++ >= 1000)
             {
+                Debug.LogWarning($" left botttom {f(leftBottom)} ");
                 foreach (List<XVector2> points in list)
                 {
                     Debug.LogWarning("======================");
@@ -385,7 +387,9 @@ public class PolyUtility
                     {
                         Debug.LogWarning($" {Test2.Navmesh.Normalizer.UnNormalize(p)} ");
                     }
+                    Debug.LogWarning("======================");
                 }
+                Recorder.Show(null);
                 Debug.LogError($"Error happen {current.P1} {list.Count} ");
                 break;
             }
@@ -407,6 +411,7 @@ public class PolyUtility
 
             if (edges.Count == 0)
             {
+                Recorder.Show(null);
                 Debug.LogError($"error happen {current.P1} ");
                 break;
             }
@@ -431,6 +436,7 @@ public class PolyUtility
 
                 if (cur.Equals(XVector2.Zero))
                 {
+                    Recorder.Show(null);
                     Debug.LogError($" nan error {current.P2} {current.P1}");
                 }
 
@@ -617,6 +623,7 @@ public class PolyUtility
         {
             if (calCount++ >= 100)
             {
+                Recorder.Show(null);
                 Debug.LogError("Error happen");
                 break;
             }
@@ -645,6 +652,7 @@ public class PolyUtility
 
             if (e1 == null && e2 == null)
             {
+                Recorder.Show(null);
                 Debug.LogError($"error happen {(e1 == null)} {(e2 == null)} {current.P1} ");
                 break;
             }

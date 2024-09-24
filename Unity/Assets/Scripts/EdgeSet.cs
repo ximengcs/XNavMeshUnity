@@ -42,6 +42,7 @@ public class EdgeSet
         float c = XVector2.Cross(nor, Normalized);
         if (!XMath.Equals(c, 0))
         {
+            Recorder.Show(null);
             Debug.LogError("error happen");
             return null;
         }
@@ -61,6 +62,7 @@ public class EdgeSet
 
             if (index == -1)
             {
+                Recorder.Show(null);
                 Debug.LogError("error happen");
                 return null;
             }
@@ -87,6 +89,7 @@ public class EdgeSet
 
             if (index == -1)
             {
+                Recorder.Show(null);
                 Debug.LogError("error happen");
                 return null;
             }

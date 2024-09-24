@@ -59,6 +59,7 @@ public partial class Test2
         Console.Inst.AddCommand("t1-off", OffT1);
         Console.Inst.AddCommand("check-valid", CheckValid);
         Console.Inst.AddCommand("entity", CreateObject);
+        Console.Inst.AddCommand("record-show", Recorder.Show);
     }
 
     private void CreateObject(string param)

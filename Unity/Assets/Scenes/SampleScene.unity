@@ -3173,7 +3173,7 @@ GameObject:
   - component: {fileID: 859269230}
   - component: {fileID: 859269231}
   m_Layer: 4
-  m_Name: Circle
+  m_Name: 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3187,7 +3187,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 859269229}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.3254804, y: -10.12742, z: 0}
+  m_LocalPosition: {x: -7.460446, y: -8.867449, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3257,7 +3257,7 @@ GameObject:
   - component: {fileID: 879065282}
   - component: {fileID: 879065283}
   m_Layer: 4
-  m_Name: Circle (2)
+  m_Name: 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4251,7 +4251,7 @@ GameObject:
   - component: {fileID: 1173948001}
   - component: {fileID: 1173948002}
   m_Layer: 4
-  m_Name: Circle
+  m_Name: 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4399,7 +4399,7 @@ GameObject:
   - component: {fileID: 1265740962}
   - component: {fileID: 1265740963}
   m_Layer: 4
-  m_Name: Circle (2)
+  m_Name: 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4413,7 +4413,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1265740961}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.931364, y: -3.58639, z: -0.17581916}
+  m_LocalPosition: {x: -0.2506271, y: -6.926601, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4687,7 +4687,7 @@ GameObject:
   - component: {fileID: 1430694278}
   - component: {fileID: 1430694279}
   m_Layer: 4
-  m_Name: Circle (1)
+  m_Name: 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4701,7 +4701,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1430694277}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.943193, y: -6.386103, z: -0.17581916}
+  m_LocalPosition: {x: -2.488891, y: -4.305905, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4905,7 +4905,7 @@ GameObject:
   - component: {fileID: 1536644573}
   - component: {fileID: 1536644574}
   m_Layer: 4
-  m_Name: Circle (3)
+  m_Name: 4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6170,7 +6170,7 @@ GameObject:
   - component: {fileID: 1974445642}
   - component: {fileID: 1974445643}
   m_Layer: 4
-  m_Name: Circle (1)
+  m_Name: 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -212,117 +212,45 @@ namespace XFrame.PathFinding
 
         private bool InnerChangeWithExtraData(Poly poly, List<XVector2> oldPoints, List<XVector2> newPoints, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
+            Recorder.MarkCurrent();
             newAreaData = null;
             newAreaOutEdges = null;
             if (newPoints[0].Equals(oldPoints[0]))  // 点位没有发生变化直接返回失败
                 return false;
 
+            Recorder.SetPolyId(poly.Id);
+
             Normalizer.Normalize(oldPoints);
             Normalizer.Normalize(newPoints);
+
+            Recorder.SetOldPoints(oldPoints);
+            Recorder.SetNewPoints(newPoints);
 
             HashSet<HalfEdgeFace> relationFaces = new HashSet<HalfEdgeFace>();
             InnerFindRelationFaces(oldPoints, relationFaces);
 
             InnerFindRelationFaces(newPoints, relationFaces);
+
+            Recorder.SetRelationFaces(relationFaces);
+
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
+            Recorder.SetNewAreaOutEdges(newAreaOutEdges);
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
                 return false;
 
+            Recorder.SetPolies(m_Polies);
+
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<List<XVector2>> relationAllPoints);
 
-            HashSet<XVector2> newEdgeList = new HashSet<XVector2>();
-            foreach (var entry in relationlist)
-            {
-                foreach (XVector2 point in entry.Value)
-                {
-                    if (!newEdgeList.Contains(point))
-                        newEdgeList.Add(point);
-                }
-            }
+            Recorder.SetRelationAllPoints(relationAllPoints);
 
-            // TO DO 当点落在旧边上时 需要根据点拆分边
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
+
+            Recorder.SetHalfEdgeData(newAreaData);
 
             if (newAreaData.Faces.Count == 0)
             {
-                Debug.LogWarning($" newEdgeList ------------------------- {newEdgeList.Count} ");
-                foreach (XVector2 point in newEdgeList)
-                {
-                    Debug.LogWarning($" {Normalizer.UnNormalize(point)} ");
-                }
-                Debug.LogWarning($" ------------------------- after ");
-
-
-                Debug.LogWarning($"newAreaOutEdges ------------------- {newAreaOutEdges.Count}");
-                foreach (var e in newAreaOutEdges)
-                {
-                    Debug.LogWarning($" {Normalizer.UnNormalize(e.P1)} ");
-                }
-                Debug.LogWarning("newAreaOutEdges--------------- after");
-
-                Debug.LogWarning($" relationlist ---------------------------------- {relationlist.Count}");
-                foreach (var entry in relationlist)
-                {
-                    Debug.LogWarning("==============================");
-                    foreach (XVector2 v in entry.Value)
-                    {
-                        Debug.LogWarning($" {Normalizer.UnNormalize(v)} ");
-                    }
-                    List<XVector2> vs = new List<XVector2>(entry.Value);
-                    Normalizer.UnNormalize(vs);
-                    Test2.Inst.AddLines(vs);
-                }
-                Debug.LogWarning("--------------------------------------");
-                Debug.LogWarning($"relationAllPoints -------------------------- {relationAllPoints.Count}");
-                foreach (List<XVector2> l in relationAllPoints)
-                {
-                    Debug.LogWarning("=========================");
-                    foreach (XVector2 l2 in l)
-                    {
-                        Debug.LogWarning($" {Normalizer.UnNormalize(l2)} ");
-                    }
-                }
-                Debug.LogWarning($"relationAllPoints -------------------------- after");
-
-                Debug.LogWarning($"polies--------");
-                foreach (var item in m_Polies)
-                {
-                    Poly p = item.Value;
-                    Debug.LogWarning($" poly id {p.Id} ");
-                    foreach (XVector2 po in p.Points)
-                    {
-                        Debug.LogWarning($" point {po} ");
-                    }
-                }
-                Debug.LogWarning($"polies--------after");
-
-                Debug.LogWarning("poly points---------------");
-                foreach (XVector2 p in poly.Points)
-                {
-                    Debug.LogWarning($" {p} ");
-                }
-                Debug.LogWarning("old points---------------after");
-
-                Debug.LogWarning("old points---------------");
-                foreach (XVector2 p in oldPoints)
-                {
-                    Debug.LogWarning($" {Normalizer.UnNormalize(p)} ");
-                }
-                Debug.LogWarning("old points---------------after");
-
-                Debug.LogWarning("new points---------------");
-                foreach (XVector2 p in newPoints)
-                {
-                    Debug.LogWarning($" {Normalizer.UnNormalize(p)} ");
-                }
-                Debug.LogWarning("new points---------------after");
-
-                Debug.LogWarning($" newAreaData {newAreaData.Faces.Count} ----------------------");
-                foreach (var f in newAreaData.Faces)
-                {
-                    DebugUtility.Print(f, Normalizer);
-                }
-                Debug.LogWarning($" newAreaData ---------------------- after");
+                Recorder.Show(null);
                 Debug.LogError("error");
             }
 
@@ -503,6 +431,7 @@ namespace XFrame.PathFinding
             }
             else
             {
+                Recorder.Show(null);
                 Debug.LogError("not find new triangle");
             }
         }
@@ -586,6 +515,7 @@ namespace XFrame.PathFinding
                     XVector2 p2 = e.NextEdge.Vertex.Position;
                     if (!p1.Equals(curE.P2))
                     {
+                        Recorder.Show(null);
                         Debug.LogError($"error happen {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)}");
                     }
 
@@ -664,7 +594,10 @@ namespace XFrame.PathFinding
             do
             {
                 if (count++ > 1000)
+                {
+                    Recorder.Show(null);
                     throw new System.Exception("loop error");
+                }
                 Edge tmp = curEdge;
                 curEdge = null;
                 foreach (Edge e in edgeList)
@@ -837,14 +770,6 @@ namespace XFrame.PathFinding
 
             //Debug.LogWarning("----------------------------------------");
             return tmpData;
-        }
-
-        public void ShowLastLimit()
-        {
-            Debug.LogWarning($"ShowLastLimit ----------------- {lastLimit.Count}");
-            foreach (XVector2 v in lastLimit)
-                Debug.LogWarning($" {Normalizer.UnNormalize(v)} ");
-            Debug.LogWarning("==============");
         }
 
         public static List<XVector2> lastLimit = null;

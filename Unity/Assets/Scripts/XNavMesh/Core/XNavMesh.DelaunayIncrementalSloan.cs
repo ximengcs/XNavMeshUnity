@@ -179,7 +179,11 @@ namespace XFrame.PathFinding
                 while (trianglesToInvestigate.Count > 0)
                 {
                     if (count++ > 1000)
+                    {
+
+                        Recorder.Show(null);
                         throw new Exception("loop error");
+                    }
 
                     HalfEdge edgeToTest = trianglesToInvestigate.Pop();
 
@@ -227,7 +231,11 @@ namespace XFrame.PathFinding
                 while (tCurrent != tStart)
                 {
                     if (count++ > 1000)
+                    {
+
+                        Recorder.Show(null);
                         throw new Exception("loop error");
+                    }
 
                     //点对向的边
                     HalfEdge edgeOppositeRotateVertex = rotateAroundThis.Edge.NextEdge.OppositeEdge;
@@ -286,12 +294,19 @@ namespace XFrame.PathFinding
                     return null;
                 }
 
+                startTriangle = currentTriangle;
                 int count = 0;
                 // 从上面随机到的起始点开始寻找 点所在的三角形面
                 while (true)
                 {
                     if (count++ > 1000)
+                    {
+                        Recorder.Show(null);
+                        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                        Triangle start = new Triangle(startTriangle);
+                        Debug.LogError($"TriangulationWalk error {f(p)} <{f(start.P1)} {f(start.P2)} {f(start.P3)}>");
                         throw new Exception("loop exec");
+                    }
 
                     // 如果这个点在三角形的三边的右侧，则它就在三角形内，如果不是，则移动到下一个三角形
                     HalfEdge e1 = currentTriangle.Edge;
@@ -325,6 +340,7 @@ namespace XFrame.PathFinding
                                 // 不在此三角形内，移动到左边的三角形
                                 if (e3.OppositeEdge == null)
                                 {
+                                    Recorder.Show(null);
                                     if (Test2.Navmesh != null)
                                     {
                                         Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
@@ -343,6 +359,7 @@ namespace XFrame.PathFinding
                         {
                             if (e2.OppositeEdge == null)
                             {
+                                Recorder.Show(null);
                                 if (Test2.Navmesh != null)
                                 {
                                     Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
@@ -362,6 +379,7 @@ namespace XFrame.PathFinding
                     {
                         if (e1.OppositeEdge == null)
                         {
+                            Recorder.Show(null);
                             if (Test2.Navmesh != null)
                             {
                                 Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
