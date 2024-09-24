@@ -50,6 +50,14 @@ namespace XFrame.PathFinding
             {
                 sb.AppendLine("vert or edge count is error");
             }
+
+            Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+            sb.AppendLine($"face ============= {Faces.Count}");
+            foreach (HalfEdgeFace face in Faces)
+            {
+                sb.AppendLine($" <{f(face.Edge.Vertex.Position)} {f(face.Edge.NextEdge.Vertex.Position)} {f(face.Edge.PrevEdge.Vertex.Position)}>");
+            }
+
             return sb.ToString();
         }
 
