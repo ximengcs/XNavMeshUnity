@@ -34,6 +34,48 @@ namespace XFrame.PathFinding
             Edges = new HashSet<HalfEdge>();
         }
 
+        public HalfEdgeData Clone()
+        {
+            HalfEdgeData data = new HalfEdgeData();
+            Dictionary<HalfEdgeVertex, HalfEdgeVertex> vertMap = new Dictionary<HalfEdgeVertex, HalfEdgeVertex>();
+            Dictionary<HalfEdge, HalfEdge> edgeMap = new Dictionary<HalfEdge, HalfEdge>();
+            Dictionary<HalfEdgeFace, HalfEdgeFace> faceMap = new Dictionary<HalfEdgeFace, HalfEdgeFace>();
+
+            foreach (HalfEdgeVertex v in Vertices)
+            {
+                HalfEdgeVertex newVert = new HalfEdgeVertex(v.Position);
+                vertMap.Add(v, newVert);
+                HalfEdge e = new HalfEdge(newVert);
+                newVert.Edge = e;
+                edgeMap.Add(v.Edge, e);
+
+                data.Vertices.Add(newVert);
+                data.Edges.Add(e);
+            }
+
+            foreach (HalfEdge e in Edges)
+            {
+                if (!faceMap.ContainsKey(e.Face))
+                {
+                    HalfEdgeFace face = new HalfEdgeFace(edgeMap[e.Face.Edge]);
+                    face.Area = e.Face.Area;
+                    faceMap.Add(e.Face, face);
+                    data.Faces.Add(face);
+                }
+            }
+
+            foreach (HalfEdge e in Edges)
+            {
+                HalfEdge newEdge = edgeMap[e];
+                newEdge.Face = faceMap[e.Face];
+                newEdge.NextEdge = edgeMap[e.NextEdge];
+                newEdge.PrevEdge = edgeMap[e.PrevEdge];
+                if (e.OppositeEdge != null)
+                    newEdge.OppositeEdge = edgeMap[e.OppositeEdge];
+            }
+            return data;
+        }
+
         public string CheckValid()
         {
             StringBuilder sb = new StringBuilder();

@@ -82,7 +82,7 @@ namespace XFrame.PathFinding
         public static void Save(string name, HalfEdgeData data)
         {
             byte[] bytes = DataUtility.ToBytes(data);
-            File.WriteAllBytes($"Assets/Data/{name}-{DateTime.Now.ToString("yyyy-mm-dd")}.bytes", bytes);
+            File.WriteAllBytes($"Assets/Data/{name}-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.bytes", bytes);
             AssetDatabase.Refresh();
             Debug.Log($"save success, size {bytes.Length}");
         }

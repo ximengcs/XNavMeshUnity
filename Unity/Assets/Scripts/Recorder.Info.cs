@@ -27,7 +27,7 @@ public static partial class Recorder
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Id {Id}");
             sb.AppendLine($"Points ~~~~~~~~ {Points.Count}");
-            foreach(XVector2 p in Points)
+            foreach (XVector2 p in Points)
                 sb.AppendLine($" {(p)} ");
             sb.AppendLine("++++++++++++++++");
             sb.AppendLine($"Faces ~~~~~~~~ {Faces.Count}");
@@ -47,7 +47,9 @@ public static partial class Recorder
         public List<XVector2> NewAreaOutEdges;
         public List<PolyFrame> Polies;
         public List<List<XVector2>> RelationAllPoints;
+        public Dictionary<int, List<XVector2>> PolyNewPoints;
         public List<Triangle> NewHalfEdgeData;
+        public HalfEdgeData CloneData;
 
         public override string ToString()
         {
@@ -91,6 +93,15 @@ public static partial class Recorder
             }
             sb.AppendLine($"-----------------------------------------------------");
 
+            sb.AppendLine($"PolyNewPoints ========================= {PolyNewPoints.Count}");
+            foreach (var item in PolyNewPoints)
+            {
+                sb.AppendLine($"poly -> {item.Key} ~~~~~~~~~~");
+                foreach (XVector2 p in item.Value)
+                    sb.AppendLine($" {f(p)} ");
+            }
+            sb.AppendLine($"-----------------------------------------------------");
+
             sb.AppendLine($"NewHalfEdgeData ========================= {NewHalfEdgeData.Count}");
             foreach (Triangle tri in NewHalfEdgeData)
                 sb.AppendLine($" <{f(tri.P1)} {tri.P2} {tri.P3}> ");
@@ -108,6 +119,7 @@ public static partial class Recorder
             Polies = new List<PolyFrame>();
             RelationAllPoints = new List<List<XVector2>>();
             NewHalfEdgeData = new List<Triangle>();
+            PolyNewPoints = new Dictionary<int, List<XVector2>>();
         }
 
         public void SetOldPoints(List<XVector2> oldPoints)
@@ -138,6 +150,14 @@ public static partial class Recorder
             {
                 PolyFrame frame = new PolyFrame(item.Value);
                 Polies.Add(frame);
+            }
+        }
+
+        public void SetRelationNewPoint(Dictionary<Poly, List<XVector2>> list)
+        {
+            foreach (var item in list)
+            {
+                PolyNewPoints.Add(item.Key.Id, new List<XVector2>(item.Value));
             }
         }
 

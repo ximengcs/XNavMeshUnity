@@ -75,11 +75,98 @@ public partial class Test2
         Console.Inst.AddCommand("check-valid", CheckValid);
         Console.Inst.AddCommand("entity", CreateObject);
         Console.Inst.AddCommand("record-show", Recorder.Show);
-        Console.Inst.AddCommand("record-show", Recorder.Show);
+        Console.Inst.AddCommand("record-gene-relation", GenerateRelation);
         Console.Inst.AddCommand("poly-show", ShowPoly);
         Console.Inst.AddCommand("poly-hide", HidePoly);
         Console.Inst.AddCommand("open", OpenData);
         Console.Inst.AddCommand("test-tri", TestTri);
+
+        Console.Inst.AddCommand("record-cur-new-data-entity", RecordCurNewDataEntity);
+    }
+
+    private void GenerateRelation(string param)
+    {
+        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        Dictionary<int, List<XVector2>> list = Recorder.CurrentInfo.PolyNewPoints;
+        foreach (var item in list)
+        {
+            GameObject inst = new GameObject($"poly {item.Key}");
+            foreach (XVector2 point in item.Value)
+            {
+                GameObject p = new GameObject($" {f(point)} ");
+                p.transform.SetParent(inst.transform);
+                p.transform.position = f(point).ToUnityVec3();
+            }
+        }
+    }
+
+    private void RecordCurNewDataEntity(string param)
+    {
+        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        GameObject dataInst = new GameObject("triangle");
+        foreach (HalfEdgeFace face in Recorder.CurrentInfo.CloneData.Faces)
+        {
+            HalfEdge e1 = face.Edge;
+            HalfEdge e2 = e1.NextEdge;
+            HalfEdge e3 = e2.NextEdge;
+
+            Triangle triangle = new Triangle(face);
+            GameObject tri = new GameObject($"< {f(e1.Vertex.Position)} {f(e2.Vertex.Position)} {f(e3.Vertex.Position)}>");
+            tri.transform.SetParent(dataInst.transform);
+
+            GameObject selfPoints = new GameObject("selfPoints");
+            selfPoints.transform.SetParent(tri.transform);
+
+            GameObject p1 = new GameObject(f(triangle.P1).ToString());
+            p1.transform.SetParent(selfPoints.transform);
+            p1.transform.position = f(triangle.P1).ToUnityVec3();
+
+            GameObject p2 = new GameObject(f(triangle.P2).ToString());
+            p2.transform.SetParent(selfPoints.transform);
+            p2.transform.position = f(triangle.P2).ToUnityVec3();
+
+            GameObject p3 = new GameObject(f(triangle.P3).ToString());
+            p3.transform.SetParent(selfPoints.transform);
+            p3.transform.position = f(triangle.P3).ToUnityVec3();
+
+            if (e1.OppositeEdge != null) GenerateSubStruct(e1, p1);
+            if (e2.OppositeEdge != null) GenerateSubStruct(e2, p2);
+            if (e3.OppositeEdge != null) GenerateSubStruct(e3, p3);
+        }
+    }
+
+    private void GenerateSubStruct(HalfEdge e1, GameObject p1)
+    {
+        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        HalfEdge ope1 = e1.OppositeEdge;
+        HalfEdge ope2 = ope1.NextEdge;
+        HalfEdge ope3 = ope2.NextEdge;
+
+        GameObject p1Op_ = new GameObject("p1Op");
+        p1Op_.transform.SetParent(p1.transform);
+
+        GameObject p1Op_p1 = new GameObject("p1");
+        p1Op_p1.transform.SetParent(p1Op_.transform);
+        p1Op_p1.transform.position = f(ope1.Vertex.Position).ToUnityVec3();
+
+        GameObject p1Op_p2 = new GameObject("p2");
+        p1Op_p2.transform.SetParent(p1Op_.transform);
+        p1Op_p2.transform.position = f(ope2.Vertex.Position).ToUnityVec3();
+
+        GameObject p1Op = new GameObject("p1OpFace");
+        p1Op.transform.SetParent(p1.transform);
+
+        GameObject p1Opp1 = new GameObject("p1");
+        p1Opp1.transform.SetParent(p1Op.transform);
+        p1Opp1.transform.position = f(ope1.Vertex.Position).ToUnityVec3();
+
+        GameObject p1Opp2 = new GameObject("p2");
+        p1Opp2.transform.SetParent(p1Op.transform);
+        p1Opp2.transform.position = f(ope2.Vertex.Position).ToUnityVec3();
+
+        GameObject p1Opp3 = new GameObject("p3");
+        p1Opp3.transform.SetParent(p1Op.transform);
+        p1Opp3.transform.position = f(ope3.Vertex.Position).ToUnityVec3();
     }
 
     private void OpenData(string param)

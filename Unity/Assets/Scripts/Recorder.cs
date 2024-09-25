@@ -37,6 +37,11 @@ public static partial class Recorder
         CurrentInfo.SetPolies(polies);
     }
 
+    public static void SetRelationNewPoint(Dictionary<Poly, List<XVector2>> list)
+    {
+        CurrentInfo.SetRelationNewPoint(list);
+    }
+
     public static void SetRelationAllPoints(List<List<XVector2>> relationAllPoints)
     {
         CurrentInfo.SetRelationAllPoints(relationAllPoints);
@@ -44,6 +49,7 @@ public static partial class Recorder
 
     public static void SetHalfEdgeData(HalfEdgeData data)
     {
+        CurrentInfo.CloneData = data.Clone();
         CurrentInfo.SetHalfEdgeData(data);
     }
 
