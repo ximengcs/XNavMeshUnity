@@ -72,134 +72,197 @@ namespace XFrame.PathFinding
             /// <param name="flippedEdges"></param>
             public static void InsertNewPointInTriangulation(XVector2 p, HalfEdgeData triangulationData)
             {
-                // 找到点所在的三角形面
-                HalfEdgeFace f = TriangulationWalk(p, null, triangulationData);
-
-                // 如果没有找到三角面，可能的原因是点在范围之外
-                if (f == null)
-                {
-                    return;
-                }
-
+                // 如果点已存在直接返回
                 if (FindVert(p, triangulationData))
                 {
                     return;
                 }
 
-                // 如果点落在三角形边上,并且所在边对边为空(即在边缘上)，则直接连接此点到对点
-                if (XMath.CheckPointOnTriangleLine(new Triangle(f), p, out XVector2 oppositePoint))
+                // 找到点所在的三角形面
+                TriangleWalkResult walkResult = TriangulationWalk(p, null, triangulationData, out List<HalfEdgeFace> faces);
+
+                // 如果没有找到三角面，可能的原因是点在范围之外
+                if (walkResult.Relation == PointTriangleRelation.None)
                 {
-                    HalfEdge edge;
-                    HalfEdge e1 = f.Edge;
-                    HalfEdge e2 = e1.NextEdge;
-                    HalfEdge e3 = e2.NextEdge;
-
-                    if (e1.Vertex.Position.Equals(oppositePoint))
-                        edge = e1;
-                    else if (e2.Vertex.Position.Equals(oppositePoint))
-                        edge = e2;
-                    else
-                        edge = e3;
-
-                    if (edge.PrevEdge.OppositeEdge == null) // 所在边对边为空
-                    {
-                        HalfEdge f1_e2 = edge.NextEdge;
-                        HalfEdge f2_e3 = edge.PrevEdge;
-
-                        HalfEdgeVertex f1_p = new HalfEdgeVertex(p);
-                        HalfEdge f1_e1 = edge;
-                        HalfEdge f1_e3 = new HalfEdge(f1_p);
-
-                        f1_p.Edge = f1_e2;
-                        f1_e2.Vertex.Edge = f1_e3;
-                        f1_e3.Vertex.Edge = f1_e1;
-
-                        f1_e2.NextEdge = f1_e3;
-                        f1_e3.PrevEdge = f1_e2;
-
-                        f1_e3.NextEdge = f1_e1;
-                        f1_e1.PrevEdge = f1_e3;
-
-                        HalfEdgeFace f1 = new HalfEdgeFace(f1_e1);
-                        f1_e1.Face = f1;
-                        f1_e2.Face = f1;
-                        f1_e3.Face = f1;
-
-                        HalfEdgeVertex f2_p1 = new HalfEdgeVertex(edge.Vertex.Position);
-                        HalfEdgeVertex f2_p2 = new HalfEdgeVertex(p);
-                        HalfEdge f2_e1 = new HalfEdge(f2_p1);
-                        HalfEdge f2_e2 = new HalfEdge(f2_p2);
-
-                        f2_p1.Edge = f2_e2;
-                        f2_p2.Edge = f2_e3;
-                        f2_e3.Vertex.Edge = f2_e1;
-
-                        f2_e1.NextEdge = f2_e2;
-                        f2_e2.PrevEdge = f2_e1;
-                        f2_e2.NextEdge = f2_e3;
-                        f2_e3.PrevEdge = f2_e2;
-                        f2_e3.NextEdge = f2_e1;
-                        f2_e1.PrevEdge = f2_e3;
-
-                        f2_e1.OppositeEdge = f1_e1.OppositeEdge;
-                        if (f2_e1.OppositeEdge != null)
-                            f2_e1.OppositeEdge.OppositeEdge = f2_e1;
-
-                        f2_e2.OppositeEdge = f1_e1;
-                        f1_e1.OppositeEdge = f2_e2;
-
-                        HalfEdgeFace f2 = new HalfEdgeFace(f2_e1);
-                        f2_e1.Face = f2;
-                        f2_e2.Face = f2;
-                        f2_e3.Face = f2;
-
-                        triangulationData.Vertices.Add(f1_p);
-                        triangulationData.Vertices.Add(f2_p1);
-                        triangulationData.Vertices.Add(f2_p2);
-
-                        triangulationData.Edges.Add(f1_e3);
-                        triangulationData.Edges.Add(f2_e1);
-                        triangulationData.Edges.Add(f2_e2);
-
-                        triangulationData.Faces.Add(f1);
-                        triangulationData.Faces.Add(f2);
-                        triangulationData.Faces.Remove(f);
-                        return;
-                    }
+                    return;
                 }
 
-                // 删除这个三角形，并连接由此点分开的三个三角形
-                SplitTriangleFaceAtPoint(f, p, triangulationData);
+                // Debug.LogWarning();
+                //Debug.LogWarning($"faces count {faces.Count}");
+                //foreach (HalfEdgeFace face in faces)
+                //{
+                //    Debug.LogWarning($" {Test2.Normalizer.UnNormalize(new Triangle(f))} ");
+                //}
+                //Debug.LogWarning("==================");
 
-                // 此时新创建的三个三角形 不一定是符合Delaunay三角形的, 所以需要验证外接圆
-                Stack<HalfEdge> trianglesToInvestigate = new Stack<HalfEdge>();
-                AddTrianglesOppositePToStack(p, trianglesToInvestigate, triangulationData);
-
-                int count = 0;
-                while (trianglesToInvestigate.Count > 0)
+                // 如果点落在三角形边上
+                if (walkResult.Relation == PointTriangleRelation.On)
                 {
-                    if (count++ > 1000)
-                    {
+                    Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
+                    Func<Triangle, Triangle> ff = Test2.Normalizer.UnNormalize;
+                    Debug.LogWarning($"On!!!! {f(p)} {f(walkResult.Edge.PrevEdge.Vertex.Position)} {f(walkResult.Edge.Vertex.Position)}");
+                    // 删除这条边, 连接这个点到两个三角形的四个点
+                    HalfEdge e1 = walkResult.Edge;
+                    HalfEdge e1_prev = e1.PrevEdge;
+                    HalfEdge e1_next = e1.NextEdge;
+                    HalfEdge e2 = e1.OppositeEdge;
 
-                        Recorder.Show(null);
-                        throw new Exception("loop error");
+                    HalfEdgeFace old_f1 = e1.Face;
+
+                    // face1
+                    HalfEdgeVertex f1_p1 = new HalfEdgeVertex(p);
+                    HalfEdgeVertex f1_p2 = new HalfEdgeVertex(e1_next.Vertex.Position);
+                    HalfEdge f1_e1 = new HalfEdge(f1_p1);
+                    HalfEdge f1_e2 = new HalfEdge(f1_p2);
+                    HalfEdgeFace f1 = new HalfEdgeFace(f1_e1);
+
+                    f1_e1.PrevEdge = e1_prev;
+                    e1_prev.NextEdge = f1_e1;
+
+                    f1_e1.NextEdge = f1_e2;
+                    f1_e2.PrevEdge = f1_e1;
+
+                    f1_e2.NextEdge = e1_prev;
+                    e1_prev.PrevEdge = f1_e2;
+
+                    f1_e1.Face = f1;
+                    e1_prev.Face = f1;
+                    f1_e2.Face = f1;
+
+                    // face2
+                    HalfEdgeVertex f2_p = new HalfEdgeVertex(p);
+                    HalfEdge f2_e1 = new HalfEdge(f2_p);
+                    HalfEdgeFace f2 = new HalfEdgeFace(f2_e1);
+
+                    f2_e1.NextEdge = e1;
+                    e1.PrevEdge = f2_e1;
+
+                    e1_next.NextEdge = f2_e1;
+                    f2_e1.PrevEdge = e1_next;
+
+                    f2_e1.Face = f2;
+                    e1.Face = f2;
+                    e1_next.Face = f2;
+
+                    // set face1 face2 opposite
+                    f1_e2.OppositeEdge = f2_e1;
+                    f2_e1.OppositeEdge = f1_e2;
+
+                    triangulationData.Faces.Remove(old_f1);
+                    triangulationData.Faces.Add(f1);
+                    triangulationData.Faces.Add(f2);
+                    triangulationData.Vertices.Add(f1_p1);
+                    triangulationData.Vertices.Add(f1_p2);
+                    triangulationData.Vertices.Add(f2_p);
+                    triangulationData.Edges.Add(f1_e1);
+                    triangulationData.Edges.Add(f1_e2);
+                    triangulationData.Edges.Add(f2_e1);
+
+                    if (e2 != null)
+                    {
+                        HalfEdgeFace old_f2 = e2.Face;
+                        HalfEdge e2_next = e2.NextEdge;
+                        HalfEdge e2_prev = e2.PrevEdge;
+
+                        // face3
+                        HalfEdgeVertex f3_p1 = new HalfEdgeVertex(p);
+                        HalfEdge f3_e1 = new HalfEdge(f3_p1);
+                        HalfEdgeFace f3 = new HalfEdgeFace(f3_e1);
+
+                        f3_e1.NextEdge = e2;
+                        e2.PrevEdge = f3_e1;
+
+                        f3_e1.PrevEdge = e2_next;
+                        e2_next.NextEdge = f3_e1;
+
+                        f3_e1.Face = f3;
+                        e2.Face = f3;
+                        e2_next.Face = f3;
+
+                        // face4
+                        HalfEdgeVertex f4_p1 = new HalfEdgeVertex(p);
+                        HalfEdgeVertex f4_p2 = new HalfEdgeVertex(e2_next.Vertex.Position);
+                        HalfEdge f4_e1 = new HalfEdge(f4_p1);
+                        HalfEdge f4_e2 = new HalfEdge(f4_p2);
+                        HalfEdgeFace f4 = new HalfEdgeFace(f4_e1);
+
+                        f4_e1.NextEdge = f4_e2;
+                        f4_e2.PrevEdge = f4_e1;
+
+                        f4_e2.NextEdge = e2_prev;
+                        e2_prev.PrevEdge = f4_e2;
+
+                        f4_e1.PrevEdge = e2_prev;
+                        e2_prev.NextEdge = f4_e1;
+
+                        f4_e1.Face = f4;
+                        f4_e2.Face = f4;
+                        e2_prev.Face = f4;
+
+                        f4_e2.OppositeEdge = f3_e1;
+                        f3_e1.OppositeEdge = f4_e2;
+
+                        f1_e1.OppositeEdge = e2;
+                        e2.OppositeEdge = f1_e1;
+
+                        e1.OppositeEdge = f4_e1;
+                        f4_e1.OppositeEdge = e1;
+
+                        triangulationData.Faces.Remove(old_f2);
+                        triangulationData.Faces.Add(f3);
+                        triangulationData.Faces.Add(f4);
+                        triangulationData.Vertices.Add(f3_p1);
+                        triangulationData.Vertices.Add(f4_p1);
+                        triangulationData.Vertices.Add(f4_p2);
+                        triangulationData.Edges.Add(f3_e1);
+                        triangulationData.Edges.Add(f4_e1);
+                        triangulationData.Edges.Add(f4_e2);
                     }
-
-                    HalfEdge edgeToTest = trianglesToInvestigate.Pop();
-
-                    // 当p点在这个三角形的外接圆上，或者外接圆外面时，则处理下一个
-                    XVector2 a = edgeToTest.Vertex.Position;
-                    XVector2 b = edgeToTest.PrevEdge.Vertex.Position;
-                    XVector2 c = edgeToTest.NextEdge.Vertex.Position;
-
-                    // 是否在外接圆内
-                    if (GeometryUtility.ShouldFlipEdgeStable(a, b, c, p))
+                    else
                     {
-                        // 翻转边
-                        GeometryUtility.FlipTriangleEdge(edgeToTest);
+                        f1_e1.OppositeEdge = null;
+                        e1.OppositeEdge = null;
+                    }
+                }
+                else if (walkResult.Relation == PointTriangleRelation.In)
+                {
+                    Func<XVector2, XVector2> ff = Test2.Normalizer.UnNormalize;
+                    Debug.LogWarning($"edge {ff(walkResult.Edge.Vertex.Position)} ");
+                    HalfEdgeFace f = walkResult.Edge.Face;
+                    
+                    // 删除这个三角形，并连接由此点分开的三个三角形
+                    SplitTriangleFaceAtPoint(f, p, triangulationData);
 
-                        // 重新寻找此点的对向边
-                        AddTrianglesOppositePToStack(p, trianglesToInvestigate, triangulationData);
+                    // 此时新创建的三个三角形 不一定是符合Delaunay三角形的, 所以需要验证外接圆
+                    Stack<HalfEdge> trianglesToInvestigate = new Stack<HalfEdge>();
+                    AddTrianglesOppositePToStack(p, trianglesToInvestigate, triangulationData);
+
+                    int count = 0;
+                    while (trianglesToInvestigate.Count > 0)
+                    {
+                        if (count++ > 1000)
+                        {
+
+                            Recorder.Show(null);
+                            throw new Exception("loop error");
+                        }
+
+                        HalfEdge edgeToTest = trianglesToInvestigate.Pop();
+
+                        // 当p点在这个三角形的外接圆上，或者外接圆外面时，则处理下一个
+                        XVector2 a = edgeToTest.Vertex.Position;
+                        XVector2 b = edgeToTest.PrevEdge.Vertex.Position;
+                        XVector2 c = edgeToTest.NextEdge.Vertex.Position;
+
+                        // 是否在外接圆内
+                        if (GeometryUtility.ShouldFlipEdgeStable(a, b, c, p))
+                        {
+                            // 翻转边
+                            GeometryUtility.FlipTriangleEdge(edgeToTest);
+
+                            // 重新寻找此点的对向边
+                            AddTrianglesOppositePToStack(p, trianglesToInvestigate, triangulationData);
+                        }
                     }
                 }
             }
@@ -259,10 +322,13 @@ namespace XFrame.PathFinding
                 }
             }
 
-            public static HalfEdgeFace TriangulationWalk(XVector2 p, HalfEdgeFace startTriangle, HalfEdgeData triangulationData)
+            public static TriangleWalkResult TriangulationWalk(XVector2 p, HalfEdgeFace startTriangle, HalfEdgeData triangulationData, out List<HalfEdgeFace> faces)
             {
+                Func<XVector2, XVector2> ff = Test2.Normalizer.UnNormalize;
+                Debug.LogWarning(ff(p));
                 // 点所在的三角形面
-                HalfEdgeFace intersectingTriangle;
+                HalfEdgeFace intersectingTriangle = null;
+                TriangleWalkResult result = new TriangleWalkResult();
 
                 // 指定一个起始面可以加速算法
                 HalfEdgeFace currentTriangle = null;
@@ -289,9 +355,11 @@ namespace XFrame.PathFinding
                     }
                 }
 
+                faces = new List<HalfEdgeFace>();
                 if (currentTriangle == null)
                 {
-                    return null;
+                    result.Relation = PointTriangleRelation.None;
+                    return result;
                 }
 
                 startTriangle = currentTriangle;
@@ -299,12 +367,14 @@ namespace XFrame.PathFinding
                 // 从上面随机到的起始点开始寻找 点所在的三角形面
                 while (true)
                 {
+                    if (count > 100 && intersectingTriangle != null)
+                        break;
+
                     if (count++ > 1000)
                     {
                         Recorder.Show(null);
-                        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                         Triangle start = new Triangle(startTriangle);
-                        Debug.LogError($"TriangulationWalk error {f(p)} <{f(start.P1)} {f(start.P2)} {f(start.P3)}>");
+                        Debug.LogError($"TriangulationWalk error {ff(p)} <{ff(start.P1)} {ff(start.P2)} {ff(start.P3)}>");
                         DataUtility.Save("walk-error", triangulationData);
                         throw new Exception("loop exec");
                     }
@@ -317,7 +387,8 @@ namespace XFrame.PathFinding
                     if (count > 950)
                     {
                         Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-                        Debug.LogWarning($"[walk] {f(p)} {f(e1.Vertex.Position)} {f(e2.Vertex.Position)} {e3.Vertex.Position} ");
+                        Debug.LogWarning($"[walk] {(p)} {(e1.Vertex.Position)} {(e2.Vertex.Position)} {(e3.Vertex.Position)} ");
+                        Debug.LogWarning($"[walk] {f(p)} {f(e1.Vertex.Position)} {f(e2.Vertex.Position)} {f(e3.Vertex.Position)} ");
                         if (e1.OppositeEdge != null)
                             Debug.LogWarning($"[walk]--e1-- {f(e1.OppositeEdge.Vertex.Position)} {f(e1.OppositeEdge.PrevEdge.Vertex.Position)} ");
                         if (e2.OppositeEdge != null)
@@ -326,78 +397,109 @@ namespace XFrame.PathFinding
                             Debug.LogWarning($"[walk]--e3-- {f(e3.OppositeEdge.Vertex.Position)} {f(e3.OppositeEdge.PrevEdge.Vertex.Position)} ");
                     }
 
-                    if (IsPointToTheRightOrOnLine(e1.PrevEdge.Vertex.Position, e1.Vertex.Position, p))
+                    LeftOnRight pos1 = IsPoint_Left_On_Right_OfVector(e1.PrevEdge.Vertex.Position, e1.Vertex.Position, p);
+                    LeftOnRight pos2 = IsPoint_Left_On_Right_OfVector(e2.PrevEdge.Vertex.Position, e2.Vertex.Position, p);
+                    LeftOnRight pos3 = IsPoint_Left_On_Right_OfVector(e3.PrevEdge.Vertex.Position, e3.Vertex.Position, p);
+                    if (count > 950)
+                        Debug.LogWarning($" {pos1} {pos2} {pos3}");
+
+                    if (pos1 == LeftOnRight.On)
                     {
-                        if (IsPointToTheRightOrOnLine(e2.PrevEdge.Vertex.Position, e2.Vertex.Position, p))
+                        result.Relation = PointTriangleRelation.On;
+                        result.Edge = e1;
+                        break;
+                    }
+                    else if (pos2 == LeftOnRight.On)
+                    {
+                        result.Relation = PointTriangleRelation.On;
+                        result.Edge = e2;
+                        break;
+                    }
+                    else if (pos3 == LeftOnRight.On)
+                    {
+                        result.Relation = PointTriangleRelation.On;
+                        result.Edge = e3;
+                        break;
+                    }
+                    else
+                    {
+                        if (pos1 == LeftOnRight.Right)
                         {
-                            if (IsPointToTheRightOrOnLine(e3.PrevEdge.Vertex.Position, e3.Vertex.Position, p))
+                            if (pos2 == LeftOnRight.Right)
                             {
-                                //需要插入的点在这个三角形内
-                                intersectingTriangle = currentTriangle;
-                                break;
+                                if (pos3 == LeftOnRight.Right)
+                                {
+                                    //需要插入的点在这个三角形内
+                                    result.Relation = PointTriangleRelation.In;
+                                    result.Edge = currentTriangle.Edge;
+                                    intersectingTriangle = currentTriangle;
+                                    if (!faces.Contains(currentTriangle))
+                                        faces.Add(currentTriangle);
+                                    break;
+                                }
+                                else
+                                {
+                                    // 不在此三角形内，移动到左边的三角形
+                                    if (e3.OppositeEdge == null)
+                                    {
+                                        Recorder.Show(null);
+                                        if (Test2.Normalizer != null)
+                                        {
+                                            Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
+                                            Debug.LogError($" {e3.GetHashCode()}  {f(e3.Vertex.Position)} {f(e3.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
+                                            DebugUtility.Print(e1.Face, Test2.Normalizer);
+                                        }
+                                        else
+                                        {
+                                            Debug.LogError($" {(e3.Vertex.Position)} {(e3.NextEdge.Vertex.Position)} opposite edge is null ");
+                                        }
+                                    }
+                                    currentTriangle = e3.OppositeEdge.Face;
+                                }
                             }
                             else
                             {
-                                // 不在此三角形内，移动到左边的三角形
-                                if (e3.OppositeEdge == null)
+                                if (e2.OppositeEdge == null)
                                 {
                                     Recorder.Show(null);
                                     if (Test2.Normalizer != null)
                                     {
                                         Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-                                        Debug.LogError($" {e3.GetHashCode()}  {f(e3.Vertex.Position)} {f(e3.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
+                                        Debug.LogError($" {e2.GetHashCode()} {f(e2.Vertex.Position)} {f(e2.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
                                         DebugUtility.Print(e1.Face, Test2.Normalizer);
                                     }
                                     else
                                     {
-                                        Debug.LogError($" {(e3.Vertex.Position)} {(e3.NextEdge.Vertex.Position)} opposite edge is null ");
+                                        Debug.LogError($" {(e2.Vertex.Position)} {(e2.NextEdge.Vertex.Position)} opposite edge is null ");
                                     }
                                 }
-                                currentTriangle = e3.OppositeEdge.Face;
+                                // 不在此三角形内，移动到左边的三角形
+                                currentTriangle = e2.OppositeEdge.Face;
                             }
                         }
                         else
                         {
-                            if (e2.OppositeEdge == null)
+                            if (e1.OppositeEdge == null)
                             {
                                 Recorder.Show(null);
                                 if (Test2.Normalizer != null)
                                 {
                                     Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-                                    Debug.LogError($" {e2.GetHashCode()} {f(e2.Vertex.Position)} {f(e2.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
+                                    Debug.LogError($" {e1.GetHashCode()}  {f(e1.Vertex.Position)} {f(e1.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
                                     DebugUtility.Print(e1.Face, Test2.Normalizer);
                                 }
                                 else
                                 {
-                                    Debug.LogError($" {(e2.Vertex.Position)} {(e2.NextEdge.Vertex.Position)} opposite edge is null ");
+                                    Debug.LogError($" {(e1.Vertex.Position)} {(e1.NextEdge.Vertex.Position)} opposite edge is null ");
                                 }
                             }
                             // 不在此三角形内，移动到左边的三角形
-                            currentTriangle = e2.OppositeEdge.Face;
+                            currentTriangle = e1.OppositeEdge.Face;
                         }
-                    }
-                    else
-                    {
-                        if (e1.OppositeEdge == null)
-                        {
-                            Recorder.Show(null);
-                            if (Test2.Normalizer != null)
-                            {
-                                Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-                                Debug.LogError($" {e1.GetHashCode()}  {f(e1.Vertex.Position)} {f(e1.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
-                                DebugUtility.Print(e1.Face, Test2.Normalizer);
-                            }
-                            else
-                            {
-                                Debug.LogError($" {(e1.Vertex.Position)} {(e1.NextEdge.Vertex.Position)} opposite edge is null ");
-                            }
-                        }
-                        // 不在此三角形内，移动到左边的三角形
-                        currentTriangle = e1.OppositeEdge.Face;
                     }
                 }
 
-                return intersectingTriangle;
+                return result;
             }
 
             /// <summary>
@@ -566,7 +668,7 @@ namespace XFrame.PathFinding
                 data.Vertices.Remove(t_e3.Vertex);
             }
 
-            private static bool IsPointToTheRightOrOnLine(XVector2 a, XVector2 b, XVector2 p)
+            public static bool IsPointToTheRightOrOnLine(XVector2 a, XVector2 b, XVector2 p)
             {
                 bool isToTheRight = false;
                 LeftOnRight pointPos = IsPoint_Left_On_Right_OfVector(a, b, p);
@@ -599,7 +701,11 @@ namespace XFrame.PathFinding
                 //= 0 -> on the line
                 else
                 {
-                    return LeftOnRight.On;
+                    // TO DO
+                    if (EdgeSet.InSameLine(a, b, p))
+                        return LeftOnRight.On;
+                    else // ERROR 在线段延长线，但未判断左右
+                        return LeftOnRight.Left;
                 }
             }
 

@@ -25,6 +25,8 @@ namespace XFrame.PathFinding
             m_Polies = new Dictionary<int, Poly>();
 
             Initialize();
+
+            Debug.LogWarning($" {m_Data.CheckValid()} ");
         }
 
         private void Initialize()
@@ -37,6 +39,7 @@ namespace XFrame.PathFinding
             Add(new XVector2(min.X, min.Y));
             Add(new XVector2(min.X, max.Y));
             Add(new XVector2(max.X, min.Y));
+            return;
             Add(new XVector2(max.X, max.Y));
 
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
@@ -706,6 +709,8 @@ namespace XFrame.PathFinding
 
         public static HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, bool removeEdgeConstraint = true, List<List<XVector2>> extraPointsList = null)
         {
+            int count = 0;
+            int num = 1;
             //Debug.LogWarning("----------------------------------------");
             HalfEdgeData tmpData = new HalfEdgeData();
             Triangle superTriangle = GeometryUtility.SuperTriangle;
@@ -714,6 +719,8 @@ namespace XFrame.PathFinding
             {
                 //Debug.LogWarning($"add point {Normalizer.UnNormalize(e.P1)}");
                 DelaunayIncrementalSloan.InsertNewPointInTriangulation(e.P1, tmpData);
+                if (count++ >= num)
+                    return tmpData;
             }
 
             List<XVector2> tmpList = new List<XVector2>();  // TO DO 
@@ -745,6 +752,8 @@ namespace XFrame.PathFinding
                         {
                             //Debug.LogWarning($"add point - {Normalizer.UnNormalize(v)}");
                             DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
+                            if (count++ >= num)
+                                return tmpData;
                         }
                     }
 
@@ -753,11 +762,11 @@ namespace XFrame.PathFinding
                 // 最好等所有点添加完后再添加限制
                 foreach (List<XVector2> extraPoints in extraPointsList)
                 {
-                    ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
+                    //ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
                 }
             }
 
-            ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
+            //ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
             //Debug.LogWarning("----------------------------------------");
             return tmpData;

@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 using XFrame.PathFinding;
 using static Test;
+using static XFrame.PathFinding.XNavMesh;
 
 public partial class Test2
 {
@@ -87,6 +89,7 @@ public partial class Test2
 
     private void GenerateHalfData(string param)
     {
+        if(string.IsNullOrEmpty(param)) return;
         if (Normalizer == null)
         {
             List<XVector2> points = GetAllPoints(RectPoints, false);
@@ -166,11 +169,15 @@ public partial class Test2
             edges.Add(new Edge(cur, next));
         }
 
+        s_Cache = new StringBuilder();
         HalfEdgeData data = XNavMesh.GenerateHalfEdgeData2(edges, true, relationAllPoints);
         HalfDataTest?.Dispose();
         HalfDataTest = new HalfEdgeInfo(data, Color.cyan);
         Debug.LogWarning(data.Faces.Count);
+        Debug.LogWarning(s_Cache.ToString());
     }
+
+    public static StringBuilder s_Cache;
 
     private void GenerateRelation(string param)
     {

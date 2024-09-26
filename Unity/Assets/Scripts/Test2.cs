@@ -32,16 +32,19 @@ public partial class Test2 : MonoBehaviour
         });
         Console.Inst.AddCommand("test-3", (param) =>
         {
-            Console.Inst.ExecuteCommand("navmesh-add");
-            Console.Inst.ExecuteCommand("main-hide");
-            Console.Inst.ExecuteCommand("open walk-error-2024-17-24");
-            Console.Inst.ExecuteCommand("test-tri");
+            XVector2 a = new XVector2(-12.24f, 2.872314E-07f);
+            XVector2 b = new XVector2(-12.24f, 2853.11f);
+            XVector2 p = new XVector2(-12.24f, -11.89f);
+
+
+            Debug.LogWarning($"online {XNavMesh.DelaunayIncrementalSloan.IsPoint_Left_On_Right_OfVector(a, b, p)}");
+            Debug.LogWarning($"online {XNavMesh.DelaunayIncrementalSloan.IsPoint_Left_On_Right_OfVector(b, a, p)}");
         });
     }
 
     private void TestTri(string param)
     {
-        XNavMesh.DelaunayIncrementalSloan.TriangulationWalk(new XVector2(-0.9968367f, -6.047449f), null, HalfDataTest.Data);
+        //XNavMesh.DelaunayIncrementalSloan.TriangulationWalk(new XVector2(-0.9968367f, -6.047449f), null, HalfDataTest.Data);
     }
 
     private void TestEdge(string param)
@@ -76,9 +79,10 @@ public partial class Test2 : MonoBehaviour
         if (m_NavMesh != null)
             return;
         List<XVector2> points = GetAllPoints(RectPoints, false);
+        Normalizer = new Normalizer(new AABB(points));
         m_NavMesh = new XNavMesh(new AABB(points));
         Navmesh = m_NavMesh;
-        Normalizer = m_NavMesh.Normalizer;  
+        Normalizer = m_NavMesh.Normalizer;
         m_NavMesh.Add(points);
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
         m_FullMeshArea.Refresh();

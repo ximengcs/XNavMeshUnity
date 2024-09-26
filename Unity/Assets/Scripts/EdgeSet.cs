@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 using UnityEngine;
 using XFrame.PathFinding;
@@ -162,6 +163,16 @@ public class EdgeSet
         {
             return false;
         }
+    }
+
+    public static bool InSameLine(XVector2 a, XVector2 b, XVector2 p)
+    {
+        XVector2 nor = XVector2.Normalize(b - a);
+        float d1 = XMath.Dot(p - a, nor);
+        float d2 = XMath.Dot(b - a, nor);
+        if (d1 >= 0 && d1 <= d2)
+            return true;
+        return false;
     }
 
     public bool InSameLine(XVector2 point)
