@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
 
@@ -76,21 +75,131 @@ public partial class Test2
         Console.Inst.AddCommand("entity", CreateObject);
         Console.Inst.AddCommand("record-show", Recorder.Show);
         Console.Inst.AddCommand("record-gene-relation", GenerateRelation);
+        Console.Inst.AddCommand("record-gene-new-poly", GenerateNewPloyPoints);
         Console.Inst.AddCommand("poly-show", ShowPoly);
         Console.Inst.AddCommand("poly-hide", HidePoly);
         Console.Inst.AddCommand("open", OpenData);
         Console.Inst.AddCommand("test-tri", TestTri);
+        Console.Inst.AddCommand("gen-data", GenerateHalfData);
 
         Console.Inst.AddCommand("record-cur-new-data-entity", RecordCurNewDataEntity);
     }
 
+    private void GenerateHalfData(string param)
+    {
+        if (Normalizer == null)
+        {
+            List<XVector2> points = GetAllPoints(RectPoints, false);
+            Normalizer = new Normalizer(points);
+        }
+
+        string text = File.ReadAllText($"Assets/Data/HalfEdgeTest/{param}");
+        List<List<XVector2>> relationAllPoints = new List<List<XVector2>>();
+        List<XVector2> edgePoints = new List<XVector2>();
+        List<XVector2> polyPoints = null;
+
+        const int POLY = 1, EDGE = 2;
+        int mode = 0;
+        string line = null;
+        StringReader reader = new StringReader(text);
+        while ((line = reader.ReadLine()) != null)
+        {
+            line = line.Trim();
+
+            if (string.IsNullOrEmpty(line) || line.Length <= 0)
+                continue;
+            if (line.StartsWith("-") || line.StartsWith("="))
+                continue;
+
+            if (line.Contains("poly"))
+            {
+                polyPoints = new List<XVector2>();
+                relationAllPoints.Add(polyPoints);
+                mode = POLY;
+                continue;
+            }
+            else if (line.Contains("NewAreaOutEdges"))
+            {
+                mode = EDGE;
+                continue;
+            }
+            else if (line.Contains("End"))
+            {
+                break;
+            }
+
+            switch (mode)
+            {
+                case POLY:
+                    {
+                        line = line.Trim('(', ')', ' ');
+                        string[] contents = line.Split(',');
+                        XVector2 p = new XVector2();
+                        p.X = float.Parse(contents[0]);
+                        p.Y = float.Parse(contents[1]);
+                        polyPoints.Add(p);
+                    }
+                    break;
+
+                case EDGE:
+                    {
+                        line = line.Trim('(', ')', ' ');
+                        string[] contents = line.Split(',');
+                        XVector2 p = new XVector2();
+                        p.X = float.Parse(contents[0]);
+                        p.Y = float.Parse(contents[1]);
+                        edgePoints.Add(p);
+                    }
+                    break;
+            }
+        }
+
+        foreach (List<XVector2> points in relationAllPoints)
+            Normalizer.Normalize(points);
+        Normalizer.Normalize(edgePoints);
+
+        List<Edge> edges = new List<Edge>();
+        for (int i = 0; i < edgePoints.Count; i++)
+        {
+            XVector2 cur = edgePoints[i];
+            XVector2 next = edgePoints[(i + 1) % edgePoints.Count];
+            edges.Add(new Edge(cur, next));
+        }
+
+        HalfEdgeData data = XNavMesh.GenerateHalfEdgeData2(edges, true, relationAllPoints);
+        HalfDataTest?.Dispose();
+        HalfDataTest = new HalfEdgeInfo(data, Color.cyan);
+        Debug.LogWarning(data.Faces.Count);
+    }
+
     private void GenerateRelation(string param)
     {
-        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
+        List<List<XVector2>> list = Recorder.CurrentInfo.RelationAllPoints;
+
+        GameObject root = new GameObject("relation");
+        foreach (List<XVector2> pt in list)
+        {
+            GameObject inst = new GameObject("points");
+            inst.transform.SetParent(root.transform);
+            foreach (XVector2 pt2 in pt)
+            {
+                GameObject pInst = new GameObject($"{f(pt2)}");
+                pInst.transform.SetParent(inst.transform);
+                pInst.transform.position = f(pt2).ToUnityVec3();
+            }
+        }
+    }
+
+    private void GenerateNewPloyPoints(string param)
+    {
+        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         Dictionary<int, List<XVector2>> list = Recorder.CurrentInfo.PolyNewPoints;
+        GameObject root = new GameObject("new points");
         foreach (var item in list)
         {
             GameObject inst = new GameObject($"poly {item.Key}");
+            inst.transform.SetParent(root.transform);
             foreach (XVector2 point in item.Value)
             {
                 GameObject p = new GameObject($" {f(point)} ");
@@ -102,7 +211,7 @@ public partial class Test2
 
     private void RecordCurNewDataEntity(string param)
     {
-        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         GameObject dataInst = new GameObject("triangle");
         foreach (HalfEdgeFace face in Recorder.CurrentInfo.CloneData.Faces)
         {
@@ -137,7 +246,7 @@ public partial class Test2
 
     private void GenerateSubStruct(HalfEdge e1, GameObject p1)
     {
-        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         HalfEdge ope1 = e1.OppositeEdge;
         HalfEdge ope2 = ope1.NextEdge;
         HalfEdge ope3 = ope2.NextEdge;

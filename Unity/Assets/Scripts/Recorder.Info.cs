@@ -23,7 +23,7 @@ public static partial class Recorder
 
         public override string ToString()
         {
-            Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+            Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"Id {Id}");
             sb.AppendLine($"Points ~~~~~~~~ {Points.Count}");
@@ -53,7 +53,7 @@ public static partial class Recorder
 
         public override string ToString()
         {
-            Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+            Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
             StringBuilder sb = new StringBuilder();
             sb.AppendLine($"PolyId  {PolyId}");
             sb.AppendLine($"OldPoints ========================= {OldPoints.Count}");

@@ -11,6 +11,7 @@ public partial class Test2 : MonoBehaviour
 {
     public static bool T1;
     public static XNavMesh Navmesh;
+    public static Normalizer Normalizer;
 
     private PolyInfo m_ShowPoly;
     private bool m_DrawGizmosFullMeshArea = true;
@@ -48,8 +49,8 @@ public partial class Test2 : MonoBehaviour
         List<List<XVector2>> list = new List<List<XVector2>>();
         var l1 = GetAllPoints(Holls[4], false);
         var l2 = GetAllPoints(Holls[3], false);
-        Navmesh.Normalizer.Normalize(l1);
-        Navmesh.Normalizer.Normalize(l2);
+        Normalizer.Normalize(l1);
+        Normalizer.Normalize(l2);
         list.Add(l1);
         list.Add(l2);
         //list.Add(GetAllPoints(Holls[5], false));
@@ -65,7 +66,7 @@ public partial class Test2 : MonoBehaviour
             Debug.LogWarning($" {p1} ");
             tmpEdges.Add(new Edge(p1, p2));
         }
-        Navmesh.Normalizer.UnNormalize(tmpEdges);
+        Normalizer.UnNormalize(tmpEdges);
         m_Edges.Add(tmpEdges);
         Debug.LogWarning("===============================");
     }
@@ -77,6 +78,7 @@ public partial class Test2 : MonoBehaviour
         List<XVector2> points = GetAllPoints(RectPoints, false);
         m_NavMesh = new XNavMesh(new AABB(points));
         Navmesh = m_NavMesh;
+        Normalizer = m_NavMesh.Normalizer;  
         m_NavMesh.Add(points);
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
         m_FullMeshArea.Refresh();

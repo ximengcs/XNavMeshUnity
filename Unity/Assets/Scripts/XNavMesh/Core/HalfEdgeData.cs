@@ -93,7 +93,7 @@ namespace XFrame.PathFinding
                 sb.AppendLine("vert or edge count is error");
             }
 
-            Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+            Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
             sb.AppendLine($"face ============= {Faces.Count}");
             foreach (HalfEdgeFace face in Faces)
             {

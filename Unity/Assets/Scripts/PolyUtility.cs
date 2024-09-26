@@ -161,8 +161,8 @@ public class PolyUtility
 
     public static void ClipPoints(List<List<XVector2>> list, List<List<XVector2>> mainList)
     {
-        float gap = Test2.Navmesh.Normalizer.MinGap;
-        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        float gap = Test2.Normalizer.MinGap;
+        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         //Debug.LogWarning($"gap {gap}");
         for (int k = 0; k < list.Count; k++)
         {
@@ -275,7 +275,7 @@ public class PolyUtility
     private static void ConstraintSamePoint(float gap, List<XVector2> points, int offset, XVector2 cur)
     {
         int count = points.Count;
-        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         // 下一个点
         for (int j = 0; j < count - 1; j++)
         {
@@ -372,7 +372,7 @@ public class PolyUtility
             }
         }
         result.Add(current.P1);
-        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         //Debug.LogWarning($" left botttom {f(leftBottom)} ");
         int calCount = 0;
         do
@@ -385,7 +385,7 @@ public class PolyUtility
                     Debug.LogWarning("======================");
                     foreach (XVector2 p in points)
                     {
-                        Debug.LogWarning($" {Test2.Navmesh.Normalizer.UnNormalize(p)} ");
+                        Debug.LogWarning($" {Test2.Normalizer.UnNormalize(p)} ");
                     }
                     Debug.LogWarning("======================");
                 }

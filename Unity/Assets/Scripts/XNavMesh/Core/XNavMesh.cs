@@ -234,6 +234,7 @@ namespace XFrame.PathFinding
 
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<List<XVector2>> relationAllPoints);
 
+            Recorder.SetRelationNewPoint(relationlist);
             Recorder.SetRelationAllPoints(relationAllPoints);
 
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
@@ -703,7 +704,7 @@ namespace XFrame.PathFinding
                 m_Data.Faces.Add(f);
         }
 
-        public HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, bool removeEdgeConstraint = true, List<List<XVector2>> extraPointsList = null)
+        public static HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, bool removeEdgeConstraint = true, List<List<XVector2>> extraPointsList = null)
         {
             //Debug.LogWarning("----------------------------------------");
             HalfEdgeData tmpData = new HalfEdgeData();
@@ -756,15 +757,11 @@ namespace XFrame.PathFinding
                 }
             }
 
-            lastLimit = tmpList;
-
             ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
             //Debug.LogWarning("----------------------------------------");
             return tmpData;
         }
-
-        public static List<XVector2> lastLimit = null;
 
         public void Add(List<XVector2> points)
         {
@@ -800,12 +797,12 @@ namespace XFrame.PathFinding
             return null;
         }
 
-        public static XNavMeshList<TriangleArea> ToTriangles(XNavMesh navMesh, HalfEdgeData data)
+        public static XNavMeshList<TriangleArea> ToTriangles(Normalizer nor, HalfEdgeData data)
         {
             XNavMeshList<TriangleArea> triangles = new XNavMeshList<TriangleArea>(8);
             foreach (HalfEdgeFace face in data.Faces)
             {
-                triangles.Add(new TriangleArea(face, navMesh.m_Normalizer));
+                triangles.Add(new TriangleArea(face, nor));
             }
 
             return triangles;
@@ -813,7 +810,7 @@ namespace XFrame.PathFinding
 
         public XNavMeshList<TriangleArea> ToTriangles()
         {
-            return ToTriangles(this, m_Data);
+            return ToTriangles(Normalizer, m_Data);
         }
     }
 }

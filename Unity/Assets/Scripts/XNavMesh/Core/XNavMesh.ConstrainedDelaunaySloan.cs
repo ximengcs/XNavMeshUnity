@@ -124,7 +124,7 @@ namespace XFrame.PathFinding
                 //Is also needed when flood-filling so we dont jump over a constraint
                 HashSet<HalfEdge> constraintEdges = FindAllConstraintEdges(constraints, triangleData);
 
-                Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                 //Each edge is associated with a face which should be deleted
                 foreach (HalfEdge e in constraintEdges)
                 {
@@ -497,7 +497,7 @@ namespace XFrame.PathFinding
 
                     if (count > 950)
                     {
-                        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                         Debug.LogWarning($"[constraint] remove intersect {f(v_i)} {f(v_j)} [[ {f(v_k)} {f(v_l)} {f(v_3rd)} ]] {f(v_opposite_pos)} {GeometryUtility.IsQuadrilateralConvex(v_k, v_l, v_3rd, v_opposite_pos)} ");
                         Debug.LogWarning($"[constraint] in same line {EdgeSet.InSameLine(new Edge(v_3rd, v_l), new Edge(v_3rd, v_opposite_pos))}");
                     }

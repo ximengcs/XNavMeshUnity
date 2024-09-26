@@ -33,8 +33,19 @@ public partial class Test2
         {
             Data = data;
 
-            List<TriangleArea> triangles = XNavMesh.ToTriangles(Test2.Navmesh, data);
+            List<TriangleArea> triangles = XNavMesh.ToTriangles(Test2.Normalizer, data);
             m_Meshs = MeshArea.GenerateMesh(triangles, color);
+        }
+
+        public void Dispose()
+        {
+            if (m_Meshs != null)
+            {
+                foreach (MeshInfo m in m_Meshs)
+                {
+                    Pool.ReleaseMesh(m.Mesh);
+                }
+            }
         }
     }
 }

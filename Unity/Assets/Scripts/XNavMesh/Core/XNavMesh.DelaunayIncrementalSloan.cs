@@ -302,7 +302,7 @@ namespace XFrame.PathFinding
                     if (count++ > 1000)
                     {
                         Recorder.Show(null);
-                        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                         Triangle start = new Triangle(startTriangle);
                         Debug.LogError($"TriangulationWalk error {f(p)} <{f(start.P1)} {f(start.P2)} {f(start.P3)}>");
                         DataUtility.Save("walk-error", triangulationData);
@@ -316,7 +316,7 @@ namespace XFrame.PathFinding
 
                     if (count > 950)
                     {
-                        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                         Debug.LogWarning($"[walk] {f(p)} {f(e1.Vertex.Position)} {f(e2.Vertex.Position)} {e3.Vertex.Position} ");
                         if (e1.OppositeEdge != null)
                             Debug.LogWarning($"[walk]--e1-- {f(e1.OppositeEdge.Vertex.Position)} {f(e1.OppositeEdge.PrevEdge.Vertex.Position)} ");
@@ -342,11 +342,11 @@ namespace XFrame.PathFinding
                                 if (e3.OppositeEdge == null)
                                 {
                                     Recorder.Show(null);
-                                    if (Test2.Navmesh != null)
+                                    if (Test2.Normalizer != null)
                                     {
-                                        Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                                        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                                         Debug.LogError($" {e3.GetHashCode()}  {f(e3.Vertex.Position)} {f(e3.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
-                                        DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
+                                        DebugUtility.Print(e1.Face, Test2.Normalizer);
                                     }
                                     else
                                     {
@@ -361,11 +361,11 @@ namespace XFrame.PathFinding
                             if (e2.OppositeEdge == null)
                             {
                                 Recorder.Show(null);
-                                if (Test2.Navmesh != null)
+                                if (Test2.Normalizer != null)
                                 {
-                                    Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                                    Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                                     Debug.LogError($" {e2.GetHashCode()} {f(e2.Vertex.Position)} {f(e2.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
-                                    DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
+                                    DebugUtility.Print(e1.Face, Test2.Normalizer);
                                 }
                                 else
                                 {
@@ -381,11 +381,11 @@ namespace XFrame.PathFinding
                         if (e1.OppositeEdge == null)
                         {
                             Recorder.Show(null);
-                            if (Test2.Navmesh != null)
+                            if (Test2.Normalizer != null)
                             {
-                                Func<XVector2, XVector2> f = Test2.Navmesh.Normalizer.UnNormalize;
+                                Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                                 Debug.LogError($" {e1.GetHashCode()}  {f(e1.Vertex.Position)} {f(e1.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
-                                DebugUtility.Print(e1.Face, Test2.Navmesh.Normalizer);
+                                DebugUtility.Print(e1.Face, Test2.Normalizer);
                             }
                             else
                             {
