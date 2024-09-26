@@ -97,7 +97,24 @@ namespace XFrame.PathFinding
             sb.AppendLine($"face ============= {Faces.Count}");
             foreach (HalfEdgeFace face in Faces)
             {
-                sb.AppendLine($" <{f(face.Edge.Vertex.Position)} {f(face.Edge.NextEdge.Vertex.Position)} {f(face.Edge.PrevEdge.Vertex.Position)}>");
+                sb.AppendLine($" <{f(face.Edge.Vertex.Position)} {f(face.Edge.NextEdge.Vertex.Position)} {f(face.Edge.PrevEdge.Vertex.Position)}> ");
+            }
+            sb.AppendLine("edge check=====");
+            foreach (HalfEdge e in Edges)
+            {
+                if (e.Face == null)
+                {
+                    sb.AppendLine($" error {e.Vertex.Position} ");
+                }
+            }
+
+            sb.AppendLine("vertex check=====");
+            foreach (HalfEdgeVertex v in Vertices)
+            {
+                if (v.Edge == null)
+                {
+                    sb.AppendLine($" error {v.Position} ");
+                }
             }
 
             return sb.ToString();

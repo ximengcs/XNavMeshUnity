@@ -113,7 +113,9 @@ namespace XFrame.PathFinding
                     HalfEdgeVertex f1_p1 = new HalfEdgeVertex(p);
                     HalfEdgeVertex f1_p2 = new HalfEdgeVertex(e1_next.Vertex.Position);
                     HalfEdge f1_e1 = new HalfEdge(f1_p1);
+                    f1_p1.Edge = f1_e1;
                     HalfEdge f1_e2 = new HalfEdge(f1_p2);
+                    f1_p2.Edge = f1_e2;
                     HalfEdgeFace f1 = new HalfEdgeFace(f1_e1);
 
                     f1_e1.PrevEdge = e1_prev;
@@ -132,6 +134,7 @@ namespace XFrame.PathFinding
                     // face2
                     HalfEdgeVertex f2_p = new HalfEdgeVertex(p);
                     HalfEdge f2_e1 = new HalfEdge(f2_p);
+                    f2_p.Edge = f2_e1;
                     HalfEdgeFace f2 = new HalfEdgeFace(f2_e1);
 
                     f2_e1.NextEdge = e1;
@@ -167,6 +170,7 @@ namespace XFrame.PathFinding
                         // face3
                         HalfEdgeVertex f3_p1 = new HalfEdgeVertex(p);
                         HalfEdge f3_e1 = new HalfEdge(f3_p1);
+                        f3_p1.Edge = f3_e1;
                         HalfEdgeFace f3 = new HalfEdgeFace(f3_e1);
 
                         f3_e1.NextEdge = e2;
@@ -183,7 +187,9 @@ namespace XFrame.PathFinding
                         HalfEdgeVertex f4_p1 = new HalfEdgeVertex(p);
                         HalfEdgeVertex f4_p2 = new HalfEdgeVertex(e2_next.Vertex.Position);
                         HalfEdge f4_e1 = new HalfEdge(f4_p1);
+                        f4_p1.Edge = f4_e1;
                         HalfEdge f4_e2 = new HalfEdge(f4_p2);
+                        f4_p2.Edge = f4_e2;
                         HalfEdgeFace f4 = new HalfEdgeFace(f4_e1);
 
                         f4_e1.NextEdge = f4_e2;
@@ -229,7 +235,7 @@ namespace XFrame.PathFinding
                     Func<XVector2, XVector2> ff = Test2.Normalizer.UnNormalize;
                     Debug.LogWarning($"edge {ff(walkResult.Edge.Vertex.Position)} ");
                     HalfEdgeFace f = walkResult.Edge.Face;
-                    
+
                     // 删除这个三角形，并连接由此点分开的三个三角形
                     SplitTriangleFaceAtPoint(f, p, triangulationData);
 

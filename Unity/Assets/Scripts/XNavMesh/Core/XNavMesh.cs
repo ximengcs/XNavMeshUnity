@@ -39,9 +39,9 @@ namespace XFrame.PathFinding
             Add(new XVector2(min.X, min.Y));
             Add(new XVector2(min.X, max.Y));
             Add(new XVector2(max.X, min.Y));
-            return;
             Add(new XVector2(max.X, max.Y));
 
+            Debug.LogWarning(m_Data.CheckValid());
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
         }
 
@@ -710,7 +710,7 @@ namespace XFrame.PathFinding
         public static HalfEdgeData GenerateHalfEdgeData2(List<Edge> edgeList, bool removeEdgeConstraint = true, List<List<XVector2>> extraPointsList = null)
         {
             int count = 0;
-            int num = 1;
+            int num = 999;
             //Debug.LogWarning("----------------------------------------");
             HalfEdgeData tmpData = new HalfEdgeData();
             Triangle superTriangle = GeometryUtility.SuperTriangle;
@@ -762,11 +762,11 @@ namespace XFrame.PathFinding
                 // 最好等所有点添加完后再添加限制
                 foreach (List<XVector2> extraPoints in extraPointsList)
                 {
-                    //ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
+                    ConstrainedDelaunaySloan.AddConstraints(tmpData, extraPoints, false);
                 }
             }
 
-            //ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
+            ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
             //Debug.LogWarning("----------------------------------------");
             return tmpData;
