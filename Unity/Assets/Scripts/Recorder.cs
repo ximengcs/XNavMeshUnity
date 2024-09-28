@@ -1,5 +1,6 @@
 ﻿
 using System.Collections.Generic;
+using UnityEngine;
 using XFrame.PathFinding;
 
 public static partial class Recorder
@@ -49,6 +50,9 @@ public static partial class Recorder
 
     public static void SetHalfEdgeData(HalfEdgeData data)
     {
+        Debug.LogWarning("check data valid");
+        Debug.LogWarning($" {data.CheckValid()} ");
+        Debug.LogWarning("===================");
         CurrentInfo.CloneData = data.Clone();
         CurrentInfo.SetHalfEdgeData(data);
     }

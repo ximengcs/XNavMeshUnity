@@ -104,7 +104,15 @@ namespace XFrame.PathFinding
             {
                 if (e.Face == null)
                 {
-                    sb.AppendLine($" error {e.Vertex.Position} ");
+                    sb.AppendLine($" edge error [1] {f(e.Vertex.Position)} ");
+                }
+                if (!Vertices.Contains(e.Vertex))
+                {
+                    sb.AppendLine($" edge error [2] {f(e.Vertex.Position)} ");
+                }
+                if (e.Vertex.Edge != e.NextEdge)
+                {
+                    sb.AppendLine($" edge error [3] {f(e.Vertex.Position)} ");
                 }
             }
 
@@ -113,7 +121,15 @@ namespace XFrame.PathFinding
             {
                 if (v.Edge == null)
                 {
-                    sb.AppendLine($" error {v.Position} ");
+                    sb.AppendLine($" vert error [1] {f(v.Position)} ");
+                }
+                if (!Edges.Contains(v.Edge))
+                {
+                    sb.AppendLine($" vert error [2] {f(v.Position)} ");
+                }
+                if (v.Edge.PrevEdge.Vertex != v)
+                {
+                    sb.AppendLine($" vert error [3] {f(v.Position)} ");
                 }
             }
 

@@ -173,8 +173,9 @@ public partial class Test2
         HalfEdgeData data = XNavMesh.GenerateHalfEdgeData2(edges, true, relationAllPoints);
         HalfDataTest?.Dispose();
         HalfDataTest = new HalfEdgeInfo(data, Color.cyan);
-        Debug.LogWarning(data.Faces.Count);
-        Debug.LogWarning(s_Cache.ToString());
+        Debug.LogWarning("check valid------------------");
+        Debug.LogWarning(data.CheckValid());
+        Debug.LogWarning("-----------------------------");
     }
 
     public static StringBuilder s_Cache;

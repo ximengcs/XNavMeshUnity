@@ -12,6 +12,7 @@ public partial class Test2 : MonoBehaviour
     public static bool T1;
     public static XNavMesh Navmesh;
     public static Normalizer Normalizer;
+    public static AABB AABB;
 
     private PolyInfo m_ShowPoly;
     private bool m_DrawGizmosFullMeshArea = true;

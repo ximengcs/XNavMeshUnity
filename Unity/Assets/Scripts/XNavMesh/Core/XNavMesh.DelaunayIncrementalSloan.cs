@@ -87,20 +87,12 @@ namespace XFrame.PathFinding
                     return;
                 }
 
-                // Debug.LogWarning();
-                //Debug.LogWarning($"faces count {faces.Count}");
-                //foreach (HalfEdgeFace face in faces)
-                //{
-                //    Debug.LogWarning($" {Test2.Normalizer.UnNormalize(new Triangle(f))} ");
-                //}
-                //Debug.LogWarning("==================");
-
                 // 如果点落在三角形边上
                 if (walkResult.Relation == PointTriangleRelation.On)
                 {
                     Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                     Func<Triangle, Triangle> ff = Test2.Normalizer.UnNormalize;
-                    Debug.LogWarning($"On!!!! {f(p)} {f(walkResult.Edge.PrevEdge.Vertex.Position)} {f(walkResult.Edge.Vertex.Position)}");
+                    Debug.LogWarning($"On!!!! {f(p)} {f(walkResult.Edge.PrevEdge.Vertex.Position)} {f(walkResult.Edge.Vertex.Position)} {f(walkResult.Edge.NextEdge.Vertex.Position)}");
                     // 删除这条边, 连接这个点到两个三角形的四个点
                     HalfEdge e1 = walkResult.Edge;
                     HalfEdge e1_prev = e1.PrevEdge;
@@ -113,9 +105,7 @@ namespace XFrame.PathFinding
                     HalfEdgeVertex f1_p1 = new HalfEdgeVertex(p);
                     HalfEdgeVertex f1_p2 = new HalfEdgeVertex(e1_next.Vertex.Position);
                     HalfEdge f1_e1 = new HalfEdge(f1_p1);
-                    f1_p1.Edge = f1_e1;
                     HalfEdge f1_e2 = new HalfEdge(f1_p2);
-                    f1_p2.Edge = f1_e2;
                     HalfEdgeFace f1 = new HalfEdgeFace(f1_e1);
 
                     f1_e1.PrevEdge = e1_prev;
@@ -127,6 +117,10 @@ namespace XFrame.PathFinding
                     f1_e2.NextEdge = e1_prev;
                     e1_prev.PrevEdge = f1_e2;
 
+                    f1_p1.Edge = f1_e1.NextEdge;
+                    f1_p2.Edge = f1_e2.NextEdge;
+                    e1_prev.Vertex.Edge = f1_e1;
+
                     f1_e1.Face = f1;
                     e1_prev.Face = f1;
                     f1_e2.Face = f1;
@@ -134,7 +128,6 @@ namespace XFrame.PathFinding
                     // face2
                     HalfEdgeVertex f2_p = new HalfEdgeVertex(p);
                     HalfEdge f2_e1 = new HalfEdge(f2_p);
-                    f2_p.Edge = f2_e1;
                     HalfEdgeFace f2 = new HalfEdgeFace(f2_e1);
 
                     f2_e1.NextEdge = e1;
@@ -142,6 +135,9 @@ namespace XFrame.PathFinding
 
                     e1_next.NextEdge = f2_e1;
                     f2_e1.PrevEdge = e1_next;
+
+                    f2_p.Edge = f2_e1.NextEdge;
+                    e1_next.Vertex.Edge = f2_e1;
 
                     f2_e1.Face = f2;
                     e1.Face = f2;
@@ -170,7 +166,6 @@ namespace XFrame.PathFinding
                         // face3
                         HalfEdgeVertex f3_p1 = new HalfEdgeVertex(p);
                         HalfEdge f3_e1 = new HalfEdge(f3_p1);
-                        f3_p1.Edge = f3_e1;
                         HalfEdgeFace f3 = new HalfEdgeFace(f3_e1);
 
                         f3_e1.NextEdge = e2;
@@ -178,6 +173,9 @@ namespace XFrame.PathFinding
 
                         f3_e1.PrevEdge = e2_next;
                         e2_next.NextEdge = f3_e1;
+
+                        f3_p1.Edge = f3_e1.NextEdge;
+                        e2_next.Vertex.Edge = f3_e1;
 
                         f3_e1.Face = f3;
                         e2.Face = f3;
@@ -187,9 +185,7 @@ namespace XFrame.PathFinding
                         HalfEdgeVertex f4_p1 = new HalfEdgeVertex(p);
                         HalfEdgeVertex f4_p2 = new HalfEdgeVertex(e2_next.Vertex.Position);
                         HalfEdge f4_e1 = new HalfEdge(f4_p1);
-                        f4_p1.Edge = f4_e1;
                         HalfEdge f4_e2 = new HalfEdge(f4_p2);
-                        f4_p2.Edge = f4_e2;
                         HalfEdgeFace f4 = new HalfEdgeFace(f4_e1);
 
                         f4_e1.NextEdge = f4_e2;
@@ -200,6 +196,10 @@ namespace XFrame.PathFinding
 
                         f4_e1.PrevEdge = e2_prev;
                         e2_prev.NextEdge = f4_e1;
+
+                        f4_p1.Edge = f4_e1.NextEdge;
+                        f4_p2.Edge = f4_e2.NextEdge;
+                        e2_prev.Vertex.Edge = f4_e1;
 
                         f4_e1.Face = f4;
                         f4_e2.Face = f4;
@@ -331,7 +331,7 @@ namespace XFrame.PathFinding
             public static TriangleWalkResult TriangulationWalk(XVector2 p, HalfEdgeFace startTriangle, HalfEdgeData triangulationData, out List<HalfEdgeFace> faces)
             {
                 Func<XVector2, XVector2> ff = Test2.Normalizer.UnNormalize;
-                Debug.LogWarning(ff(p));
+                Debug.LogWarning("triangle walk point " + ff(p));
                 // 点所在的三角形面
                 HalfEdgeFace intersectingTriangle = null;
                 TriangleWalkResult result = new TriangleWalkResult();

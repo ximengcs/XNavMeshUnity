@@ -715,6 +715,14 @@ namespace XFrame.PathFinding
             HalfEdgeData tmpData = new HalfEdgeData();
             Triangle superTriangle = GeometryUtility.SuperTriangle;
             tmpData.AddTriangle(superTriangle);
+
+            XVector2 min = Test2.Normalizer.AABB.Min;
+            XVector2 max = Test2.Normalizer.AABB.Max;
+            Debug.LogWarning(Test2.Normalizer.Normalize(new XVector2(min.X, min.Y)));
+            Debug.LogWarning(Test2.Normalizer.Normalize(new XVector2(min.X, max.Y)));
+            Debug.LogWarning(Test2.Normalizer.Normalize(new XVector2(max.X, min.Y)));
+            Debug.LogWarning(Test2.Normalizer.Normalize(new XVector2(max.X, max.Y)));
+
             foreach (Edge e in edgeList)
             {
                 //Debug.LogWarning($"add point {Normalizer.UnNormalize(e.P1)}");
@@ -728,8 +736,6 @@ namespace XFrame.PathFinding
             {
                 tmpList.Add(e.P1);
             }
-
-            DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
             if (extraPointsList != null)
             {
@@ -747,7 +753,10 @@ namespace XFrame.PathFinding
                                 break;
                             }
                         }
-
+                        if (Test2.Normalizer.Normalize(new XVector2(-0.5728453f, -3.069223f)).Equals(v))
+                        {
+                            //return tmpData;
+                        }
                         if (!find)
                         {
                             //Debug.LogWarning($"add point - {Normalizer.UnNormalize(v)}");
@@ -758,7 +767,10 @@ namespace XFrame.PathFinding
                     }
 
                 }
+            }
 
+            if (extraPointsList != null)
+            {
                 // 最好等所有点添加完后再添加限制
                 foreach (List<XVector2> extraPoints in extraPointsList)
                 {
@@ -767,6 +779,8 @@ namespace XFrame.PathFinding
             }
 
             ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
+
+            DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
 
             //Debug.LogWarning("----------------------------------------");
             return tmpData;
