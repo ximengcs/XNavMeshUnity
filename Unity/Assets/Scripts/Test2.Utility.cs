@@ -7,7 +7,6 @@ using UnityEditor;
 using UnityEngine;
 using XFrame.PathFinding;
 using static Test;
-using static XFrame.PathFinding.XNavMesh;
 
 public partial class Test2
 {
@@ -85,11 +84,17 @@ public partial class Test2
         Console.Inst.AddCommand("gen-data", GenerateHalfData);
 
         Console.Inst.AddCommand("record-cur-new-data-entity", RecordCurNewDataEntity);
+        Console.Inst.AddCommand("gen-data-point-entity", GenDataPointEntity);
+    }
+
+    private void GenDataPointEntity(string param)
+    {
+        GenrateFaceEntity(HalfDataTest.Data.Faces);
     }
 
     private void GenerateHalfData(string param)
     {
-        if(string.IsNullOrEmpty(param)) return;
+        if (string.IsNullOrEmpty(param)) return;
         if (Normalizer == null)
         {
             List<XVector2> points = GetAllPoints(RectPoints, false);
@@ -219,9 +224,14 @@ public partial class Test2
 
     private void RecordCurNewDataEntity(string param)
     {
+        GenrateFaceEntity(Recorder.CurrentInfo.CloneData.Faces);
+    }
+
+    public void GenrateFaceEntity(HashSet<HalfEdgeFace> faces)
+    {
         Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         GameObject dataInst = new GameObject("triangle");
-        foreach (HalfEdgeFace face in Recorder.CurrentInfo.CloneData.Faces)
+        foreach (HalfEdgeFace face in faces)
         {
             HalfEdge e1 = face.Edge;
             HalfEdge e2 = e1.NextEdge;

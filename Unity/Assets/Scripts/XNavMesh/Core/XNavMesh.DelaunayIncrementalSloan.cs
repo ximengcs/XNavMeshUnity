@@ -78,6 +78,8 @@ namespace XFrame.PathFinding
                     return;
                 }
 
+                Debug.LogWarning($"new point {Test2.Normalizer.UnNormalize(p)}");
+
                 // 找到点所在的三角形面
                 TriangleWalkResult walkResult = TriangulationWalk(p, null, triangulationData, out List<HalfEdgeFace> faces);
 
@@ -233,7 +235,7 @@ namespace XFrame.PathFinding
                 else if (walkResult.Relation == PointTriangleRelation.In)
                 {
                     Func<XVector2, XVector2> ff = Test2.Normalizer.UnNormalize;
-                    Debug.LogWarning($"edge {ff(walkResult.Edge.Vertex.Position)} ");
+                    Debug.LogWarning($"edge {ff(walkResult.Edge.PrevEdge.Vertex.Position)} {ff(walkResult.Edge.Vertex.Position)} {ff(walkResult.Edge.NextEdge.Vertex.Position)} ");
                     HalfEdgeFace f = walkResult.Edge.Face;
 
                     // 删除这个三角形，并连接由此点分开的三个三角形
@@ -691,8 +693,9 @@ namespace XFrame.PathFinding
             {
                 float relationValue = GetPointInRelationToVectorValue(a, b, p);
 
+                ;
                 //To avoid floating point precision issues we can add a small value
-                float epsilon = XMath.EPSILON;
+                float epsilon = float.Epsilon;
 
                 //To the right
                 if (relationValue < -epsilon)
@@ -707,6 +710,8 @@ namespace XFrame.PathFinding
                 //= 0 -> on the line
                 else
                 {
+                    Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
+                    Debug.LogWarning($" IsPoint_Left_On_Right_OfVector {f(a)} {f(b)} {f(p)} {relationValue} {XVector2.Cross(b - a, p - a)} "); 
                     // TO DO
                     if (EdgeSet.InSameLine(a, b, p))
                         return LeftOnRight.On;

@@ -99,10 +99,12 @@ namespace XFrame.PathFinding
         //http://thirdpartyninjas.com/blog/2008/10/07/line-segment-intersection/
         //Notice that there are more than one way to test if two line segments are intersecting
         //but this is the fastest according to https://www.habrador.com/tutorials/math/5-line-line-intersection/
-        public static bool LineLine(Edge a, Edge b, bool includeEndPoints)
+        public static bool LineLine(Edge a, Edge b, bool includeEndPoints, bool highPrecision = false)
         {
             //To avoid floating point precision issues we can use a small value
             float epsilon = EPSILON;
+            if (highPrecision)
+                epsilon = float.Epsilon;
 
             bool isIntersecting = false;
 

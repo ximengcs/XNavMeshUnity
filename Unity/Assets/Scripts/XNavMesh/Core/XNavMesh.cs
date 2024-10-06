@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 namespace XFrame.PathFinding
 {
@@ -247,7 +248,9 @@ namespace XFrame.PathFinding
             if (newAreaData.Faces.Count == 0)
             {
                 Recorder.Show(null);
+                Test2.Inst.GenrateFaceEntity(relationFaces);
                 Debug.LogError("error");
+                return false;
             }
 
             // 标记区域
@@ -520,6 +523,9 @@ namespace XFrame.PathFinding
                     float tmpD = XMath.Dot(n1, n2);
                     float tmpCross = XVector2.Cross(n1, n2);
 
+                    Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
+                    //Debug.LogWarning($"[edge] {f(p1)} {f(p2)} {f(curE.P2)} {a} {angle} ");
+
                     if (angle == 0)
                     {
                         angle = a;
@@ -554,6 +560,8 @@ namespace XFrame.PathFinding
                     }
                 }
 
+                Func<XVector2, XVector2> f_ = Test2.Normalizer.UnNormalize;
+                //Debug.LogWarning($"next ------------- {f_(current.Vertex.Position)} {f_(current.NextEdge.Vertex.Position)}");
                 edgeList.Add(new Edge(current.Vertex.Position, current.NextEdge.Vertex.Position));
                 current = current.NextEdge;
             } while (current != startEdge);
@@ -735,6 +743,9 @@ namespace XFrame.PathFinding
             foreach (Edge e in edgeList)
             {
                 tmpList.Add(e.P1);
+
+                Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
+                //Debug.LogWarning("tmp point " + f(e.P1));
             }
 
             if (extraPointsList != null)
@@ -762,7 +773,10 @@ namespace XFrame.PathFinding
                             //Debug.LogWarning($"add point - {Normalizer.UnNormalize(v)}");
                             DelaunayIncrementalSloan.InsertNewPointInTriangulation(v, tmpData);
                             if (count++ >= num)
+                            {
+                                //DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
                                 return tmpData;
+                            }
                         }
                     }
 

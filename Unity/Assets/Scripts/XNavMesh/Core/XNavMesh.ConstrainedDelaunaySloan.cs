@@ -38,6 +38,7 @@ namespace XFrame.PathFinding
                     XVector2 c_p1 = constraints[i];
                     XVector2 c_p2 = constraints[XMath.ClampListIndex(i + 1, constraints.Count)];
 
+                    Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                     // 检查两个点组成的边是否已在半边数据集合中，如果存在则跳过
                     if (IsEdgeInListOfEdges(edges, c_p1, c_p2))
                     {
@@ -431,7 +432,7 @@ namespace XFrame.PathFinding
                     }
 
                     //Is this edge intersecting with the constraint?
-                    if (IsEdgeCrossingEdge(e_p1, e_p2, c_p1, c_p2))
+                    if (IsEdgeCrossingEdge(e_p1, e_p2, c_p1, c_p2, true))  //这里需要高清度精确，因为使用低精度，会使靠近边时限制无效，从而导致错误
                     {
                         //If so add it to the queue of edges
                         intersectingEdges.Enqueue(e);
@@ -444,7 +445,7 @@ namespace XFrame.PathFinding
             }
 
             //Is an edge crossing another edge? 
-            private static bool IsEdgeCrossingEdge(XVector2 e1_p1, XVector2 e1_p2, XVector2 e2_p1, XVector2 e2_p2)
+            private static bool IsEdgeCrossingEdge(XVector2 e1_p1, XVector2 e1_p2, XVector2 e2_p1, XVector2 e2_p2, bool highPrecision = false)
             {
                 //We will here run into floating point precision issues so we have to be careful
                 //To solve that you can first check the end points 
@@ -457,7 +458,7 @@ namespace XFrame.PathFinding
                 }
 
                 //Then check if the lines are intersecting
-                if (!XMath.LineLine(new Edge(e1_p1, e1_p2), new Edge(e2_p1, e2_p2), includeEndPoints: false))
+                if (!XMath.LineLine(new Edge(e1_p1, e1_p2), new Edge(e2_p1, e2_p2), includeEndPoints: false, highPrecision))
                 {
                     return false;
                 }
