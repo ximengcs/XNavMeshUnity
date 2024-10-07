@@ -121,6 +121,7 @@ namespace XFrame.PathFinding
             foreach (HalfEdgeFace face in m_Data.Faces)
             {
                 Triangle triangle = new Triangle(face);
+                bool add = false;
                 //Debug.LogWarning($"real InnerFindRelationFaces triangle {Normalizer.UnNormalize(triangle)} ");
 
                 for (int i = 0; i < points.Count; i++)
@@ -131,22 +132,32 @@ namespace XFrame.PathFinding
                     if (triangle.Intersect2(p1, p2))
                     {
                         if (!faces.Contains(face))
+                        {
+                            //Debug.LogWarning($"add InnerFindRelationFaces {Normalizer.UnNormalize(triangle)} ");
                             faces.Add(face);
+                            add = true;
+                        }
                     }
                 }
 
-                // 检查是否存在Poly中没有加入的面
-                foreach (var entry in m_Polies)
+                if (add)
                 {
-                    Poly poly = entry.Value;
-                    if (poly.Contains(face))
+                    // 检查是否存在Poly中没有加入的面
+                    foreach (var entry in m_Polies)
                     {
-                        foreach (HalfEdgeFace polyFace in poly.Faces)
+                        Poly poly = entry.Value;
+                        if (poly.Contains(face))
                         {
-                            if (!faces.Contains(polyFace))
-                                faces.Add(polyFace);
+                            foreach (HalfEdgeFace polyFace in poly.Faces)
+                            {
+                                if (!faces.Contains(polyFace))
+                                {
+                                    faces.Add(polyFace);
+                                    //Debug.LogWarning($"add 2 InnerFindRelationFaces {Normalizer.UnNormalize(new Triangle(polyFace))} ");
+                                }
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
             }

@@ -68,7 +68,7 @@ public static partial class Recorder
 
             sb.AppendLine($"RelationFaces ========================= {RelationFaces.Count}");
             foreach (Triangle tri in RelationFaces)
-                sb.AppendLine($" <{f(tri.P1)} {tri.P2} {tri.P3}> ");
+                sb.AppendLine($" <{f(tri.P1)} {f(tri.P2)} {f(tri.P3)}> ");
             sb.AppendLine($"-----------------------------------------------------");
 
             sb.AppendLine($"NewAreaOutEdges ========================= {NewAreaOutEdges.Count}");

@@ -28,18 +28,15 @@ public partial class Test2 : MonoBehaviour
         });
         Console.Inst.AddCommand("test-2", (param) =>
         {
-            //Console.Inst.ExecuteCommand("t1-on");
-            Console.Inst.ExecuteCommand("poly-rotate 1 0.1");
+            Console.Inst.ExecuteCommand("poly-rotate-loop 1 0.1");
         });
         Console.Inst.AddCommand("test-3", (param) =>
         {
-            XVector2 a = new XVector2(-12.24f, 2.872314E-07f);
-            XVector2 b = new XVector2(-12.24f, 2853.11f);
-            XVector2 p = new XVector2(-12.24f, -11.89f);
-
-
-            Debug.LogWarning($"online {XNavMesh.DelaunayIncrementalSloan.IsPoint_Left_On_Right_OfVector(a, b, p)}");
-            Debug.LogWarning($"online {XNavMesh.DelaunayIncrementalSloan.IsPoint_Left_On_Right_OfVector(b, a, p)}");
+            Console.Inst.ExecuteCommand("poly-move-x 1 15");
+        });
+        Console.Inst.AddCommand("test-4", (param) =>
+        {
+            Console.Inst.ExecuteCommand("poly-move-x 1 1");
         });
     }
 
