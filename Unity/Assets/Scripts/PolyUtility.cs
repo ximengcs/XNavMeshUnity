@@ -115,7 +115,7 @@ public class PolyUtility
         }
 
         // 精简点位，将小于某个值的点合并为一个
-        // ClipPoints(newList, list);
+        ClipPoints(newList, list);
 
         List<XVector2> result = FindOutLine(newList);
 
@@ -393,14 +393,14 @@ public class PolyUtility
                 Debug.LogError($"Error happen {current.P1} {list.Count} ");
                 break;
             }
-            //Debug.LogWarning($"current {f(current.P1)} {f(current.P2)}");
+
             List<Edge> edges = new List<Edge>();
             foreach (List<XVector2> points in list)
             {
                 for (int i = 0; i < points.Count; i++)
                 {
                     XVector2 p = points[i];
-                    if (p.Equals(current.P1))
+                    if (p.EqualsFull(current.P1))
                     {
                         Edge e = new Edge(points[(i + 1) % points.Count], current.P1);
                         edges.Add(e);
@@ -489,6 +489,7 @@ public class PolyUtility
                 current = e1;
                 result.Add(e1.P1);
             }
+
         } while (!current.P1.Equals(leftBottom));
 
         //Debug.LogWarning($"end--------------------------");

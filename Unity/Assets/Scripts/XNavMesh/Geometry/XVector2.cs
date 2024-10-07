@@ -17,6 +17,26 @@ namespace XFrame.PathFinding
             Y = y;
         }
 
+        public bool EqualsFull(XVector2 other)
+        {
+            float xDiff = X - other.X;
+            float yDiff = Y - other.Y;
+
+            float e = float.Epsilon;
+
+            //如果所有的值都在0"附近"
+            if (
+                xDiff < e && xDiff > -e &&
+                yDiff < e && yDiff > -e)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         /// <summary>
         /// 检查两个二维向量是否相等
         /// </summary>
