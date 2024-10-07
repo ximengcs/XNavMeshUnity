@@ -172,7 +172,7 @@ public class EdgeSet
         float d1 = XMath.Dot(p - a, nor);
         float d2 = XMath.Dot(b - a, nor);
         Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-        Debug.LogWarning($" same line {f(a)} {f(b)} {f(p)}  {d1} {d2} {(d1 >= 0 && d1 <= d2)}");
+        //Debug.LogWarning($" same line {f(a)} {f(b)} {f(p)}  {d1} {d2} {(d1 >= 0 && d1 <= d2)}");
         if (d1 >= 0 && d1 <= d2)
             return true;
         return false;

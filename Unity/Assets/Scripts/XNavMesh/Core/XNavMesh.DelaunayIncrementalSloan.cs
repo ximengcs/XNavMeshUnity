@@ -78,7 +78,7 @@ namespace XFrame.PathFinding
                     return;
                 }
 
-                Debug.LogWarning($"new point {Test2.Normalizer.UnNormalize(p)}");
+                //Debug.LogWarning($"new point {Test2.Normalizer.UnNormalize(p)}");
 
                 // 找到点所在的三角形面
                 TriangleWalkResult walkResult = TriangulationWalk(p, null, triangulationData, out List<HalfEdgeFace> faces);
@@ -94,7 +94,7 @@ namespace XFrame.PathFinding
                 {
                     Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                     Func<Triangle, Triangle> ff = Test2.Normalizer.UnNormalize;
-                    Debug.LogWarning($"On!!!! {f(p)} {f(walkResult.Edge.PrevEdge.Vertex.Position)} {f(walkResult.Edge.Vertex.Position)} {f(walkResult.Edge.NextEdge.Vertex.Position)}");
+                    //Debug.LogWarning($"On!!!! {f(p)} {f(walkResult.Edge.PrevEdge.Vertex.Position)} {f(walkResult.Edge.Vertex.Position)} {f(walkResult.Edge.NextEdge.Vertex.Position)}");
                     // 删除这条边, 连接这个点到两个三角形的四个点
                     HalfEdge e1 = walkResult.Edge;
                     HalfEdge e1_prev = e1.PrevEdge;
@@ -235,7 +235,7 @@ namespace XFrame.PathFinding
                 else if (walkResult.Relation == PointTriangleRelation.In)
                 {
                     Func<XVector2, XVector2> ff = Test2.Normalizer.UnNormalize;
-                    Debug.LogWarning($"edge {ff(walkResult.Edge.PrevEdge.Vertex.Position)} {ff(walkResult.Edge.Vertex.Position)} {ff(walkResult.Edge.NextEdge.Vertex.Position)} ");
+                    //Debug.LogWarning($"edge {ff(walkResult.Edge.PrevEdge.Vertex.Position)} {ff(walkResult.Edge.Vertex.Position)} {ff(walkResult.Edge.NextEdge.Vertex.Position)} ");
                     HalfEdgeFace f = walkResult.Edge.Face;
 
                     // 删除这个三角形，并连接由此点分开的三个三角形
@@ -333,7 +333,7 @@ namespace XFrame.PathFinding
             public static TriangleWalkResult TriangulationWalk(XVector2 p, HalfEdgeFace startTriangle, HalfEdgeData triangulationData, out List<HalfEdgeFace> faces)
             {
                 Func<XVector2, XVector2> ff = Test2.Normalizer.UnNormalize;
-                Debug.LogWarning("triangle walk point " + ff(p));
+                //Debug.LogWarning("triangle walk point " + ff(p));
                 // 点所在的三角形面
                 HalfEdgeFace intersectingTriangle = null;
                 TriangleWalkResult result = new TriangleWalkResult();
@@ -711,7 +711,7 @@ namespace XFrame.PathFinding
                 else
                 {
                     Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-                    Debug.LogWarning($" IsPoint_Left_On_Right_OfVector {f(a)} {f(b)} {f(p)} {relationValue} {XVector2.Cross(b - a, p - a)} "); 
+                    //Debug.LogWarning($" IsPoint_Left_On_Right_OfVector {f(a)} {f(b)} {f(p)} {relationValue} {XVector2.Cross(b - a, p - a)} "); 
                     // TO DO
                     if (EdgeSet.InSameLine(a, b, p))
                         return LeftOnRight.On;

@@ -724,13 +724,6 @@ namespace XFrame.PathFinding
             Triangle superTriangle = GeometryUtility.SuperTriangle;
             tmpData.AddTriangle(superTriangle);
 
-            XVector2 min = Test2.Normalizer.AABB.Min;
-            XVector2 max = Test2.Normalizer.AABB.Max;
-            Debug.LogWarning(Test2.Normalizer.Normalize(new XVector2(min.X, min.Y)));
-            Debug.LogWarning(Test2.Normalizer.Normalize(new XVector2(min.X, max.Y)));
-            Debug.LogWarning(Test2.Normalizer.Normalize(new XVector2(max.X, min.Y)));
-            Debug.LogWarning(Test2.Normalizer.Normalize(new XVector2(max.X, max.Y)));
-
             foreach (Edge e in edgeList)
             {
                 //Debug.LogWarning($"add point {Normalizer.UnNormalize(e.P1)}");
