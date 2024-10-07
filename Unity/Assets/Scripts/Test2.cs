@@ -23,8 +23,9 @@ public partial class Test2 : MonoBehaviour
         Console.Inst.AddCommand("test-1", (param) =>
         {
             Console.Inst.ExecuteCommand("navmesh-add");
-            Console.Inst.ExecuteCommand("poly-add 2 true");
+            Console.Inst.ExecuteCommand("poly-add 0 true");
             Console.Inst.ExecuteCommand("poly-add 1 true");
+            Console.Inst.ExecuteCommand("poly-add 2 true");
         });
         Console.Inst.AddCommand("test-2", (param) =>
         {
