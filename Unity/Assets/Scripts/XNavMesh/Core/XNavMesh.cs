@@ -26,8 +26,6 @@ namespace XFrame.PathFinding
             m_Polies = new Dictionary<int, Poly>();
 
             Initialize();
-
-            Debug.LogWarning($" {m_Data.CheckValid()} ");
         }
 
         private void Initialize()
@@ -42,7 +40,6 @@ namespace XFrame.PathFinding
             Add(new XVector2(max.X, min.Y));
             Add(new XVector2(max.X, max.Y));
 
-            Debug.LogWarning(m_Data.CheckValid());
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
         }
 

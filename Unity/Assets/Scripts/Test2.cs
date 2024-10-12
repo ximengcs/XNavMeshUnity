@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
-using static UnityEditor.Progress;
+using SW = System.Diagnostics.Stopwatch;
 
 
 public partial class Test2 : MonoBehaviour
@@ -36,7 +36,25 @@ public partial class Test2 : MonoBehaviour
         });
         Console.Inst.AddCommand("test-3", (param) =>
         {
-            Console.Inst.ExecuteCommand("poly-move-x 1 15");
+            SW sw = SW.StartNew();
+            for (int i = 0; i < 100; i++)
+            {
+                object obj = new object();
+                obj.GetHashCode();
+            }
+            sw.Stop();
+            Debug.LogWarning(sw.ElapsedTicks);
+
+            XPool.Spwan<object>(1, 100, true);
+
+            sw = SW.StartNew();
+            for (int i = 0; i < 100; i++)
+            {
+                object obj = XPool.Require<object>();
+                obj.GetHashCode();
+            }
+            sw.Stop();
+            Debug.LogWarning(sw.ElapsedTicks);
         });
         Console.Inst.AddCommand("test-4", (param) =>
         {
