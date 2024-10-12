@@ -438,6 +438,35 @@ public partial class Test2
         return int.TryParse(paramStr[0], out target);
     }
 
+    private bool ParamToVecVec(string param, out XVector2 p1, out XVector2 p2)
+    {
+        p1 = default;
+        p2 = default;
+
+        string[] paramStr = param.Split(' ');
+        if (paramStr.Length >= 2)
+        {
+            string[] valueStr = paramStr[0].Split(',');
+            if (valueStr.Length >= 2)
+            {
+                if (!float.TryParse(valueStr[0], out p1.X)) return false;
+                if (!float.TryParse(valueStr[1], out p1.Y)) return false;
+            }
+
+            valueStr = paramStr[1].Split(',');
+            if (valueStr.Length >= 2)
+            {
+                if (!float.TryParse(valueStr[0], out p2.X)) return false;
+                if (!float.TryParse(valueStr[1], out p2.Y)) return false;
+            }
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     private bool ParamToIntFloat(string param, out int t1, out float t2)
     {
         string[] paramStr = param.Split(' ');

@@ -1,10 +1,13 @@
+using Simon001.PathFinding;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
+using static UnityEditor.Progress;
 
 
 public partial class Test2 : MonoBehaviour
@@ -37,7 +40,42 @@ public partial class Test2 : MonoBehaviour
         });
         Console.Inst.AddCommand("test-4", (param) =>
         {
-            Console.Inst.ExecuteCommand("poly-move-x 1 1");
+            if (ParamToVecVec(param, out XVector2 p1, out XVector2 p2))
+            {
+                Debug.Log($"a star {p1} {p2} ");
+                AStar aStar = new AStar(new XNavMeshHelper(Navmesh.Data));
+                IAStarItem start = Navmesh.Data.Find(Normalizer.Normalize(p1));
+                IAStarItem end = Navmesh.Data.Find(Normalizer.Normalize(p2));
+                if (start != null && end != null)
+                {
+                    {
+                        HalfEdgeFace f1 = start as HalfEdgeFace;
+                        HalfEdgeFace f2 = end as HalfEdgeFace;
+                        XVector2 p = Normalizer.UnNormalize(new Triangle(f1).CenterOfGravityPoint);
+                        GameObject inst = new GameObject("start");
+                        inst.transform.position = p.ToUnityVec3();
+
+                        p = Normalizer.UnNormalize(new Triangle(f2).CenterOfGravityPoint);
+                        inst = new GameObject("end");
+                        inst.transform.position = p.ToUnityVec3();
+                    }
+
+                    AStarPath path = aStar.Execute(start, end);
+                    Debug.Log($"execute {path.Count()}");
+                    List<XVector2> points = new List<XVector2>();
+                    foreach (HalfEdgeFace item in path)
+                    {
+                        XVector2 p = Normalizer.UnNormalize(new Triangle(item).CenterOfGravityPoint);
+                        points.Add(p);
+                        GameObject inst = new GameObject();
+                        inst.transform.position = p.ToUnityVec3();
+                    }
+                    List<Edge> edges = new List<Edge>();
+                    for (int i = 0; i < points.Count - 1; i++)
+                        edges.Add(new Edge(points[i], points[i + 1]));
+                    m_Edges.Add(edges);
+                }
+            }
         });
     }
 

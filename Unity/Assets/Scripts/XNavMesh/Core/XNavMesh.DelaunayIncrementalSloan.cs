@@ -370,6 +370,9 @@ namespace XFrame.PathFinding
                     return result;
                 }
 
+                HashSet<HalfEdgeFace> checkList = new HashSet<HalfEdgeFace>();
+                checkList.Add(startTriangle);
+
                 startTriangle = currentTriangle;
                 int count = 0;
                 // 从上面随机到的起始点开始寻找 点所在的三角形面
@@ -448,61 +451,57 @@ namespace XFrame.PathFinding
                                 else
                                 {
                                     // 不在此三角形内，移动到左边的三角形
-                                    if (e3.OppositeEdge == null)
+                                    currentTriangle = e3.OppositeEdge.Face;
+
+                                    if (checkList.Contains(currentTriangle))
                                     {
-                                        Recorder.Show(null);
-                                        if (Test2.Normalizer != null)
+                                        if (e1.OppositeEdge != null)
+                                            currentTriangle = e1.OppositeEdge.Face;
+
+                                        if (checkList.Contains(currentTriangle))
                                         {
-                                            Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-                                            Debug.LogError($" {e3.GetHashCode()}  {f(e3.Vertex.Position)} {f(e3.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
-                                            DebugUtility.Print(e1.Face, Test2.Normalizer);
-                                        }
-                                        else
-                                        {
-                                            Debug.LogError($" {(e3.Vertex.Position)} {(e3.NextEdge.Vertex.Position)} opposite edge is null ");
+                                            if (e2.OppositeEdge != null)
+                                                currentTriangle = e2.OppositeEdge.Face;
                                         }
                                     }
-                                    currentTriangle = e3.OppositeEdge.Face;
+                                    checkList.Add(currentTriangle);
                                 }
                             }
                             else
                             {
-                                if (e2.OppositeEdge == null)
-                                {
-                                    Recorder.Show(null);
-                                    if (Test2.Normalizer != null)
-                                    {
-                                        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-                                        Debug.LogError($" {e2.GetHashCode()} {f(e2.Vertex.Position)} {f(e2.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
-                                        DebugUtility.Print(e1.Face, Test2.Normalizer);
-                                    }
-                                    else
-                                    {
-                                        Debug.LogError($" {(e2.Vertex.Position)} {(e2.NextEdge.Vertex.Position)} opposite edge is null ");
-                                    }
-                                }
                                 // 不在此三角形内，移动到左边的三角形
                                 currentTriangle = e2.OppositeEdge.Face;
+
+                                if (checkList.Contains(currentTriangle))
+                                {
+                                    if (e3.OppositeEdge != null)
+                                        currentTriangle = e3.OppositeEdge.Face;
+
+                                    if (checkList.Contains(currentTriangle))
+                                    {
+                                        if (e1.OppositeEdge != null)
+                                            currentTriangle = e1.OppositeEdge.Face;
+                                    }
+                                }
+                                checkList.Add(currentTriangle);
                             }
                         }
                         else
                         {
-                            if (e1.OppositeEdge == null)
-                            {
-                                Recorder.Show(null);
-                                if (Test2.Normalizer != null)
-                                {
-                                    Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
-                                    Debug.LogError($" {e1.GetHashCode()}  {f(e1.Vertex.Position)} {f(e1.NextEdge.Vertex.Position)} {f(p)} opposite edge is null ");
-                                    DebugUtility.Print(e1.Face, Test2.Normalizer);
-                                }
-                                else
-                                {
-                                    Debug.LogError($" {(e1.Vertex.Position)} {(e1.NextEdge.Vertex.Position)} opposite edge is null ");
-                                }
-                            }
                             // 不在此三角形内，移动到左边的三角形
                             currentTriangle = e1.OppositeEdge.Face;
+                            if (checkList.Contains(currentTriangle))
+                            {
+                                if (e2.OppositeEdge != null)
+                                    currentTriangle = e2.OppositeEdge.Face;
+
+                                if (checkList.Contains(currentTriangle))
+                                {
+                                    if (e3.OppositeEdge != null)
+                                        currentTriangle = e3.OppositeEdge.Face;
+                                }
+                            }
+                            checkList.Add(currentTriangle);
                         }
                     }
                 }

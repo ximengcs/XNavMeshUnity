@@ -1,10 +1,12 @@
 ﻿
+using Simon001.PathFinding;
+
 namespace XFrame.PathFinding
 {
     /// <summary>
     /// 半边结构面
     /// </summary>
-    public class HalfEdgeFace
+    public class HalfEdgeFace : IAStarItem
     {
         /// <summary>
         /// 每个面持有它的半边的引用, 起始半边

@@ -34,6 +34,18 @@ namespace XFrame.PathFinding
             Edges = new HashSet<HalfEdge>();
         }
 
+        public HalfEdgeFace Find(XVector2 point)
+        {
+            foreach (HalfEdgeFace face in Faces)
+            {
+                if (new Triangle(face).Contains(point))
+                {
+                    return face;
+                }
+            }
+            return null;
+        }
+
         public HalfEdgeData Clone()
         {
             HalfEdgeData data = new HalfEdgeData();
