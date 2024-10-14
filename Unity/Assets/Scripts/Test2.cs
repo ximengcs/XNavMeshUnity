@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
+using static UnityEditor.Progress;
 using SW = System.Diagnostics.Stopwatch;
 
 
@@ -93,6 +94,77 @@ public partial class Test2 : MonoBehaviour
                         edges.Add(new Edge(points[i], points[i + 1]));
                     m_Edges.Add(edges);
                 }
+            }
+        });
+        Console.Inst.AddCommand("test-5", (param) =>
+        {
+            foreach (HalfEdgeFace f in m_NavMesh.Data.Faces)
+            {
+                List<HalfEdgeFace> faces = new List<HalfEdgeFace>();
+                HalfEdge e1 = f.Edge;
+                HalfEdge e2 = e1.NextEdge;
+                HalfEdge e3 = e1.PrevEdge;
+
+                HalfEdge ope1 = e1.OppositeEdge;
+                HalfEdge ope2 = e2.OppositeEdge;
+                HalfEdge ope3 = e3.OppositeEdge;
+
+                if (ope1 != null)
+                {
+                    HalfEdgeFace opf1 = ope1.Face;
+                    faces.Add(opf1);
+
+                    HalfEdge e = ope1.NextEdge.OppositeEdge;
+                    while (e != null)
+                    {
+                        HalfEdgeFace ef = e.Face;
+                        if (ope2 != null && ef == ope2.Face) break;
+                        if (ope3 != null && ef == ope3.Face) break;
+
+                        faces.Add(ef);
+                        e = e.NextEdge.OppositeEdge;
+                    }
+                }
+                if (ope2 != null)
+                {
+                    HalfEdgeFace opf2 = ope2.Face;
+                    faces.Add(opf2);
+
+                    HalfEdge e = ope2.NextEdge.OppositeEdge;
+                    while (e != null)
+                    {
+                        HalfEdgeFace ef = e.Face;
+
+                        if (ope3 != null && ef == ope3.Face) break;
+                        if (ope1 != null && ef == ope1.Face) break;
+
+                        faces.Add(ef);
+                        e = e.NextEdge.OppositeEdge;
+                    }
+                }
+                if (ope3 != null)
+                {
+                    HalfEdgeFace opf3 = ope3.Face;
+                    faces.Add(opf3);
+
+                    HalfEdge e = ope3.NextEdge.OppositeEdge;
+                    while (e != null)
+                    {
+                        HalfEdgeFace ef = e.Face;
+                        if (ope1 != null && ef == ope1.Face) break;
+                        if (ope2 != null && ef == ope2.Face) break;
+
+                        faces.Add(ef);
+                        e = e.NextEdge.OppositeEdge;
+                    }
+                }
+
+                Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
+                StringBuilder s = new StringBuilder();
+                s.AppendLine($"face {fun(new Triangle(f))}");
+                foreach (HalfEdgeFace face in faces)
+                    s.AppendLine($" -- {fun(new Triangle(face))}");
+                Debug.Log(s.ToString());
             }
         });
     }

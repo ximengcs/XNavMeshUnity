@@ -32,6 +32,66 @@ namespace XFrame.PathFinding
             Area = AreaType.Walk;
         }
 
+        public bool GetSameVert(HalfEdgeFace other, out XVector2 insect)
+        {
+            HalfEdge e1 = other.Edge;
+            HalfEdge e2 = e1.NextEdge;
+            HalfEdge e3 = e2.NextEdge;
+
+            XVector2 p1 = e1.Vertex.Position;
+            XVector2 p2 = e2.Vertex.Position;
+            XVector2 p3 = e3.Vertex.Position;
+
+            XVector2 p4 = Edge.Vertex.Position;
+            XVector2 p5 = Edge.NextEdge.Vertex.Position;
+            XVector2 p6 = Edge.PrevEdge.Vertex.Position;
+
+            if (p1.Equals(p4) || p1.Equals(p5) || p1.Equals(p6))
+            {
+                insect = p1;
+                return true;
+            }
+            if (p2.Equals(p4) || p2.Equals(p5) || p2.Equals(p6))
+            {
+                insect = p2;
+                return true;
+            }
+            if (p3.Equals(p4) || p3.Equals(p5) || p3.Equals(p6))
+            {
+                insect = p3;
+                return true;
+            }
+            insect = default;
+            return false;
+        }
+
+        public bool IsAdjacent(HalfEdgeFace other)
+        {
+            HalfEdge e1 = other.Edge;
+            HalfEdge e2 = e1.NextEdge;
+            HalfEdge e3 = e2.NextEdge;
+
+            if (e1.OppositeEdge != null)
+            {
+                if (e1.OppositeEdge.Face == this)
+                    return true;
+            }
+
+            if (e2.OppositeEdge != null)
+            {
+                if (e2.OppositeEdge.Face == this)
+                    return true;
+            }
+
+            if (e3.OppositeEdge != null)
+            {
+                if (e3.OppositeEdge.Face == this)
+                    return true;
+            }
+
+            return false;
+        }
+
         public bool Contains(XVector2 point)
         {
             return Edge.Vertex.Position.Equals(point) ||
