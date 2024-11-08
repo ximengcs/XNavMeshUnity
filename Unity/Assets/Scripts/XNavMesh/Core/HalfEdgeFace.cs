@@ -46,23 +46,24 @@ namespace XFrame.PathFinding
             XVector2 p5 = Edge.NextEdge.Vertex.Position;
             XVector2 p6 = Edge.PrevEdge.Vertex.Position;
 
+            int count = 0;
+            insect = default;
             if (p1.Equals(p4) || p1.Equals(p5) || p1.Equals(p6))
             {
                 insect = p1;
-                return true;
+                count++;
             }
             if (p2.Equals(p4) || p2.Equals(p5) || p2.Equals(p6))
             {
                 insect = p2;
-                return true;
+                count++;
             }
             if (p3.Equals(p4) || p3.Equals(p5) || p3.Equals(p6))
             {
                 insect = p3;
-                return true;
+                count++;
             }
-            insect = default;
-            return false;
+            return count == 1;
         }
 
         public bool IsAdjacent(HalfEdgeFace other)

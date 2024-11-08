@@ -21,7 +21,7 @@ namespace XFrame.PathFinding
             HalfEdgeFace f2 = to as HalfEdgeFace;
 
             if (f2.Area == AreaType.Obstacle)
-                return int.MaxValue;
+                return AStar.MAX_VALUE;
 
             if (f1.IsAdjacent(f2))
             {
@@ -35,11 +35,12 @@ namespace XFrame.PathFinding
                 {
                     Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
                     Func<XVector2, XVector2> fun2 = Test2.Normalizer.UnNormalize;
-                    Debug.Log($" ===> {fun(new Triangle(f1))} {fun(new Triangle(f2))} {fun2(insect)} ");
 
                     XVector2 p1 = new Triangle(f1).InnerCentrePoint;
                     XVector2 p2 = new Triangle(f2).InnerCentrePoint;
-                    return (int)(XVector2.Distance(p1, insect) * 100000) + (int)(XVector2.Distance(p2, insect) * 100000);
+                    int value = (int)(XVector2.Distance(p1, insect) * 100000) + (int)(XVector2.Distance(p2, insect) * 100000);
+                    Debug.Log($" ===> {fun(new Triangle(f1))} {fun(new Triangle(f2))} {fun2(insect)} {value} ");
+                    return value;
                 }
                 else
                 {
@@ -56,7 +57,7 @@ namespace XFrame.PathFinding
             HalfEdgeFace f2 = end as HalfEdgeFace;
 
             if (f2.Area == AreaType.Obstacle)
-                return int.MaxValue;
+                return AStar.INVALID;
 
             XVector2 p1 = new Triangle(f1).InnerCentrePoint;
             XVector2 p2 = new Triangle(f2).InnerCentrePoint;

@@ -16,6 +16,11 @@ namespace XFrame.PathFinding
             return new Vector2(point.X, point.Y);
         }
 
+        public static XVector2 ToVec(this Vector3 point)
+        {
+            return new XVector2(point.x, point.y);
+        }
+
         public static System.Numerics.Vector2 ToSystemVec2(this XVector2 point)
         {
             return new System.Numerics.Vector2(point.X, point.Y);
