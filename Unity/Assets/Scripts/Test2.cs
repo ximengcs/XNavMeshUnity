@@ -154,7 +154,7 @@ public partial class Test2 : MonoBehaviour
     private void TestPath(XVector2 p1, XVector2 p2)
     {
         Debug.Log($"a star {p1} {p2} ");
-        AStar aStar = new AStar(new XNavMeshHelper(Navmesh.Data));
+        AStar aStar = new AStar(new XNavMeshHelper(Navmesh.Data), Debug.Log);
         IAStarItem start = Navmesh.Data.Find(Normalizer.Normalize(p1));
         IAStarItem end = Navmesh.Data.Find(Normalizer.Normalize(p2));
         if (start != null && end != null)

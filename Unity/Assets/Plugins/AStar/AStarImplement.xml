@@ -9,7 +9,7 @@
             A星寻路辅助器
             </summary>
         </member>
-        <member name="M:Simon001.PathFinding.IAStarHelper.GetItemRound(Simon001.PathFinding.IAStarItem,System.Collections.Generic.List{Simon001.PathFinding.IAStarItem})">
+        <member name="M:Simon001.PathFinding.IAStarHelper.GetItemRound(Simon001.PathFinding.IAStarItem,System.Collections.Generic.HashSet{Simon001.PathFinding.IAStarItem})">
             <summary>
             获取单元格周围的单元
             </summary>

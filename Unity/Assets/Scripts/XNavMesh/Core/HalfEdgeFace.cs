@@ -66,6 +66,18 @@ namespace XFrame.PathFinding
             return count == 1;
         }
 
+        public HalfEdge FindSameValueVert(HalfEdge edge)
+        {
+            XVector2 p = edge.Vertex.Position;
+            if (Edge.Vertex.Position.Equals(p))
+                return Edge;
+            if (Edge.NextEdge.Vertex.Position.Equals(p))
+                return Edge.NextEdge;
+            if (Edge.PrevEdge.Vertex.Position.Equals(p))
+                return Edge.PrevEdge;
+            return null;
+        }
+
         public bool IsAdjacent(HalfEdgeFace other)
         {
             HalfEdge e1 = other.Edge;
