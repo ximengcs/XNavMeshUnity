@@ -1,4 +1,6 @@
 ﻿
+using System;
+
 namespace XFrame.PathFinding
 {
     /// <summary>
@@ -23,7 +25,15 @@ namespace XFrame.PathFinding
 
         public override string ToString()
         {
-            return Position.ToString();
+            if (Test2.Normalizer != null)
+            {
+                Func<XVector2, XVector2> fun2 = Test2.Normalizer.UnNormalize;
+                return fun2(Position).ToString();
+            }
+            else
+            {
+                return Position.ToString();
+            }
         }
     }
 }

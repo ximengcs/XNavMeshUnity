@@ -332,7 +332,6 @@ namespace XFrame.PathFinding
 
             public static TriangleWalkResult TriangulationWalk(XVector2 p, HalfEdgeFace startTriangle, HalfEdgeData triangulationData, out List<HalfEdgeFace> faces)
             {
-                Func<XVector2, XVector2> ff = Test2.Normalizer.UnNormalize;
                 //Debug.LogWarning("triangle walk point " + ff(p));
                 // 点所在的三角形面
                 HalfEdgeFace intersectingTriangle = null;
@@ -385,7 +384,6 @@ namespace XFrame.PathFinding
                     {
                         Recorder.Show(null);
                         Triangle start = new Triangle(startTriangle);
-                        Debug.LogError($"TriangulationWalk error {ff(p)} <{ff(start.P1)} {ff(start.P2)} {ff(start.P3)}>");
                         DataUtility.Save("walk-error", triangulationData);
                         throw new Exception("loop exec");
                     }

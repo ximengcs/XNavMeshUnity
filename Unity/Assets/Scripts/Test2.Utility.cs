@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
 
@@ -20,6 +21,7 @@ public partial class Test2
     private Dictionary<int, PolyInfo> m_Polies;
     private List<List<Edge>> m_Edges;
     private HalfEdgeInfo HalfDataTest;
+    private List<Updater> m_UpdaterList;
 
     private void OnDrawGizmos()
     {
@@ -55,9 +57,11 @@ public partial class Test2
         Inst = this;
         m_Edges = new List<List<Edge>>();
         m_Polies = new Dictionary<int, PolyInfo>();
+        m_UpdaterList = new List<Updater>();
         Application.targetFrameRate = 60;
         AddTestCommand();
         Console.Inst.AddCommand("navmesh-add", CreateNavMesh);
+        Console.Inst.AddCommand("navmesh-open", OpenNavmesh);
         Console.Inst.AddCommand("poly-add", CreatePoly);
         Console.Inst.AddCommand("poly-remove", RemovePoly);
         Console.Inst.AddCommand("poly-move-x", MovePolyX);
@@ -296,6 +300,18 @@ public partial class Test2
         p1Opp3.transform.position = f(ope3.Vertex.Position).ToUnityVec3();
     }
 
+    private void OpenNavmesh(string param)
+    {
+        param = param.TrimEnd(' ');
+        byte[] bytes = File.ReadAllBytes($"Assets/Data/Navmesh/{param}.bytes");
+        m_NavMesh = DataUtility.ToNavmesh(bytes);
+        Normalizer = m_NavMesh.Normalizer;
+
+        m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
+        m_FullMeshArea.Refresh();
+        Debug.Log($"read success {m_NavMesh.Data.Faces.Count}");
+    }
+
     private void OpenData(string param)
     {
         param = param.TrimEnd(' ');
@@ -389,6 +405,9 @@ public partial class Test2
             if (entry.Value.Updater != null)
                 entry.Value.Updater.OnUpdate();
         }
+
+        foreach(var entry in m_UpdaterList)
+            entry.OnUpdate();
     }
 
     public List<XVector2> GetAllPoints(Transform tf, bool checkActive)

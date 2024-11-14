@@ -125,7 +125,7 @@ namespace XFrame.PathFinding
                 //Is also needed when flood-filling so we dont jump over a constraint
                 HashSet<HalfEdge> constraintEdges = FindAllConstraintEdges(constraints, triangleData);
 
-                Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
+                //Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
                 //Each edge is associated with a face which should be deleted
                 foreach (HalfEdge e in constraintEdges)
                 {
@@ -193,7 +193,7 @@ namespace XFrame.PathFinding
                         else
                         {
                             //DebugUtility.Print(e.OppositeEdge.Face, Test2.Navmesh.Normalizer);
-                            nei = $"{f(e.OppositeEdge.PrevEdge.Vertex.Position)}  {f(e.OppositeEdge.Vertex.Position)}  hash{e.OppositeEdge.Face.GetHashCode()} ";
+                            //nei = $"{f(e.OppositeEdge.PrevEdge.Vertex.Position)}  {f(e.OppositeEdge.Vertex.Position)}  hash{e.OppositeEdge.Face.GetHashCode()} ";
                         }
                         //Debug.LogWarning($" neighbor hash{e.Face.GetHashCode()} {f(e.PrevEdge.Vertex.Position)} {f(e.Vertex.Position)} {nei} ");
                         //No neighbor exists

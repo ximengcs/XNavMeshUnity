@@ -62,7 +62,7 @@ namespace XFrame.PathFinding
 
             XVector2 p1 = new Triangle(f1).InnerCentrePoint;
             XVector2 p2 = new Triangle(f2).InnerCentrePoint;
-            return (int)(XVector2.Distance(p1, p2) * 1000000);
+            return (int)(XVector2.Distance(p1, p2) * 100000);
         }
 
         public void GetItemRound(IAStarItem item, HashSet<IAStarItem> result)

@@ -17,6 +17,11 @@ namespace XFrame.PathFinding
 
         public Normalizer Normalizer => m_Normalizer;
         public HalfEdgeData Data => m_Data;
+        public Dictionary<int, Poly> Polies
+        {
+            get { return m_Polies; }
+            internal set { m_Polies = value; }
+        }
 
         public XNavMesh(AABB aabb)
         {
@@ -26,6 +31,13 @@ namespace XFrame.PathFinding
             m_Polies = new Dictionary<int, Poly>();
 
             Initialize();
+        }
+
+        public XNavMesh(AABB aabb, HalfEdgeData data)
+        {
+            m_AABB = aabb;
+            m_Normalizer = new Normalizer(aabb);
+            m_Data = data;
         }
 
         private void Initialize()
@@ -765,10 +777,7 @@ namespace XFrame.PathFinding
                                 break;
                             }
                         }
-                        if (Test2.Normalizer.Normalize(new XVector2(-0.5728453f, -3.069223f)).Equals(v))
-                        {
-                            //return tmpData;
-                        }
+
                         if (!find)
                         {
                             //Debug.LogWarning($"add point - {Normalizer.UnNormalize(v)}");

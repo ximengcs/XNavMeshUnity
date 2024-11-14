@@ -1,5 +1,6 @@
 ﻿
 using Simon001.PathFinding;
+using System;
 
 namespace XFrame.PathFinding
 {

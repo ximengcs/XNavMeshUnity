@@ -14,7 +14,11 @@ namespace XFrame.PathFinding
 
         public int Id => m_Id;
 
+        public AreaType AreaType => m_AreaType;
+
         public IEnumerable<HalfEdgeFace> Faces => m_Faces;
+
+        public int FaceCount => m_Faces.Count;
 
         public XVector2 CenterOfGravityPoint
         {
@@ -43,6 +47,14 @@ namespace XFrame.PathFinding
             m_Points = points;
             m_NavMesh = navMesh;
             m_AreaType = areaType;
+        }
+
+        internal Poly(int id, XNavMesh navMesh, List<XVector2> points, HashSet<HalfEdgeFace> faces, AreaType areaType)
+        {
+            m_Id = id;
+            m_Points = points;
+            m_AreaType = areaType;
+            m_Faces = faces;
         }
 
         internal static bool Intersect(List<XVector2> points, List<XVector2> points2)

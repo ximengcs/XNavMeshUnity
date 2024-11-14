@@ -1,3 +1,5 @@
+using RVO;
+using RVOCS;
 using Simon001.PathFinding;
 using System;
 using System.Collections.Generic;
@@ -5,6 +7,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 using XFrame.PathFinding;
 using static Test;
 using static UnityEditor.Progress;
@@ -18,6 +21,8 @@ public partial class Test2 : MonoBehaviour
     public static Normalizer Normalizer;
     public static AABB AABB;
 
+    public GameObject CirclePrefab;
+    public RVOArea RVOObstacle;
     public Transform StartPoint;
     public Transform EndPoint;
 
@@ -144,6 +149,34 @@ public partial class Test2 : MonoBehaviour
                 Debug.Log(s.ToString());
             }
         });
+
+        Console.Inst.AddCommand("rvo", (param) =>
+        {
+            Circle circle = new Circle(CirclePrefab);
+
+            /* Set up the scenario. */
+            circle.setupScenario();
+            circle.updateVisualization();
+            if (RVOObstacle)
+            {
+                Simulator.Instance.addObstacle(RVOObstacle.GetVertices());
+                Simulator.Instance.processObstacles();
+            }
+            
+            m_UpdaterList.Add(new Updater(() =>
+            {
+                //if (!circle.reachedGoal())
+                //{
+                //    circle.updateVisualization();
+                //    circle.setPreferredVelocities();
+                //    Simulator.Instance.doStep();
+                //}
+
+                circle.updateVisualization();
+                circle.setPreferredVelocities();
+                Simulator.Instance.doStep();
+            }));
+        });
     }
 
     private void TestTri(string param)
@@ -176,6 +209,7 @@ public partial class Test2 : MonoBehaviour
             List<XVector2> points = new List<XVector2>();
             foreach (HalfEdgeFace item in path)
             {
+                Debug.Log($"itemn {item}");
                 XVector2 p = Normalizer.UnNormalize(new Triangle(item).CenterOfGravityPoint);
                 points.Add(p);
                 GameObject inst = new GameObject();
