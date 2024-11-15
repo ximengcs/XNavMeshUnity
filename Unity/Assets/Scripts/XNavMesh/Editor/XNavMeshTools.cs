@@ -5,6 +5,14 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using XFrame.PathFinding;
+using static Test;
+
+public struct CurrentNavmesh
+{
+    public XNavMesh Navmesh;
+    public MeshArea MeshArea;
+    public XNavMeshRenderer Renderer;
+}
 
 public class XNavMeshTools : EditorWindow
 {
@@ -13,41 +21,78 @@ public class XNavMeshTools : EditorWindow
     private Transform m_Rect;
     private TextAsset m_File;
 
+    private List<GameObject> m_AreasInst;
+    private CurrentNavmesh m_CurrentNavmesh;
+
+    private bool m_ExitDestroy;
     private XNavmeshEditData m_Current;
+    private Vector2 m_AreaListPos;
 
     private string m_FilePath = "Assets/Scripts/XNavMesh/Editor/Data";
     private string m_FileExtension = "xnavmesh";
     private string m_CurrentPath;
 
+    private void OnEnable()
+    {
+        m_ExitDestroy = true;
+        m_AreasInst = new List<GameObject>();
+    }
+
     private void OnGUI()
     {
+        EditorGUILayout.BeginHorizontal(GUI.skin.textField);
         if (GUILayout.Button("New"))
         {
             m_Current = new XNavmeshEditData();
             m_Current.Name = $"navmesh_{DateTime.Now.ToString("yyyyMMddHHmmss")}";
             m_CurrentPath = EditorUtility.SaveFilePanel("new navmesh file", m_FilePath, m_Current.Name, m_FileExtension);
-            InnerNew();
+            if (!string.IsNullOrEmpty(m_CurrentPath))
+            {
+                InnerNew();
+                m_Current.Name = Path.GetFileNameWithoutExtension(m_CurrentPath);
+            }
         }
         if (GUILayout.Button("Open"))
         {
             m_CurrentPath = EditorUtility.OpenFilePanel("open navmesh file", m_FilePath, m_FileExtension);
-            InnerOpenCurrent();
+            if (!string.IsNullOrEmpty(m_CurrentPath))
+            {
+                InnerOpenCurrent();
+                m_Current.Name = Path.GetFileNameWithoutExtension(m_CurrentPath);
+            }
         }
         if (GUILayout.Button("Save"))
         {
             InnerSaveCurrent();
         }
+        EditorGUILayout.EndHorizontal();
 
         if (m_Current != null)
         {
+            EditorGUILayout.BeginVertical(GUI.skin.window);
+
+            EditorGUILayout.BeginHorizontal();
+            m_Current.Name = EditorGUILayout.TextField(m_Current.Name);
+            if (GUILayout.Button("OK", GUILayout.Width(50)))
+            {
+                InnerChangeFileName();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginVertical(GUI.skin.textField);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Edit Mode");
             m_Current.EditMode = (EditMode)EditorGUILayout.EnumPopup(m_Current.EditMode);
             EditorGUILayout.EndHorizontal();
 
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Exit Delete");
+            m_ExitDestroy = EditorGUILayout.Toggle(m_ExitDestroy);
+            EditorGUILayout.EndHorizontal();
+
             if (GUILayout.Button("Add Area"))
             {
-                InnerAddArea("area", new Vector3[]
+                InnerAddArea($"Area{m_AreasInst.Count + 1}", new Vector3[]
                 {
                     new Vector3(1, -1),
                     new Vector3(-1, -1),
@@ -55,22 +100,99 @@ public class XNavMeshTools : EditorWindow
                 });
             }
 
-            if (GUILayout.Button("Generate navmesh"))
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Generate Navmesh"))
             {
                 InnerGenerateNavmesh();
             }
+            if (GUILayout.Button("Clear"))
+            {
+                m_CurrentNavmesh.Renderer.Destroy();
+                m_CurrentNavmesh = default;
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.Space();
+            EditorGUILayout.BeginHorizontal(GUI.skin.textField);
+            if (GUILayout.Button("Min"))
+            {
+                Selection.activeGameObject = m_Rect.GetChild(0).gameObject;
+            }
+            if (GUILayout.Button("Max"))
+            {
+                Selection.activeGameObject = m_Rect.GetChild(1).gameObject;
+            }
+            EditorGUILayout.EndHorizontal();
+
+            m_AreaListPos = EditorGUILayout.BeginScrollView(m_AreaListPos, GUI.skin.textField);
+            for (int i = 0; i < m_AreasInst.Count; i++)
+            {
+                GameObject obj = m_AreasInst[i];
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button(obj.name))
+                {
+                    Selection.activeGameObject = obj;
+                }
+                if (GUILayout.Button("X", GUILayout.Width(30)))
+                {
+                    GameObject.DestroyImmediate(obj);
+                    m_AreasInst.RemoveAt(i);
+                    EditorGUILayout.EndHorizontal();
+                    break;
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+            EditorGUILayout.EndScrollView();
+
+            EditorGUILayout.EndVertical();
         }
     }
 
+    private void InnerRefreshMinMax()
+    {
+        if (m_Areas)
+        {
+            foreach (GameObject obj in m_Areas)
+            {
+
+            }
+        }
+    }
     private void OnDestroy()
     {
-        GameObject.DestroyImmediate(m_Root);
+        if (m_ExitDestroy)
+            GameObject.DestroyImmediate(m_Root);
+        if (m_CurrentNavmesh.Renderer != null)
+            m_CurrentNavmesh.Renderer.Destroy();
+    }
+
+    private void InnerChangeFileName()
+    {
+        if (string.IsNullOrEmpty(m_CurrentPath) || m_Current == null)
+            return;
+
+        string orgPath = m_CurrentPath;
+        string tarPath = Path.Combine(m_FilePath, $"{m_Current.Name}.{m_FileExtension}");
+        if (orgPath == tarPath)
+            return;
+        if (!File.Exists(orgPath))
+            return;
+
+        m_CurrentPath = tarPath;
+        m_Root.name = m_Current.Name;
+        File.Copy(orgPath, tarPath, true);
+        File.Delete(orgPath);
+        File.Delete($"{orgPath}.meta");
+        InnerSaveCurrent();
+        AssetDatabase.Refresh();
     }
 
     private void InnerGenerateNavmesh()
     {
+        InnerSyncData();
         XNavMesh navmesh = new XNavMesh(new AABB(m_Current.MinX, m_Current.MaxX, m_Current.MinY, m_Current.MaxY));
-        //Test2.Normalizer = navmesh.Normalizer;
+
         foreach (var entry in m_Current.Areas)
         {
             List<XVector2> points = new List<XVector2>();
@@ -90,6 +212,12 @@ public class XNavMeshTools : EditorWindow
                     break;
             }
         }
+        if (m_CurrentNavmesh.Renderer != null)
+            m_CurrentNavmesh.Renderer.Destroy();
+        m_CurrentNavmesh.Navmesh = navmesh;
+        m_CurrentNavmesh.MeshArea = new MeshArea(navmesh, Color.green);
+        m_CurrentNavmesh.Renderer = new XNavMeshRenderer();
+        m_CurrentNavmesh.Renderer.Refresh(m_CurrentNavmesh.MeshArea);
 
         byte[] bytes = DataUtility.ToBytes(navmesh);
         File.WriteAllBytes($"Assets/Data/Navmesh/{m_Current.Name}.bytes", bytes);
@@ -114,6 +242,7 @@ public class XNavMeshTools : EditorWindow
 
         LineRenderer line = rectRoot.AddComponent<LineRenderer>();
         line.loop = true;
+        line.useWorldSpace = false;
         line.material = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Line.mat");
         line.positionCount = 4;
         line.startWidth = 0.5f;
@@ -124,6 +253,8 @@ public class XNavMeshTools : EditorWindow
 
     private void Update()
     {
+
+
         InnerUpdateRect();
     }
 
@@ -144,9 +275,11 @@ public class XNavMeshTools : EditorWindow
     private void InnerAddArea(string name, Vector3[] points)
     {
         GameObject root = new GameObject(name);
+        m_AreasInst.Add(root);
         root.transform.SetParent(m_Areas);
         LineRenderer line = root.AddComponent<LineRenderer>();
         line.loop = true;
+        line.useWorldSpace = false;
         line.material = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Line.mat");
         line.positionCount = points.Length;
         line.SetPositions(points);
@@ -171,6 +304,13 @@ public class XNavMeshTools : EditorWindow
 
     private void InnerSaveCurrent()
     {
+        InnerSyncData();
+        File.WriteAllText(m_CurrentPath, JsonConvert.SerializeObject(m_Current));
+        AssetDatabase.Refresh();
+    }
+
+    private void InnerSyncData()
+    {
         Dictionary<string, List<(float, float)>> result = new();
         RVOArea[] areas = m_Areas.GetComponentsInChildren<RVOArea>(false);
         foreach (RVOArea area in areas)
@@ -189,9 +329,6 @@ public class XNavMeshTools : EditorWindow
         m_Current.MaxX = max.x;
         m_Current.MinY = min.y;
         m_Current.MaxY = max.y;
-
-        File.WriteAllText(m_CurrentPath, JsonConvert.SerializeObject(m_Current));
-        AssetDatabase.Refresh();
     }
 
     private void InnerOpenCurrent()
@@ -213,18 +350,27 @@ public class XNavMeshTools : EditorWindow
 
     private void InnerGenerateBorder()
     {
-        Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
-        Vector2 max = new Vector2(float.MinValue, float.MinValue);
-        foreach (Transform tf in m_Areas)
+        if (m_Areas)
         {
-            RVOArea ob = tf.GetComponent<RVOArea>();
-            List<Vector2> points = ob.GetUnityVertices();
-            foreach (Vector2 p in points)
+            Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
+            Vector2 max = new Vector2(float.MinValue, float.MinValue);
+            foreach (Transform tf in m_Areas)
             {
-                if (p.x < min.x) min.x = p.x;
-                if (p.y < min.y) min.y = p.y;
-                if (p.x > max.x) max.x = p.x;
-                if (p.y > max.y) max.y = p.y;
+                RVOArea ob = tf.GetComponent<RVOArea>();
+                List<Vector2> points = ob.GetUnityVertices();
+                foreach (Vector2 p in points)
+                {
+                    if (p.x < min.x) min.x = p.x;
+                    if (p.y < min.y) min.y = p.y;
+                    if (p.x > max.x) max.x = p.x;
+                    if (p.y > max.y) max.y = p.y;
+                }
+            }
+
+            if (m_Current != null)
+            {
+                m_Current.PointMinX = min.x;
+                m_Current.PointMinY = min.x;
             }
         }
     }

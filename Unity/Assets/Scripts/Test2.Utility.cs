@@ -58,6 +58,7 @@ public partial class Test2
         m_Edges = new List<List<Edge>>();
         m_Polies = new Dictionary<int, PolyInfo>();
         m_UpdaterList = new List<Updater>();
+        m_Agents = new Dictionary<int, XAgent>();
         Application.targetFrameRate = 60;
         AddTestCommand();
         Console.Inst.AddCommand("navmesh-add", CreateNavMesh);
@@ -455,6 +456,50 @@ public partial class Test2
     {
         string[] paramStr = param.Split(' ');
         return int.TryParse(paramStr[0], out target);
+    }
+
+    private bool ParamToIntVec(string param, out int target, out XVector2 p1)
+    {
+        p1 = default;
+        string[] paramStr = param.Split(' ');
+        if(!int.TryParse(paramStr[0], out target))
+            return false;
+
+        if (paramStr.Length >= 2)
+        {
+            string[] valueStr = paramStr[1].Split(',');
+            if (valueStr.Length >= 2)
+            {
+                if (!float.TryParse(valueStr[0], out p1.X)) return false;
+                if (!float.TryParse(valueStr[1], out p1.Y)) return false;
+            }
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private bool ParamToVec(string param, out XVector2 p1)
+    {
+        p1 = default;
+
+        string[] paramStr = param.Split(' ');
+        if (paramStr.Length >= 2)
+        {
+            string[] valueStr = paramStr[0].Split(',');
+            if (valueStr.Length >= 2)
+            {
+                if (!float.TryParse(valueStr[0], out p1.X)) return false;
+                if (!float.TryParse(valueStr[1], out p1.Y)) return false;
+            }
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     private bool ParamToVecVec(string param, out XVector2 p1, out XVector2 p2)

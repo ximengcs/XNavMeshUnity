@@ -126,6 +126,7 @@ namespace XFrame.PathFinding
 
         private HashSet<HalfEdgeFace> InnerFindRelationFaces(List<XVector2> points, HashSet<HalfEdgeFace> result = null)
         {
+            //Debug.LogWarning($" InnerFindRelationFaces {m_Data.Faces.Count} ");
             HashSet<HalfEdgeFace> faces = result != null ? result : new HashSet<HalfEdgeFace>();
             foreach (HalfEdgeFace face in m_Data.Faces)
             {
@@ -138,7 +139,7 @@ namespace XFrame.PathFinding
                     XVector2 p1 = points[i];
                     XVector2 p2 = points[(i + 1) % points.Count];
                     //Debug.LogWarning($"real InnerFindRelationFaces {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {triangle.Intersect2(p1, p2)} |||| {Normalizer.UnNormalize(triangle)} ");
-                    if (triangle.Intersect2(p1, p2))
+                    if (triangle.Intersect2(p1, p2) || triangle.Contains(p1))
                     {
                         if (!faces.Contains(face))
                         {
@@ -492,6 +493,11 @@ namespace XFrame.PathFinding
 
             int count = 0;
             HalfEdge current = startEdge;
+
+            if (current == null)
+            {
+                Debug.LogError($"current is null, {faces.Count}");
+            }
 
             do
             {

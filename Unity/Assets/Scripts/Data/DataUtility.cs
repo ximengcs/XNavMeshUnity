@@ -91,7 +91,6 @@ namespace XFrame.PathFinding
         {
             using (MemoryStream ms = InnerToBytes(navmesh.Data))
             {
-                Debug.LogWarning($" minmax {navmesh.AABB.Min.X} {navmesh.AABB.Min.Y} {navmesh.AABB.Max.X} {navmesh.AABB.Max.Y} ");
                 ms.Write(BitConverter.GetBytes(navmesh.AABB.Min.X));
                 ms.Write(BitConverter.GetBytes(navmesh.AABB.Min.Y));
                 ms.Write(BitConverter.GetBytes(navmesh.AABB.Max.X));
@@ -105,18 +104,15 @@ namespace XFrame.PathFinding
                     ms.Write(BitConverter.GetBytes(poly.Id));
                     ms.Write(BitConverter.GetBytes((int)poly.AreaType));
                     List<XVector2> polyPoints = poly.Points;
-                    Debug.LogWarning($" write polyPoints Count {polyPoints.Count} ");
                     ms.Write(BitConverter.GetBytes(polyPoints.Count));
                     foreach (XVector2 point in polyPoints)
                     {
                         ms.Write(BitConverter.GetBytes(point.X));
                         ms.Write(BitConverter.GetBytes(point.Y));
                     }
-                    Debug.LogWarning($" write FaceCount {poly.FaceCount} ");
                     ms.Write(BitConverter.GetBytes(poly.FaceCount));
                     foreach (HalfEdgeFace face in poly.Faces)
                     {
-                        Debug.LogWarning($" write facehashcode {face.GetHashCode()} ");
                         ms.Write(BitConverter.GetBytes(face.GetHashCode()));
                     }
                 }
@@ -168,7 +164,6 @@ namespace XFrame.PathFinding
             {
                 Face f = new Face();
                 f.Id = face.GetHashCode();
-                Debug.LogWarning($" write face {f.Id} ");
                 f.EdgeId = face.Edge.GetHashCode();
                 f.AreaType = (int)face.Area;
                 WriteStruct(ms, f);
@@ -193,7 +188,6 @@ namespace XFrame.PathFinding
                 int id = BitConverter.ToInt32(bytes, pos); pos += sizeof(int);
                 AreaType areaType = (AreaType)BitConverter.ToInt32(bytes, pos); pos += sizeof(int);
                 int pointsCount = BitConverter.ToInt32(bytes, pos); pos += sizeof(int);
-                Debug.LogWarning($" read pointsCount {pointsCount} ");
                 List<XVector2> polyPoints = new List<XVector2>(pointsCount);
                 for (int j = 0; j < pointsCount; j++)
                 {
@@ -204,7 +198,6 @@ namespace XFrame.PathFinding
 
                 HashSet<HalfEdgeFace> faces = new HashSet<HalfEdgeFace>();
                 int faceCount = BitConverter.ToInt32(bytes, pos); pos += sizeof(int);
-                Debug.LogWarning($" read faceCount {faceCount} ");
                 for (int j = 0; j < faceCount; j++)
                 {
                     int hashCode = BitConverter.ToInt32(bytes, pos); pos += sizeof(int);
@@ -264,7 +257,6 @@ namespace XFrame.PathFinding
                 pos = ReadStruct<Face>(bytes, pos, out Face face);
                 HalfEdgeFace f = face.ToHalfEdgeData(edges[face.EdgeId], (AreaType)face.AreaType);
                 data.Faces.Add(f);
-                Debug.LogWarning($" read face {face.Id} ");
                 faces.Add(face.Id, f);
                 faceDatas.Add(face);
             }

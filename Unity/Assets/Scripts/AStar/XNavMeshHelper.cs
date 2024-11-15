@@ -24,15 +24,15 @@ namespace XFrame.PathFinding
             if (f2.Area == AreaType.Obstacle)
                 return AStar.MAX_VALUE;
 
-            Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
-            Func<XVector2, XVector2> fun2 = Test2.Normalizer.UnNormalize;
+            //Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
+            //Func<XVector2, XVector2> fun2 = Test2.Normalizer.UnNormalize;
 
             if (f1.IsAdjacent(f2))
             {
                 XVector2 p1 = new Triangle(f1).InnerCentrePoint;
                 XVector2 p2 = new Triangle(f2).InnerCentrePoint;
                 int value = (int)(XVector2.Distance(p1, p2) * 100000);
-                Debug.Log($" ---> {fun(new Triangle(f1))} ||||||||||||||||| {fun(new Triangle(f2))}                 {value} ");
+                //Debug.Log($" ---> {fun(new Triangle(f1))} ||||||||||||||||| {fun(new Triangle(f2))}                 {value} ");
                 return value;
             }
             else
@@ -42,7 +42,7 @@ namespace XFrame.PathFinding
                     XVector2 p1 = new Triangle(f1).InnerCentrePoint;
                     XVector2 p2 = new Triangle(f2).InnerCentrePoint;
                     int value = (int)(XVector2.Distance(p1, insect) * 100000) + (int)(XVector2.Distance(p2, insect) * 100000);
-                    Debug.Log($" ===> {fun(new Triangle(f1))} ||||||||||||||||| {fun(new Triangle(f2))}                 {fun2(insect)} {value} ");
+                    //Debug.Log($" ===> {fun(new Triangle(f1))} ||||||||||||||||| {fun(new Triangle(f2))}                 {fun2(insect)} {value} ");
                     return value;
                 }
                 else
@@ -76,11 +76,11 @@ namespace XFrame.PathFinding
             HalfEdge ope2 = e2.OppositeEdge;
             HalfEdge ope3 = e3.OppositeEdge;
 
-            Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
-            Func<XVector2, XVector2> fun2 = Test2.Normalizer.UnNormalize;
-            Debug.LogWarning($"check item around ~~~~~~~~~ {fun(new Triangle(f))}");
+            //Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
+            //Func<XVector2, XVector2> fun2 = Test2.Normalizer.UnNormalize;
+            //Debug.LogWarning($"check item around ~~~~~~~~~ {fun(new Triangle(f))}");
 
-            Debug.LogWarning($"check item around1 -------- {fun2(e1.Vertex.Position)}");
+            //Debug.LogWarning($"check item around1 -------- {fun2(e1.Vertex.Position)}");
             if (ope1 != null)
             {
                 HalfEdgeFace opf1 = ope1.Face;
@@ -120,14 +120,14 @@ namespace XFrame.PathFinding
                     }
                 }
 
-                foreach (HalfEdgeFace t in result)
-                {
-                    Debug.LogWarning($" {fun(new Triangle(t))} ");
-                }
+                //foreach (HalfEdgeFace t in result)
+                //{
+                //    Debug.LogWarning($" {fun(new Triangle(t))} ");
+                //}
             }
-            Debug.LogWarning("===============");
+            //Debug.LogWarning("===============");
 
-            Debug.LogWarning($"check item around2 -------- {fun2(e2.Vertex.Position)}");
+            //Debug.LogWarning($"check item around2 -------- {fun2(e2.Vertex.Position)}");
             if (ope2 != null)
             {
                 HalfEdgeFace opf2 = ope2.Face;
@@ -169,14 +169,14 @@ namespace XFrame.PathFinding
                     }
                 }
 
-                foreach (HalfEdgeFace t in result)
-                {
-                    Debug.LogWarning($" {fun(new Triangle(t))} ");
-                }
+                //foreach (HalfEdgeFace t in result)
+                //{
+                //    Debug.LogWarning($" {fun(new Triangle(t))} ");
+                //}
             }
-            Debug.LogWarning("===============");
+            //Debug.LogWarning("===============");
 
-            Debug.LogWarning($"check item around3 -------- {fun2(e3.Vertex.Position)}");
+            //Debug.LogWarning($"check item around3 -------- {fun2(e3.Vertex.Position)}");
             if (ope3 != null)
             {
                 HalfEdgeFace opf3 = ope3.Face;
@@ -215,12 +215,12 @@ namespace XFrame.PathFinding
                     }
                 }
 
-                foreach (HalfEdgeFace t in result)
-                {
-                    Debug.LogWarning($" {fun(new Triangle(t))} ");
-                }
+                //foreach (HalfEdgeFace t in result)
+                //{
+                //    Debug.LogWarning($" {fun(new Triangle(t))} ");
+                //}
             }
-            Debug.LogWarning("===============");
+            //Debug.LogWarning("===============");
         }
 
         public int GetUniqueId(IAStarItem item)

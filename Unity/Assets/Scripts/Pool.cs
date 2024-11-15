@@ -6,7 +6,7 @@ public static class Pool
 {
     private static List<GameObject> m_Renders = new List<GameObject>(64);
 
-    public static GameObject RequireRender(GameObject prefab, Transform parent)
+    public static GameObject RequireRender(Transform parent)
     {
         GameObject inst;
         if (m_Renders.Count > 0)
@@ -18,8 +18,9 @@ public static class Pool
         }
         else
         {
-            inst = GameObject.Instantiate(prefab, parent);
+            inst = new GameObject();
         }
+        inst.transform.SetParent(parent);
         return inst;
     }
 

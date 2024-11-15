@@ -11,4 +11,8 @@ public class XNavmeshEditData
     public float MaxX;
     public float MinY;
     public float MaxY;
+    public float PointMinX;
+    public float PointMinY;
+    public float PointMaxX;
+    public float PointMaxY;
 }
