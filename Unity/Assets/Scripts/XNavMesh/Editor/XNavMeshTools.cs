@@ -19,7 +19,6 @@ public class XNavMeshTools : EditorWindow
     private GameObject m_Root;
     private Transform m_Areas;
     private Transform m_Rect;
-    private TextAsset m_File;
 
     private List<GameObject> m_AreasInst;
     private CurrentNavmesh m_CurrentNavmesh;
@@ -149,16 +148,6 @@ public class XNavMeshTools : EditorWindow
         }
     }
 
-    private void InnerRefreshMinMax()
-    {
-        if (m_Areas)
-        {
-            foreach (GameObject obj in m_Areas)
-            {
-
-            }
-        }
-    }
     private void OnDestroy()
     {
         if (m_ExitDestroy)
@@ -205,7 +194,8 @@ public class XNavMeshTools : EditorWindow
             switch (m_Current.EditMode)
             {
                 case EditMode.Obstacle:
-                    navmesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData _, out List<Edge> _);
+                    if (points.Count == 3)
+                        navmesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData _, out List<Edge> _);
                     break;
 
                 case EditMode.Walk:
@@ -253,9 +243,8 @@ public class XNavMeshTools : EditorWindow
 
     private void Update()
     {
-
-
         InnerUpdateRect();
+        InnerGenerateBorder();
     }
 
     private void InnerUpdateRect()
@@ -269,6 +258,11 @@ public class XNavMeshTools : EditorWindow
             line.SetPosition(1, new Vector3(max.x, min.y));
             line.SetPosition(2, max);
             line.SetPosition(3, new Vector3(min.x, max.y));
+
+            m_Current.MinX = min.x;
+            m_Current.MinY = min.y;
+            m_Current.MaxX = max.x;
+            m_Current.MaxY = max.y;
         }
     }
 
@@ -357,7 +351,7 @@ public class XNavMeshTools : EditorWindow
             foreach (Transform tf in m_Areas)
             {
                 RVOArea ob = tf.GetComponent<RVOArea>();
-                List<Vector2> points = ob.GetUnityVertices();
+                List<Vector2> points = ob.GetUnityVertices2(m_Current.MinX, m_Current.MinY, m_Current.MaxX, m_Current.MaxY);
                 foreach (Vector2 p in points)
                 {
                     if (p.x < min.x) min.x = p.x;
@@ -371,6 +365,8 @@ public class XNavMeshTools : EditorWindow
             {
                 m_Current.PointMinX = min.x;
                 m_Current.PointMinY = min.x;
+                m_Current.PointMaxX = max.x;
+                m_Current.PointMaxY = max.y;
             }
         }
     }

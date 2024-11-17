@@ -138,7 +138,7 @@ namespace XFrame.PathFinding
                 {
                     XVector2 p1 = points[i];
                     XVector2 p2 = points[(i + 1) % points.Count];
-                    //Debug.LogWarning($"real InnerFindRelationFaces {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {triangle.Intersect2(p1, p2)} |||| {Normalizer.UnNormalize(triangle)} ");
+                    //Debug.LogWarning($"real InnerFindRelationFaces {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)} {triangle.Intersect2(p1, p2)} {triangle.Contains(p1)} |||| {Normalizer.UnNormalize(triangle)} ");
                     if (triangle.Intersect2(p1, p2) || triangle.Contains(p1))
                     {
                         if (!faces.Contains(face))
@@ -364,27 +364,35 @@ namespace XFrame.PathFinding
 
         public Poly AddWithExtraData(List<XVector2> points, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
+            Debug.LogWarning("----------------------AddWithExtraData");
             Poly poly = new Poly(s_PolyId++, this, new List<XVector2>(points), area);
             m_Normalizer.Normalize(points);
 
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
+            Debug.LogWarning($" face count {relationFaces.Count} ");
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
 
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, points, relationFaces, out List<List<XVector2>> relationAllPoints);
 
+            Debug.LogWarning($" newAreaOutEdges {newAreaOutEdges.Count}  {relationAllPoints.Count}");
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
-
-            // 标记区域
-            foreach (var entry in relationlist)
+            if (newAreaData.Faces.Count > 0)
             {
-                Poly relationPoly = entry.Key;
-                HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, entry.Value);
-                relationPoly.SetFaces(faces);
+                Debug.LogWarning($" newAreaData {newAreaData.Faces.Count} ");
+
+                // 标记区域
+                foreach (var entry in relationlist)
+                {
+                    Poly relationPoly = entry.Key;
+                    HashSet<HalfEdgeFace> faces = InnerFindContainsFaces(newAreaData, entry.Value);
+                    relationPoly.SetFaces(faces);
+                }
+
+                InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
+
+                m_Polies.Add(poly.Id, poly);
             }
-
-            InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
-
-            m_Polies.Add(poly.Id, poly);
+            
             return poly;
         }
 
@@ -799,6 +807,8 @@ namespace XFrame.PathFinding
                 }
             }
 
+            Debug.LogWarning($" tmpData1 {tmpData.Faces.Count} ");
+
             if (extraPointsList != null)
             {
                 // 最好等所有点添加完后再添加限制
@@ -808,9 +818,15 @@ namespace XFrame.PathFinding
                 }
             }
 
+            Debug.LogWarning($" tmpData2 {tmpData.Faces.Count} ");
+
             ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
+            Debug.LogWarning($" tmpData3 {tmpData.Faces.Count} ");
+
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
+
+            Debug.LogWarning($" tmpData4 {tmpData.Faces.Count} ");
 
             //Debug.LogWarning("----------------------------------------");
             return tmpData;
