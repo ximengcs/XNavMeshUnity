@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public partial class Test2
 {
@@ -17,6 +18,7 @@ public partial class Test2
     public List<Transform> Holls;
 
     private XNavMesh m_NavMesh;
+    private XNavMeshRenderer m_Render;
     private MeshArea m_FullMeshArea;
     private Dictionary<int, PolyInfo> m_Polies;
     private List<List<Edge>> m_Edges;
@@ -63,6 +65,8 @@ public partial class Test2
         AddTestCommand();
         Console.Inst.AddCommand("navmesh-add", CreateNavMesh);
         Console.Inst.AddCommand("navmesh-open", OpenNavmesh);
+        Console.Inst.AddCommand("navmesh-show", ShowNavmesh);
+        Console.Inst.AddCommand("navmesh-poly-rotate", RotateNavmeshLoopPoly);
         Console.Inst.AddCommand("poly-add", CreatePoly);
         Console.Inst.AddCommand("poly-remove", RemovePoly);
         Console.Inst.AddCommand("poly-move-x", MovePolyX);
@@ -301,6 +305,40 @@ public partial class Test2
         p1Opp3.transform.position = f(ope3.Vertex.Position).ToUnityVec3();
     }
 
+    private void RotateNavmeshLoopPoly(string param)
+    {
+        if (m_NavMesh == null)
+            return;
+        if (ParamToIntFloat(param, out int id, out float angle))
+        {
+            if (m_NavMesh.Polies.TryGetValue(id, out Poly info))
+            {
+                m_UpdaterList.Add(new Updater(() =>
+                {
+                    if (info.Rotate(angle, out HalfEdgeData newAreaData, out List<Edge> newOutLine))
+                    {
+                        m_FullMeshArea.Refresh();
+                        m_Render.Refresh(m_FullMeshArea);
+                    }
+                    else
+                    {
+                        Debug.Log($"move poly {id} with y failure");
+                    }
+                    return true;
+                }));
+            }
+        }
+    }
+
+    private void ShowNavmesh(string param)
+    {
+        if (m_NavMesh != null)
+        {
+            m_Render = new XNavMeshRenderer();
+            m_Render.Refresh(m_FullMeshArea);
+        }
+    }
+
     private void OpenNavmesh(string param)
     {
         param = param.TrimEnd(' ');
@@ -310,7 +348,7 @@ public partial class Test2
 
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
         m_FullMeshArea.Refresh();
-        Debug.Log($"read success {m_NavMesh.Data.Faces.Count}");
+        Debug.Log($"read success, navmesh face count {m_NavMesh.Data.Faces.Count}");
     }
 
     private void OpenData(string param)
@@ -407,8 +445,11 @@ public partial class Test2
                 entry.Value.Updater.OnUpdate();
         }
 
-        foreach(var entry in m_UpdaterList)
-            entry.OnUpdate();
+        for(int i = m_UpdaterList.Count - 1; i >= 0; i--)
+        {
+            if (!m_UpdaterList[i].OnUpdate())
+                m_UpdaterList.RemoveAt(i);
+        }
     }
 
     public List<XVector2> GetAllPoints(Transform tf, bool checkActive)
@@ -462,7 +503,7 @@ public partial class Test2
     {
         p1 = default;
         string[] paramStr = param.Split(' ');
-        if(!int.TryParse(paramStr[0], out target))
+        if (!int.TryParse(paramStr[0], out target))
             return false;
 
         if (paramStr.Length >= 2)
@@ -625,6 +666,9 @@ public partial class Test2
 
                 if (!XMath.CheckPointsHasSame(item.Triangle.P1, item.Triangle.P2, item.Triangle.P3))
                 {
+                    if (item.AreaInfo.PolyId != -1)
+                        Handles.Label(item.Triangle.InnerCentrePoint.ToUnityVec3(), $"[Poly {item.AreaInfo.PolyId}]");
+
                     Gizmos.DrawLine(p1, p2);
                     Gizmos.DrawLine(p2, p3);
                     Gizmos.DrawLine(p3, p1);

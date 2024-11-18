@@ -55,6 +55,20 @@ namespace XFrame.PathFinding
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
         }
 
+        public XVector2 GetRandomPoint()
+        {
+            int target = UnityEngine.Random.Range(0, m_Data.Faces.Count);
+            int index = 0;
+            foreach(var face in m_Data.Faces)
+            {
+                if (index++ == target)
+                {
+                    return new Triangle(face).RandomPoint();
+                }
+            }
+            return default;
+        }
+
         public void CheckDataValid()
         {
 
@@ -364,22 +378,17 @@ namespace XFrame.PathFinding
 
         public Poly AddWithExtraData(List<XVector2> points, AreaType area, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
-            Debug.LogWarning("----------------------AddWithExtraData");
             Poly poly = new Poly(s_PolyId++, this, new List<XVector2>(points), area);
             m_Normalizer.Normalize(points);
 
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
-            Debug.LogWarning($" face count {relationFaces.Count} ");
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
 
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, points, relationFaces, out List<List<XVector2>> relationAllPoints);
 
-            Debug.LogWarning($" newAreaOutEdges {newAreaOutEdges.Count}  {relationAllPoints.Count}");
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
             if (newAreaData.Faces.Count > 0)
             {
-                Debug.LogWarning($" newAreaData {newAreaData.Faces.Count} ");
-
                 // 标记区域
                 foreach (var entry in relationlist)
                 {
@@ -392,7 +401,11 @@ namespace XFrame.PathFinding
 
                 m_Polies.Add(poly.Id, poly);
             }
-            
+            else
+            {
+                throw new Exception("add error");
+            }
+
             return poly;
         }
 
@@ -807,8 +820,6 @@ namespace XFrame.PathFinding
                 }
             }
 
-            Debug.LogWarning($" tmpData1 {tmpData.Faces.Count} ");
-
             if (extraPointsList != null)
             {
                 // 最好等所有点添加完后再添加限制
@@ -818,15 +829,8 @@ namespace XFrame.PathFinding
                 }
             }
 
-            Debug.LogWarning($" tmpData2 {tmpData.Faces.Count} ");
-
-            ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
-
-            Debug.LogWarning($" tmpData3 {tmpData.Faces.Count} ");
-
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, tmpData);
-
-            Debug.LogWarning($" tmpData4 {tmpData.Faces.Count} ");
+            ConstrainedDelaunaySloan.AddConstraints(tmpData, tmpList, removeEdgeConstraint);
 
             //Debug.LogWarning("----------------------------------------");
             return tmpData;
@@ -866,12 +870,22 @@ namespace XFrame.PathFinding
             return null;
         }
 
-        public static XNavMeshList<TriangleArea> ToTriangles(Normalizer nor, HalfEdgeData data)
+        public static XNavMeshList<TriangleArea> ToTriangles(XNavMesh navMesh, HalfEdgeData data)
         {
             XNavMeshList<TriangleArea> triangles = new XNavMeshList<TriangleArea>(8);
             foreach (HalfEdgeFace face in data.Faces)
             {
-                triangles.Add(new TriangleArea(face, nor));
+                int polyId = -1;
+                foreach (Poly poly in navMesh.m_Polies.Values)
+                {
+                    if (poly.Contains(face))
+                    {
+                        polyId = poly.Id;
+                        break;
+                    }
+                }
+
+                triangles.Add(new TriangleArea(face, polyId, navMesh.Normalizer));
             }
 
             return triangles;
@@ -879,7 +893,7 @@ namespace XFrame.PathFinding
 
         public XNavMeshList<TriangleArea> ToTriangles()
         {
-            return ToTriangles(Normalizer, m_Data);
+            return ToTriangles(this, m_Data);
         }
     }
 }

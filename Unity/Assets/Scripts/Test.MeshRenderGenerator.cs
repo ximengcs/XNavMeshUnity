@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 public partial class Test
@@ -38,15 +39,22 @@ public partial class Test
             foreach (MeshInfo meshInfo in navMesh.Meshs)
             {
                 GameObject go = Pool.RequireRender(m_Root.transform);
-                MeshRenderer render = go.AddComponent<MeshRenderer>();
+                MeshRenderer render = go.GetComponent<MeshRenderer>();
+                if (render == null)
+                    render = go.AddComponent<MeshRenderer>();
                 Color color = meshInfo.Color;
                 color.a = 0.5f;
-                render.sharedMaterial = Resources.Load<Material>("Mesh");
+                render.sharedMaterial = new Material(Resources.Load<Material>("Mesh"));
+
                 render.sharedMaterial.color = color;
-                MeshFilter filter = go.AddComponent<MeshFilter>();
+                MeshFilter filter = go.GetComponent<MeshFilter>();
+                if (filter == null)
+                    filter = go.AddComponent<MeshFilter>();
                 filter.mesh = meshInfo.Mesh;
 
-                LineRenderer line = go.AddComponent<LineRenderer>();
+                LineRenderer line = go.GetComponent<LineRenderer>();
+                if (line == null)
+                    line = go.AddComponent<LineRenderer>();
                 Vector3[] points = new Vector3[]
                 {
                     new Vector3(meshInfo.Triangle.P1.X, meshInfo.Triangle.P1.Y, m_Z),

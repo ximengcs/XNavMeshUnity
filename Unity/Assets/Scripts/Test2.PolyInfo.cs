@@ -33,7 +33,7 @@ public partial class Test2
         {
             Data = data;
 
-            List<TriangleArea> triangles = XNavMesh.ToTriangles(Test2.Normalizer, data);
+            List<TriangleArea> triangles = XNavMesh.ToTriangles(Test2.Navmesh, data);
             m_Meshs = MeshArea.GenerateMesh(triangles, color);
         }
 

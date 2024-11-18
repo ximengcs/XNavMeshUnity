@@ -2,8 +2,6 @@
 using Simon001.PathFinding;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using static UnityEngine.Rendering.DebugUI;
 
 namespace XFrame.PathFinding
 {
@@ -85,7 +83,7 @@ namespace XFrame.PathFinding
             {
                 HalfEdgeFace opf1 = ope1.Face;
                 if (opf1.Area != AreaType.Obstacle)
-                result.Add(opf1);
+                    result.Add(opf1);
 
                 HalfEdge e = ope1.NextEdge.OppositeEdge;
                 while (e != null)
@@ -95,7 +93,7 @@ namespace XFrame.PathFinding
                     if (ope3 != null && ef == ope3.Face) break;
 
                     if (ef.Area != AreaType.Obstacle)
-                    result.Add(ef);
+                        result.Add(ef);
 
                     e = e.NextEdge.OppositeEdge;
                 }
@@ -113,8 +111,8 @@ namespace XFrame.PathFinding
                         if (ope3 != null && ef == ope3.Face) break;
 
                         if (ef.Area != AreaType.Obstacle)
-                        if (!result.Contains(ef))
-                            result.Add(ef);
+                            if (!result.Contains(ef))
+                                result.Add(ef);
 
                         e = e.PrevEdge.OppositeEdge;
                     }
@@ -132,7 +130,7 @@ namespace XFrame.PathFinding
             {
                 HalfEdgeFace opf2 = ope2.Face;
                 if (opf2.Area != AreaType.Obstacle)
-                result.Add(opf2);
+                    result.Add(opf2);
 
                 HalfEdge e = ope2.NextEdge.OppositeEdge;
                 while (e != null)
@@ -142,8 +140,8 @@ namespace XFrame.PathFinding
                     if (ope3 != null && ef == ope3.Face) break;
                     if (ope1 != null && ef == ope1.Face) break;
                     if (ef.Area != AreaType.Obstacle)
-                    if (!result.Contains(ef))
-                        result.Add(ef);
+                        if (!result.Contains(ef))
+                            result.Add(ef);
 
                     e = e.NextEdge.OppositeEdge;
                 }
@@ -162,8 +160,8 @@ namespace XFrame.PathFinding
                         if (ope3 != null && ef == ope3.Face) break;
                         if (ope1 != null && ef == ope1.Face) break;
                         if (ef.Area != AreaType.Obstacle)
-                        if (!result.Contains(ef))
-                            result.Add(ef);
+                            if (!result.Contains(ef))
+                                result.Add(ef);
 
                         e = e.PrevEdge.OppositeEdge;
                     }
@@ -181,7 +179,7 @@ namespace XFrame.PathFinding
             {
                 HalfEdgeFace opf3 = ope3.Face;
                 if (opf3.Area != AreaType.Obstacle)
-                result.Add(opf3);
+                    result.Add(opf3);
 
                 HalfEdge e = ope3.NextEdge.OppositeEdge;
                 while (e != null)
@@ -190,8 +188,8 @@ namespace XFrame.PathFinding
                     if (ope1 != null && ef == ope1.Face) break;
                     if (ope2 != null && ef == ope2.Face) break;
                     if (ef.Area != AreaType.Obstacle)
-                    if (!result.Contains(ef))
-                        result.Add(ef);
+                        if (!result.Contains(ef))
+                            result.Add(ef);
 
                     e = e.NextEdge.OppositeEdge;
                 }
@@ -208,8 +206,8 @@ namespace XFrame.PathFinding
                         if (ope1 != null && ef == ope1.Face) break;
                         if (ope2 != null && ef == ope2.Face) break;
                         if (ef.Area != AreaType.Obstacle)
-                        if (!result.Contains(ef))
-                            result.Add(ef);
+                            if (!result.Contains(ef))
+                                result.Add(ef);
 
                         e = e.PrevEdge.OppositeEdge;
                     }
@@ -221,6 +219,53 @@ namespace XFrame.PathFinding
                 //}
             }
             //Debug.LogWarning("===============");
+        }
+
+        public List<XVector2> GetPathPoints(AStarPath path, XVector2 startPos, XVector2 endPos)
+        {
+            List<XVector2> points = new List<XVector2>();
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                IAStarItem a = path[i];
+                IAStarItem b = path[i + 1];
+                List<XVector2> subPoints = GetPathPoints(a, b);
+                for (int j = 0; j < subPoints.Count - 1; j++)
+                    points.Add(subPoints[j]);
+            }
+            points[0] = endPos;
+            points.Add(startPos);
+            points.Reverse();
+            return points;
+        }
+
+        public List<XVector2> GetPathPoints(IAStarItem from, IAStarItem to)
+        {
+            HalfEdgeFace f1 = from as HalfEdgeFace;
+            HalfEdgeFace f2 = to as HalfEdgeFace;
+            if (f1.IsAdjacent(f2))
+            {
+                return new List<XVector2>()
+                {
+                    new Triangle(f1).InnerCentrePoint,
+                    new Triangle(f2).InnerCentrePoint
+                };
+            }
+            else
+            {
+                if (f1.GetSameVert(f2, out XVector2 insect))
+                {
+                    return new List<XVector2>()
+                    {
+                        new Triangle(f1).InnerCentrePoint,
+                        insect,
+                        new Triangle(f2).InnerCentrePoint
+                    };
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
         }
 
         public int GetUniqueId(IAStarItem item)

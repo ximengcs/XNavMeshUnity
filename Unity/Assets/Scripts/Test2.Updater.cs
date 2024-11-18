@@ -5,16 +5,16 @@ public partial class Test2
 {
     public class Updater
     {
-        private Action m_Handler;
+        private Func<bool> m_Handler;
 
-        public Updater(Action handler)
+        public Updater(Func<bool> handler)
         {
             m_Handler = handler;
         }
 
-        public void OnUpdate()
+        public bool OnUpdate()
         {
-            m_Handler?.Invoke();
+            return m_Handler.Invoke();
         }
     }
 }

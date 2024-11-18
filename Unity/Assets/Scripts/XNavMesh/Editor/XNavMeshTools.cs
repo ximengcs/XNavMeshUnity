@@ -42,20 +42,25 @@ public class XNavMeshTools : EditorWindow
         EditorGUILayout.BeginHorizontal(GUI.skin.textField);
         if (GUILayout.Button("New"))
         {
-            m_Current = new XNavmeshEditData();
-            m_Current.Name = $"navmesh_{DateTime.Now.ToString("yyyyMMddHHmmss")}";
-            m_CurrentPath = EditorUtility.SaveFilePanel("new navmesh file", m_FilePath, m_Current.Name, m_FileExtension);
-            if (!string.IsNullOrEmpty(m_CurrentPath))
+            string name = $"navmesh_{DateTime.Now.ToString("yyyyMMddHHmmss")}";
+            string path = EditorUtility.SaveFilePanel("new navmesh file", m_FilePath, name, m_FileExtension);
+            if (!string.IsNullOrEmpty(path))
             {
+                InnerClear();
                 InnerNew();
+                m_Current = new XNavmeshEditData();
+                m_CurrentPath = path;
+                m_Current.Name = name;
                 m_Current.Name = Path.GetFileNameWithoutExtension(m_CurrentPath);
             }
         }
         if (GUILayout.Button("Open"))
         {
-            m_CurrentPath = EditorUtility.OpenFilePanel("open navmesh file", m_FilePath, m_FileExtension);
-            if (!string.IsNullOrEmpty(m_CurrentPath))
+            string path = EditorUtility.OpenFilePanel("open navmesh file", m_FilePath, m_FileExtension);
+            if (!string.IsNullOrEmpty(path))
             {
+                InnerClear();
+                m_CurrentPath = path;
                 InnerOpenCurrent();
                 m_Current.Name = Path.GetFileNameWithoutExtension(m_CurrentPath);
             }
@@ -63,6 +68,10 @@ public class XNavMeshTools : EditorWindow
         if (GUILayout.Button("Save"))
         {
             InnerSaveCurrent();
+        }
+        if (GUILayout.Button("Clear"))
+        {
+            InnerClear();
         }
         EditorGUILayout.EndHorizontal();
 
@@ -150,10 +159,23 @@ public class XNavMeshTools : EditorWindow
 
     private void OnDestroy()
     {
+        InnerClear();
+    }
+
+    private void InnerClear()
+    {
         if (m_ExitDestroy)
             GameObject.DestroyImmediate(m_Root);
         if (m_CurrentNavmesh.Renderer != null)
             m_CurrentNavmesh.Renderer.Destroy();
+        m_Current = null;
+        m_AreasInst.Clear();
+        m_Root = null;
+        m_CurrentNavmesh.Renderer = null;
+        m_CurrentNavmesh.Navmesh = null;
+        m_CurrentNavmesh.MeshArea = null;
+        m_Areas = null;
+        m_Rect = null;
     }
 
     private void InnerChangeFileName()
@@ -194,8 +216,7 @@ public class XNavMeshTools : EditorWindow
             switch (m_Current.EditMode)
             {
                 case EditMode.Obstacle:
-                    if (points.Count == 3)
-                        navmesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData _, out List<Edge> _);
+                    navmesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData _, out List<Edge> _);
                     break;
 
                 case EditMode.Walk:

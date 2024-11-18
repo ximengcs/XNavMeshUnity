@@ -178,6 +178,15 @@ namespace XFrame.PathFinding
             return Equals(p1, p2, p3);
         }
 
+        public XVector2 RandomPoint()
+        {
+            float r1 = UnityEngine.Random.Range(0.0f, 1.0f);
+            float r2 = UnityEngine.Random.Range(0.0f, 1.0f);
+            float x = (1 - (float)Math.Sqrt(r1)) * P1.X + (float)(Math.Sqrt(r1) * (1 - r2)) * P2.X + (float)(Math.Sqrt(r1) * r2) * P3.X;
+            float y = (1 - (float)Math.Sqrt(r1)) * P1.Y + ((float)Math.Sqrt(r1) * (1 - r2)) * P2.Y + ((float)Math.Sqrt(r1) * r2) * P3.Y;
+            return new XVector2(x, y);
+        }
+
         /// <summary>
         /// 确保列表中的所有三角形都是顺时针，如果不是则修正
         /// </summary>

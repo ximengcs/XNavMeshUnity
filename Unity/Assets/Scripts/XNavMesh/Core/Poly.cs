@@ -55,6 +55,7 @@ namespace XFrame.PathFinding
             m_Points = points;
             m_AreaType = areaType;
             m_Faces = faces;
+            m_NavMesh = navMesh;
         }
 
         internal static bool Intersect(List<XVector2> points, List<XVector2> points2)

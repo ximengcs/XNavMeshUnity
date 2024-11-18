@@ -357,7 +357,6 @@ namespace XFrame.PathFinding
                     //The vertices positions of the current triangle
                     XVector2 e_p2 = e.Vertex.Position;
                     XVector2 e_p1 = e.PrevEdge.Vertex.Position;
-
                     //Check if edge has the same coordinates as the constrained edge
                     //We have no idea about direction so we have to check both directions
                     //This is fast because we only need to test one coordinate and if that 

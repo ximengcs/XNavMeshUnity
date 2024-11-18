@@ -72,14 +72,14 @@ public partial class Test2 : MonoBehaviour
         {
             if (ParamToVecVec(param, out XVector2 p1, out XVector2 p2))
             {
-                TestPath(Navmesh, p1, p2);
+                TestPath(Navmesh, p1, p2, out _);
             }
         });
         Console.Inst.AddCommand("test-44", (param) =>
         {
             XVector2 start = StartPoint.position.ToVec();
             XVector2 end = EndPoint.position.ToVec();
-            TestPath(Navmesh, start, end);
+            TestPath(Navmesh, start, end, out _);
         });
         Console.Inst.AddCommand("test-5", (param) =>
         {
@@ -178,7 +178,47 @@ public partial class Test2 : MonoBehaviour
                 circle.updateVisualization();
                 circle.setPreferredVelocities();
                 Simulator.Instance.doStep();
+                return true;
             }));
+        });
+
+        Console.Inst.AddCommand("agent-follow", (param) =>
+        {
+            if (ParamToInt(param, out int id))
+            {
+                if (m_Agents.TryGetValue(id, out XAgent agent))
+                {
+                    m_UpdaterList.Add(new Updater(() =>
+                    {
+                        Vector3 pos = agent.Pos.ToUnityVec3();
+                        pos.z = -1;
+                        Camera.main.transform.position = pos;
+                        return true;
+                    }));
+                }
+            }
+        });
+
+        Console.Inst.AddCommand("to-mouse", (param) =>
+        {
+            m_UpdaterList.Add(new Updater(() =>
+            {
+                if (Input.GetMouseButtonUp(0))
+                {
+                    Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    Console.Inst.ExecuteCommand($"agent-to 1 {pos.x},{pos.y}");
+                }
+                return true;
+            }));
+        });
+
+        Console.Inst.AddCommand("agent-test", (param) =>
+        {
+            Console.Inst.ExecuteCommand("navmesh-open navmesh_1");
+            Console.Inst.ExecuteCommand("navmesh-show");
+            Console.Inst.ExecuteCommand("navmesh-poly-rotate 24 0.1");
+            Console.Inst.ExecuteCommand("agent-create -0.6,-6");
+            //Console.Inst.ExecuteCommand("agent-to 1 -20.3,20.2");
         });
 
         Console.Inst.AddCommand("agent-create", (param) =>
@@ -187,6 +227,47 @@ public partial class Test2 : MonoBehaviour
             {
                 XAgent agent = new XAgent(m_Agents.Count + 1, p, CirclePrefab);
                 m_Agents.Add(agent.Id, agent);
+
+                int index = 0;
+                XVector2 target = default;
+                bool hasTarget = false;
+                AStarPath path = null;
+                XVector2 from = default;
+                XVector2 to = default;
+                List<XVector2> targets = null;
+
+                m_UpdaterList.Add(new Updater(() =>
+                {
+                    if (!hasTarget)
+                    {
+                        target = m_NavMesh.GetRandomPoint();
+                        target = m_NavMesh.Normalizer.UnNormalize(agent.Pos);
+                        Debug.LogWarning($"target {target}");
+                        path = TestPath(m_NavMesh, agent.Pos, target, out XNavMeshHelper helper);
+                        from = m_NavMesh.Normalizer.Normalize(agent.Pos);
+                        to = m_NavMesh.Normalizer.Normalize(target);
+                        targets = helper.GetPathPoints(path, from, to);
+                        m_NavMesh.Normalizer.UnNormalize(targets);
+                        index = 0;
+                    }
+                    else
+                    {
+                        if (index >= targets.Count)
+                            return false;
+                        XVector2 tarPos = targets[index];
+                        XVector2 power = XVector2.Normalize(tarPos - agent.Pos);
+                        power *= Time.deltaTime * 10;
+                        agent.Pos += power;
+
+                        if (XVector2.Distance(agent.Pos, tarPos) < 0.1f)
+                        {
+                            index++;
+                        }
+                        return true;
+                    }
+
+                    return true;
+                }));
             }
         });
 
@@ -196,27 +277,27 @@ public partial class Test2 : MonoBehaviour
             {
                 if (m_Agents.TryGetValue(agentId, out XAgent agent))
                 {
-                    AStarPath path = TestPath(m_NavMesh, agent.Pos, p);
-                    List<XVector2> targets = new List<XVector2>();
-                    foreach (HalfEdgeFace face in path)
-                    {
-                        targets.Add(m_NavMesh.Normalizer.UnNormalize(new Triangle(face).InnerCentrePoint));
-                    }
-                    targets.Reverse();
+                    AStarPath path = TestPath(m_NavMesh, agent.Pos, p, out XNavMeshHelper helper);
+                    XVector2 from = m_NavMesh.Normalizer.Normalize(agent.Pos);
+                    XVector2 to = m_NavMesh.Normalizer.Normalize(p);
+                    List<XVector2> targets = helper.GetPathPoints(path, from, to);
+                    m_NavMesh.Normalizer.UnNormalize(targets);
 
                     int index = 1;
                     m_UpdaterList.Add(new Updater(() =>
                     {
                         if (index >= targets.Count)
-                            return;
+                            return false;
                         XVector2 tarPos = targets[index];
                         XVector2 power = XVector2.Normalize(tarPos - agent.Pos);
                         power *= Time.deltaTime * 10;
                         agent.Pos += power;
+
                         if (XVector2.Distance(agent.Pos, tarPos) < 0.1f)
                         {
                             index++;
                         }
+                        return true;
                     }));
                 }
                 else
@@ -232,11 +313,12 @@ public partial class Test2 : MonoBehaviour
         //XNavMesh.DelaunayIncrementalSloan.TriangulationWalk(new XVector2(-0.9968367f, -6.047449f), null, HalfDataTest.Data);
     }
 
-    private AStarPath TestPath(XNavMesh navmesh, XVector2 p1, XVector2 p2)
+    private AStarPath TestPath(XNavMesh navmesh, XVector2 p1, XVector2 p2, out XNavMeshHelper helper)
     {
-        Debug.Log($"a star {p1} {p2} ");
+        Debug.Log($"astar path find -> from {p1} , to {p2} ");
         Normalizer normalizer = navmesh.Normalizer;
-        AStar aStar = new AStar(new XNavMeshHelper(navmesh.Data), Debug.Log);
+        helper = new XNavMeshHelper(navmesh.Data);
+        AStar aStar = new AStar(helper, Debug.Log);
         IAStarItem start = navmesh.Data.Find(normalizer.Normalize(p1));
         IAStarItem end = navmesh.Data.Find(normalizer.Normalize(p2));
         if (start != null && end != null)
@@ -254,7 +336,6 @@ public partial class Test2 : MonoBehaviour
             }
 
             AStarPath path = aStar.Execute(start, end);
-            Debug.Log($"execute {path.Count()}");
             List<XVector2> points = new List<XVector2>();
             List<Edge> edges = new List<Edge>();
             for (int i = 0; i < points.Count - 1; i++)
@@ -426,6 +507,7 @@ public partial class Test2 : MonoBehaviour
                     {
                         Debug.Log($"move poly {id} with y failure");
                     }
+                    return true;
                 });
             }
         }

@@ -90,7 +90,7 @@ public partial class Test
         {
             m_Color = color;
             m_NavMesh = navMesh;
-            Refresh(XNavMesh.ToTriangles(navMesh.Normalizer, data));
+            Refresh(XNavMesh.ToTriangles(navMesh, data));
         }
 
         public void Dispose()
@@ -110,7 +110,7 @@ public partial class Test
 
         public void Refresh(HalfEdgeData data)
         {
-            Refresh(XNavMesh.ToTriangles(m_NavMesh.Normalizer, data));
+            Refresh(XNavMesh.ToTriangles(m_NavMesh, data));
         }
 
         public void Refresh(XNavMeshList<TriangleArea> triangles)
