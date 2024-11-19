@@ -178,13 +178,29 @@ namespace XFrame.PathFinding
             return Equals(p1, p2, p3);
         }
 
+
+        /// <summary>
+        /// 1.Define the vectors a = P2 - P1 and b = P3 - P1. The vectors define the sides of the triangle when it is translated to the origin.
+        /// 2.Generate random uniform values u1, u2 ~ U(0,1)
+        /// 3.If u1 + u2 > 1, apply the transformation u1 → 1 - u1 and u2 → 1 - u2.
+        /// 4.Form w = u1 a + u2 b, which is a random point in the triangle at the origin.
+        /// 5.The point w + P1 is a random point in the original triangle.
+        /// </summary>
+        /// <see cref="https://blogs.sas.com/content/iml/2020/10/19/random-points-in-triangle.html"/>
+        /// <returns></returns>
         public XVector2 RandomPoint()
         {
-            float r1 = UnityEngine.Random.Range(0.0f, 1.0f);
-            float r2 = UnityEngine.Random.Range(0.0f, 1.0f);
-            float x = (1 - (float)Math.Sqrt(r1)) * P1.X + (float)(Math.Sqrt(r1) * (1 - r2)) * P2.X + (float)(Math.Sqrt(r1) * r2) * P3.X;
-            float y = (1 - (float)Math.Sqrt(r1)) * P1.Y + ((float)Math.Sqrt(r1) * (1 - r2)) * P2.Y + ((float)Math.Sqrt(r1) * r2) * P3.Y;
-            return new XVector2(x, y);
+            XVector2 a = P2 - P1;
+            XVector2 b = P3 - P1;
+            float u1 = UnityEngine.Random.Range(0.0f, 1.0f);
+            float u2 = UnityEngine.Random.Range(0.0f, 1.0f);
+            if (u1 + u2 > 1)
+            {
+                u1 = 1 - u1;
+                u2 = 1 - u2;
+            }
+            XVector2 w = u1 * a + u2 * b;
+            return w + P1;
         }
 
         /// <summary>

@@ -2,6 +2,7 @@
 using Simon001.PathFinding;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace XFrame.PathFinding
 {
@@ -18,9 +19,6 @@ namespace XFrame.PathFinding
         {
             HalfEdgeFace f1 = from as HalfEdgeFace;
             HalfEdgeFace f2 = to as HalfEdgeFace;
-
-            if (f2.Area == AreaType.Obstacle)
-                return AStar.MAX_VALUE;
 
             //Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
             //Func<XVector2, XVector2> fun2 = Test2.Normalizer.UnNormalize;
@@ -54,9 +52,6 @@ namespace XFrame.PathFinding
         {
             HalfEdgeFace f1 = start as HalfEdgeFace;
             HalfEdgeFace f2 = end as HalfEdgeFace;
-
-            if (f2.Area == AreaType.Obstacle)
-                return AStar.INVALID;
 
             XVector2 p1 = new Triangle(f1).InnerCentrePoint;
             XVector2 p2 = new Triangle(f2).InnerCentrePoint;
@@ -218,7 +213,6 @@ namespace XFrame.PathFinding
                 //    Debug.LogWarning($" {fun(new Triangle(t))} ");
                 //}
             }
-            //Debug.LogWarning("===============");
         }
 
         public List<XVector2> GetPathPoints(AStarPath path, XVector2 startPos, XVector2 endPos)
@@ -232,7 +226,10 @@ namespace XFrame.PathFinding
                 for (int j = 0; j < subPoints.Count - 1; j++)
                     points.Add(subPoints[j]);
             }
-            points[0] = endPos;
+            if (points.Count > 0)
+                points[0] = endPos;
+            else
+                points.Add(endPos);
             points.Add(startPos);
             points.Reverse();
             return points;

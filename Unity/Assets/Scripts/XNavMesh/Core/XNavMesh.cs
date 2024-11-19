@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using Simon001.PathFinding;
+using Unity.VisualScripting;
+using UnityEngine.AI;
 
 namespace XFrame.PathFinding
 {
@@ -55,18 +58,57 @@ namespace XFrame.PathFinding
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
         }
 
-        public XVector2 GetRandomPoint()
+        public List<Triangle> GetObstacles(float radius)
         {
-            int target = UnityEngine.Random.Range(0, m_Data.Faces.Count);
-            int index = 0;
-            foreach(var face in m_Data.Faces)
+            List<Triangle> result = new List<Triangle>();
+            foreach (HalfEdgeFace face in m_Data.Faces)
             {
-                if (index++ == target)
+                if (face.Area == AreaType.Obstacle)
                 {
-                    return new Triangle(face).RandomPoint();
+                    Triangle triangle = new Triangle(face);
+                    triangle = Normalizer.UnNormalize(triangle);
+                    XVector2 inner = triangle.CenterOfGravityPoint;
+                    triangle.P1 += XVector2.Normalize(inner - triangle.P1) * radius;
+                    triangle.P2 += XVector2.Normalize(inner - triangle.P2) * radius;
+                    triangle.P3 += XVector2.Normalize(inner - triangle.P3) * radius;
+
+                    result.Add(triangle);
                 }
             }
-            return default;
+            return result;
+        }
+
+        public XVector2 GetRandomPoint()
+        {
+            List<HalfEdgeFace> faces = new List<HalfEdgeFace>();
+            foreach (var face in m_Data.Faces)
+            {
+                if (face.Area != AreaType.Obstacle)
+                    faces.Add(face);
+            }
+
+            HalfEdgeFace target = faces[UnityEngine.Random.Range(0, faces.Count)];
+            XVector2 point = new Triangle(target).RandomPoint();
+            point = Normalizer.UnNormalize(point);
+            point = Normalizer.Constraint(point);
+            return point;
+        }
+
+        public HalfEdgeFace FindWalkFace(XVector2 point)
+        {
+            point = Normalizer.Normalize(point);
+            foreach (HalfEdgeFace face in m_Data.Faces)
+            {
+                if (face.Area != AreaType.Obstacle)
+                {
+                    if (new Triangle(face).Contains(point))
+                    {
+                        return face;
+                    }
+                }
+
+            }
+            return null;
         }
 
         public void CheckDataValid()

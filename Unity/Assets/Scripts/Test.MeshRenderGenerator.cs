@@ -1,8 +1,6 @@
 ﻿
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
 
 public partial class Test
@@ -44,7 +42,8 @@ public partial class Test
                     render = go.AddComponent<MeshRenderer>();
                 Color color = meshInfo.Color;
                 color.a = 0.5f;
-                render.sharedMaterial = new Material(Resources.Load<Material>("Mesh"));
+                if (ReferenceEquals(render.sharedMaterial, null))
+                    render.sharedMaterial = new Material(Resources.Load<Material>("Mesh"));
 
                 render.sharedMaterial.color = color;
                 MeshFilter filter = go.GetComponent<MeshFilter>();
@@ -68,7 +67,8 @@ public partial class Test
                 line.endColor = meshInfo.Color;
                 line.startWidth = 0.2f;
                 line.endWidth = 0.2f;
-                line.material = AssetDatabase.GetBuiltinExtraResource<Material>("Default-Line.mat");
+                if (ReferenceEquals(line.material, null))
+                    line.material = new Material(Resources.Load<Material>("Line"));
                 m_Meshs.Add(go);
             }
         }

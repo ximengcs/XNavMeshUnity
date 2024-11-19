@@ -26,6 +26,9 @@ namespace XFrame.PathFinding
             m_AgentId = id;
             m_Inst = GameObject.Instantiate(prefab);
             Pos = initPos;
+
+            SpriteRenderer renderer = m_Inst.GetComponent<SpriteRenderer>();
+            renderer.color = new Color(Random.Range(0.2f, 1), Random.Range(0.2f, 1), Random.Range(0.2f, 1));
         }
     }
 }

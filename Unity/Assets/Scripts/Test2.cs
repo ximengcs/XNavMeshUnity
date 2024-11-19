@@ -3,15 +3,10 @@ using RVOCS;
 using Simon001.PathFinding;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.UI;
 using XFrame.PathFinding;
 using static Test;
-using static UnityEditor.Progress;
-using static UnityEngine.GraphicsBuffer;
 using SW = System.Diagnostics.Stopwatch;
 
 
@@ -32,6 +27,8 @@ public partial class Test2 : MonoBehaviour
     private PolyInfo m_ShowPoly;
     private bool m_DrawGizmosFullMeshArea = true;
     private bool m_DrawGizmosPoly = true;
+
+    private List<Triangle> m_Triangles;
 
     private void AddTestCommand()
     {
@@ -155,31 +152,22 @@ public partial class Test2 : MonoBehaviour
 
         Console.Inst.AddCommand("rvo", (param) =>
         {
-            Circle circle = new Circle(CirclePrefab);
+            Simulator.Instance.setTimeStep(0.25f);
+            Simulator.Instance.setAgentDefaults(15.0f, 10, 10.0f, 10.0f, 1.5f, 2.0f, new RVO.Vector2(0.0f, 0.0f));
 
-            /* Set up the scenario. */
-            circle.setupScenario();
-            circle.updateVisualization();
-            if (RVOObstacle)
+            List<Triangle> triangles = m_NavMesh.GetObstacles(1.5f);
+            foreach (Triangle triangle in triangles)
             {
-                Simulator.Instance.addObstacle(RVOObstacle.GetVertices());
-                Simulator.Instance.processObstacles();
+                List<RVO.Vector2> points = new List<RVO.Vector2>()
+                {
+                    new RVO.Vector2(triangle.P1.X, triangle.P1.Y),
+                    new RVO.Vector2(triangle.P2.X, triangle.P2.Y),
+                    new RVO.Vector2(triangle.P3.X, triangle.P3.Y)
+                };
+                Simulator.Instance.addObstacle(points);
             }
+            Simulator.Instance.processObstacles();
 
-            m_UpdaterList.Add(new Updater(() =>
-            {
-                //if (!circle.reachedGoal())
-                //{
-                //    circle.updateVisualization();
-                //    circle.setPreferredVelocities();
-                //    Simulator.Instance.doStep();
-                //}
-
-                circle.updateVisualization();
-                circle.setPreferredVelocities();
-                Simulator.Instance.doStep();
-                return true;
-            }));
         });
 
         Console.Inst.AddCommand("agent-follow", (param) =>
@@ -214,18 +202,42 @@ public partial class Test2 : MonoBehaviour
 
         Console.Inst.AddCommand("agent-test", (param) =>
         {
+            Console.Inst.ShowFPS = true;
             Console.Inst.ExecuteCommand("navmesh-open navmesh_1");
             Console.Inst.ExecuteCommand("navmesh-show");
             Console.Inst.ExecuteCommand("navmesh-poly-rotate 24 0.1");
-            Console.Inst.ExecuteCommand("agent-create -0.6,-6");
-            //Console.Inst.ExecuteCommand("agent-to 1 -20.3,20.2");
+
+            Simulator.Instance.setTimeStep(0.25f);
+            Simulator.Instance.setAgentDefaults(15.0f, 10, 10.0f, 10.0f, 1f, 2.0f, new RVO.Vector2(0.0f, 0.0f));
+
+            m_Triangles = m_NavMesh.GetObstacles(2.1f);
+            Debug.LogWarning($" {m_Triangles.Count} ");
+
+            foreach (Triangle triangle in m_Triangles)
+            {
+                List<RVO.Vector2> points = new List<RVO.Vector2>()
+                {
+                    new RVO.Vector2(triangle.P1.X, triangle.P1.Y),
+                    new RVO.Vector2(triangle.P2.X, triangle.P2.Y),
+                    new RVO.Vector2(triangle.P3.X, triangle.P3.Y)
+                };
+                Simulator.Instance.addObstacle(points);
+            }
+            Simulator.Instance.processObstacles();
+
+            for (int i = 0; i < 1; i++)
+            {
+                XVector2 bornPos = m_NavMesh.GetRandomPoint();
+                Console.Inst.ExecuteCommand($"agent-create {bornPos.X},{bornPos.Y}");
+            }
         });
 
         Console.Inst.AddCommand("agent-create", (param) =>
         {
             if (ParamToVec(param, out XVector2 p))
             {
-                XAgent agent = new XAgent(m_Agents.Count + 1, p, CirclePrefab);
+                int agentId = Simulator.Instance.addAgent(new RVO.Vector2(p.X, p.Y));
+                XAgent agent = new XAgent(agentId, p, CirclePrefab);
                 m_Agents.Add(agent.Id, agent);
 
                 int index = 0;
@@ -241,28 +253,47 @@ public partial class Test2 : MonoBehaviour
                     if (!hasTarget)
                     {
                         target = m_NavMesh.GetRandomPoint();
-                        target = m_NavMesh.Normalizer.UnNormalize(agent.Pos);
-                        Debug.LogWarning($"target {target}");
                         path = TestPath(m_NavMesh, agent.Pos, target, out XNavMeshHelper helper);
+
                         from = m_NavMesh.Normalizer.Normalize(agent.Pos);
                         to = m_NavMesh.Normalizer.Normalize(target);
                         targets = helper.GetPathPoints(path, from, to);
                         m_NavMesh.Normalizer.UnNormalize(targets);
                         index = 0;
+                        hasTarget = true;
                     }
                     else
                     {
                         if (index >= targets.Count)
-                            return false;
+                        {
+                            hasTarget = false;
+                            agent.Pos = targets[targets.Count - 1];
+                            Debug.LogWarning($"next");
+                            return true;
+                        }
                         XVector2 tarPos = targets[index];
-                        XVector2 power = XVector2.Normalize(tarPos - agent.Pos);
-                        power *= Time.deltaTime * 10;
-                        agent.Pos += power;
+                        XVector2 power = tarPos - agent.Pos;
+                        RVO.Vector2 v = new RVO.Vector2(power.X, power.Y);
+                        if (RVOMath.absSq(v) > 1.0f)
+                        {
+                            v = RVOMath.normalize(v);
+                        }
+                        //power *= Time.deltaTime * 10;
+                        //agent.Pos += power;
 
-                        if (XVector2.Distance(agent.Pos, tarPos) < 0.1f)
+                        Simulator.Instance.setAgentPrefVelocity(agentId, v);
+                        Simulator.Instance.doStep();
+                        RVO.Vector2 pos = Simulator.Instance.getAgentPosition(agentId);
+                        agent.Pos = new XVector2(pos.x(), pos.y());
+
+                        bool notReachGoal = RVOMath.absSq(pos - new RVO.Vector2(tarPos.X, tarPos.Y)) > Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId);
+
+                        Debug.LogWarning($"notReachGoal |{v.x()}|{v.y()}| {agent.Pos} {tarPos} {RVOMath.absSq(pos - new RVO.Vector2(tarPos.X, tarPos.Y))} {Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId)} ");
+                        if (!notReachGoal)
                         {
                             index++;
                         }
+
                         return true;
                     }
 
@@ -315,33 +346,30 @@ public partial class Test2 : MonoBehaviour
 
     private AStarPath TestPath(XNavMesh navmesh, XVector2 p1, XVector2 p2, out XNavMeshHelper helper)
     {
-        Debug.Log($"astar path find -> from {p1} , to {p2} ");
         Normalizer normalizer = navmesh.Normalizer;
         helper = new XNavMeshHelper(navmesh.Data);
-        AStar aStar = new AStar(helper, Debug.Log);
-        IAStarItem start = navmesh.Data.Find(normalizer.Normalize(p1));
-        IAStarItem end = navmesh.Data.Find(normalizer.Normalize(p2));
+        AStar aStar = new AStar(helper);
+        IAStarItem start = navmesh.FindWalkFace(p1);
+        IAStarItem end = navmesh.FindWalkFace(p2);
         if (start != null && end != null)
         {
-            {
-                HalfEdgeFace f1 = start as HalfEdgeFace;
-                HalfEdgeFace f2 = end as HalfEdgeFace;
-                XVector2 p = normalizer.UnNormalize(new Triangle(f1).CenterOfGravityPoint);
-                GameObject inst = new GameObject("start");
-                inst.transform.position = p.ToUnityVec3();
-
-                p = normalizer.UnNormalize(new Triangle(f2).CenterOfGravityPoint);
-                inst = new GameObject("end");
-                inst.transform.position = p.ToUnityVec3();
-            }
-
             AStarPath path = aStar.Execute(start, end);
             List<XVector2> points = new List<XVector2>();
             List<Edge> edges = new List<Edge>();
             for (int i = 0; i < points.Count - 1; i++)
                 edges.Add(new Edge(points[i], points[i + 1]));
             m_Edges.Add(edges);
+
+            if (path == null)
+            {
+                Debug.LogError("calculate path count is null");
+            }
+
             return path;
+        }
+        else
+        {
+            Debug.LogError($"start or end is null. {start == null} {end == null} ");
         }
         return null;
     }

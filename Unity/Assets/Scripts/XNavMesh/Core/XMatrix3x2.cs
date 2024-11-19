@@ -1,7 +1,5 @@
 ﻿
 using System.Collections.Generic;
-using static UnityEditor.PlayerSettings;
-using static UnityEngine.EventSystems.EventTrigger;
 
 namespace XFrame.PathFinding
 {

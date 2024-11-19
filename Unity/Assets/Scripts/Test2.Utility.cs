@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using XFrame.PathFinding;
 using static Test;
+using static UnityEditor.Progress;
 using static UnityEngine.EventSystems.EventTrigger;
 
 public partial class Test2
@@ -27,6 +28,7 @@ public partial class Test2
 
     private void OnDrawGizmos()
     {
+        /*
         if (m_FullMeshArea != null)
         {
             if (m_DrawGizmosFullMeshArea)
@@ -51,6 +53,11 @@ public partial class Test2
         if (HalfDataTest != null)
         {
             InnerDrawMesh(HalfDataTest.m_Meshs);
+        }
+        */
+        if (m_Triangles != null)
+        {
+            InnerDrawTriangle();
         }
     }
 
@@ -365,7 +372,9 @@ public partial class Test2
     {
         byte[] bytes = DataUtility.ToBytes(Navmesh.Data);
         File.WriteAllBytes("Assets/Data/main.bytes", bytes);
+#if UNITY_EDITOR
         AssetDatabase.Refresh();
+#endif
         Debug.Log($"save success, size {bytes.Length}");
     }
 
@@ -445,7 +454,7 @@ public partial class Test2
                 entry.Value.Updater.OnUpdate();
         }
 
-        for(int i = m_UpdaterList.Count - 1; i >= 0; i--)
+        for (int i = m_UpdaterList.Count - 1; i >= 0; i--)
         {
             if (!m_UpdaterList[i].OnUpdate())
                 m_UpdaterList.RemoveAt(i);
@@ -638,6 +647,20 @@ public partial class Test2
 #endif
     }
 
+    private void InnerDrawTriangle()
+    {
+        foreach (Triangle triangle in m_Triangles)
+        {
+            Vector3 p1 = triangle.P1.ToUnityVec3();
+            Vector3 p2 = triangle.P2.ToUnityVec3();
+            Vector3 p3 = triangle.P3.ToUnityVec3();
+
+            Gizmos.DrawLine(p1, p2);
+            Gizmos.DrawLine(p2, p3);
+            Gizmos.DrawLine(p3, p1);
+        }
+    }
+
     #region Draw Gizmos MeshArea
     private void InnerDrawMesh(List<MeshInfo> area)
     {
@@ -666,8 +689,10 @@ public partial class Test2
 
                 if (!XMath.CheckPointsHasSame(item.Triangle.P1, item.Triangle.P2, item.Triangle.P3))
                 {
+#if UNITY_EDITOR
                     if (item.AreaInfo.PolyId != -1)
                         Handles.Label(item.Triangle.InnerCentrePoint.ToUnityVec3(), $"[Poly {item.AreaInfo.PolyId}]");
+#endif
 
                     Gizmos.DrawLine(p1, p2);
                     Gizmos.DrawLine(p2, p3);

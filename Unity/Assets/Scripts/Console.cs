@@ -4,9 +4,6 @@ using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Text;
-using UnityEngine.UI;
-using System;
-using System.Reflection;
 
 public class Console : MonoBehaviour
 {
@@ -76,11 +73,19 @@ public class Console : MonoBehaviour
     private Node m_CmdNode;
     private Dictionary<string, CommandDescInfo> m_CmdDesc;
 
+    public bool ShowFPS { get; set; }
+
+    private int m_FpsTimeGap;
+    private float m_FpsValue;
+    private float m_FpsAmount;
+    private int m_FpsCurTime;
+
     private void Awake()
     {
         m_IsWindowCollapse = true;
         m_IsEnterBtnCollapse = false;
         m_MaxCmd = 15;
+        m_FpsTimeGap = 30;
         m_Menus = new Dictionary<string, WindowInfo>();
         m_Commands = new Dictionary<string, UnityAction<string>>();
         m_CmdDesc = new Dictionary<string, CommandDescInfo>();
@@ -167,7 +172,7 @@ public class Console : MonoBehaviour
 
         m_EnterBtnStyle = new GUIStyle(GUI.skin.button);
         m_EnterBtnStyle.fixedHeight = InnerFitWidth(40);
-        m_EnterBtnStyle.fixedWidth = InnerFitWidth(130);
+        m_EnterBtnStyle.fixedWidth = InnerFitWidth(150);
         m_EnterBtnStyle.fontSize = (int)InnerFitWidth(30);
         m_EnterBtnStyle.normal.background = tex1;
         m_EnterBtnStyle.active.background = tex2;
@@ -282,12 +287,27 @@ public class Console : MonoBehaviour
         else
         {
             GUILayout.BeginHorizontal();
-            if (!m_IsEnterBtnCollapse && GUILayout.Button(InnerToGreen("Console"), m_EnterBtnStyle))
+            if (!m_IsEnterBtnCollapse && GUILayout.Button(InnerToGreen(ShowFPS ? InnerCalculateFps() : "Console"), m_EnterBtnStyle))
                 m_IsOpen = true;
             if (GUILayout.Button(InnerToBlue(m_IsEnterBtnCollapse ? ">" : "<"), m_EnterBtnCollapseStyle))
                 m_IsEnterBtnCollapse = !m_IsEnterBtnCollapse;
             GUILayout.EndHorizontal();
         }
+    }
+
+    private string InnerCalculateFps()
+    {
+        if (m_FpsValue == 0)
+            m_FpsValue = 1 / Time.unscaledDeltaTime;
+        m_FpsAmount += Time.unscaledDeltaTime;
+        m_FpsCurTime++;
+        if (m_FpsCurTime >= m_FpsTimeGap)
+        {
+            m_FpsValue = 1 / (m_FpsAmount / m_FpsTimeGap);
+            m_FpsCurTime = 0;
+            m_FpsAmount = 0;
+        }
+        return string.Format("FPS {0:F2}", m_FpsValue);
     }
 
     private void InternalCheckInGUI()

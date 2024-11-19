@@ -149,6 +149,15 @@ namespace XFrame.PathFinding
             }
         }
 
+        public XVector2 Constraint(XVector2 point)
+        {
+            if (point.X < Min.X) point.X = Min.X;
+            if (point.Y < Min.Y) point.Y = Min.Y;
+            if (point.X > Max.X) point.X = Max.X;
+            if (point.Y > Max.Y) point.Y = Max.Y;
+            return point;
+        }
+
         public Triangle Constraint(Triangle triangle)
         {
             XVector2 p1 = triangle.P1;

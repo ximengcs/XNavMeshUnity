@@ -29,6 +29,11 @@ namespace XFrame.PathFinding
             m_DMax = m_BoundingBox.DMax;
         }
 
+        public XVector2 Constraint(XVector2 point)
+        {
+            return AABB.Constraint(point);
+        }
+
         /// <summary>
         /// 归一化
         /// </summary>
