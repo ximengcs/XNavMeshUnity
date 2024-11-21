@@ -2,13 +2,13 @@
 using Simon001.PathFinding;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace XFrame.PathFinding
 {
     internal class XNavMeshHelper : IAStarHelper
     {
         private HalfEdgeData m_Data;
+        private bool m_ContainsOneIntersect;
 
         public XNavMeshHelper(HalfEdgeData data)
         {
@@ -69,11 +69,6 @@ namespace XFrame.PathFinding
             HalfEdge ope2 = e2.OppositeEdge;
             HalfEdge ope3 = e3.OppositeEdge;
 
-            //Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
-            //Func<XVector2, XVector2> fun2 = Test2.Normalizer.UnNormalize;
-            //Debug.LogWarning($"check item around ~~~~~~~~~ {fun(new Triangle(f))}");
-
-            //Debug.LogWarning($"check item around1 -------- {fun2(e1.Vertex.Position)}");
             if (ope1 != null)
             {
                 HalfEdgeFace opf1 = ope1.Face;
@@ -81,7 +76,7 @@ namespace XFrame.PathFinding
                     result.Add(opf1);
 
                 HalfEdge e = ope1.NextEdge.OppositeEdge;
-                while (e != null)
+                while (m_ContainsOneIntersect && e != null)
                 {
                     HalfEdgeFace ef = e.Face;
                     if (ope2 != null && ef == ope2.Face) break;
@@ -94,7 +89,7 @@ namespace XFrame.PathFinding
                 }
 
                 e = ope1;
-                if (e != null)
+                if (m_ContainsOneIntersect && e != null)
                 {
                     int count = 0;
                     e = e.Face.FindSameValueVert(e1.PrevEdge);
@@ -112,15 +107,8 @@ namespace XFrame.PathFinding
                         e = e.PrevEdge.OppositeEdge;
                     }
                 }
+            } 
 
-                //foreach (HalfEdgeFace t in result)
-                //{
-                //    Debug.LogWarning($" {fun(new Triangle(t))} ");
-                //}
-            }
-            //Debug.LogWarning("===============");
-
-            //Debug.LogWarning($"check item around2 -------- {fun2(e2.Vertex.Position)}");
             if (ope2 != null)
             {
                 HalfEdgeFace opf2 = ope2.Face;
@@ -128,7 +116,7 @@ namespace XFrame.PathFinding
                     result.Add(opf2);
 
                 HalfEdge e = ope2.NextEdge.OppositeEdge;
-                while (e != null)
+                while (m_ContainsOneIntersect && e != null)
                 {
                     HalfEdgeFace ef = e.Face;
 
@@ -142,13 +130,13 @@ namespace XFrame.PathFinding
                 }
 
                 e = ope2;
-                if (e != null)
+                if (m_ContainsOneIntersect && e != null)
                 {
                     int count = 0;
-                    //Debug.LogWarning($"check {fun(new Triangle(f))} {fun2(ope2.PrevEdge.Vertex.Position)} {fun(new Triangle(e.Face))} ");
+                    
                     e = e.Face.FindSameValueVert(e2.PrevEdge);
                     e = e.PrevEdge.OppositeEdge;
-                    //Debug.LogWarning($"check after {fun2(e.Vertex.Position)} {fun(new Triangle(e.Face))}");
+                    
                     while (e != null && count++ < 100)
                     {
                         HalfEdgeFace ef = e.Face;
@@ -162,14 +150,8 @@ namespace XFrame.PathFinding
                     }
                 }
 
-                //foreach (HalfEdgeFace t in result)
-                //{
-                //    Debug.LogWarning($" {fun(new Triangle(t))} ");
-                //}
             }
-            //Debug.LogWarning("===============");
 
-            //Debug.LogWarning($"check item around3 -------- {fun2(e3.Vertex.Position)}");
             if (ope3 != null)
             {
                 HalfEdgeFace opf3 = ope3.Face;
@@ -177,7 +159,7 @@ namespace XFrame.PathFinding
                     result.Add(opf3);
 
                 HalfEdge e = ope3.NextEdge.OppositeEdge;
-                while (e != null)
+                while (m_ContainsOneIntersect && e != null)
                 {
                     HalfEdgeFace ef = e.Face;
                     if (ope1 != null && ef == ope1.Face) break;
@@ -190,7 +172,7 @@ namespace XFrame.PathFinding
                 }
 
                 e = ope3;
-                if (e != null)
+                if (m_ContainsOneIntersect && e != null)
                 {
                     int count = 0;
                     e = e.Face.FindSameValueVert(e3.PrevEdge);
@@ -207,11 +189,6 @@ namespace XFrame.PathFinding
                         e = e.PrevEdge.OppositeEdge;
                     }
                 }
-
-                //foreach (HalfEdgeFace t in result)
-                //{
-                //    Debug.LogWarning($" {fun(new Triangle(t))} ");
-                //}
             }
         }
 

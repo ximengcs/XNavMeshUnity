@@ -212,6 +212,11 @@ namespace XFrame.PathFinding
                 ChangeOrientation();
         }
 
+        public bool IsClockwise()
+        {
+            return GeometryUtility.IsTriangleOrientedClockwise(P1, P2, P3);
+        }
+
         /// <summary>
         /// 改变三角形方向 P1->P2->P3  =>  P3->P2->P1
         /// </summary>

@@ -1,4 +1,5 @@
 ﻿
+using RVO;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -446,6 +447,8 @@ public partial class Test2
     {
         m_DrawGizmosPoly = false;
     }
+
+    private bool m_Dirty = false;
     private void Update()
     {
         foreach (var entry in m_Polies)
@@ -459,6 +462,9 @@ public partial class Test2
             if (!m_UpdaterList[i].OnUpdate())
                 m_UpdaterList.RemoveAt(i);
         }
+
+        if (m_Dirty)
+            Simulator.Instance.doStep();
     }
 
     public List<XVector2> GetAllPoints(Transform tf, bool checkActive)

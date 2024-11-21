@@ -315,6 +315,12 @@ public class XNavMeshTools : EditorWindow
         }
 
         root.AddComponent<RVOArea>();
+
+        Vector2[] points2d = new Vector2[points.Length];
+        for (int i = 0; i < points.Length; i++)
+            points2d[i] = points[i];
+        PolygonCollider2D collider = root.AddComponent<PolygonCollider2D>();
+        collider.points = points2d;
     }
 
     private void InnerSaveCurrent()
@@ -326,6 +332,8 @@ public class XNavMeshTools : EditorWindow
 
     private void InnerSyncData()
     {
+        if (m_Areas == null)
+            return;
         Dictionary<string, List<(float, float)>> result = new();
         RVOArea[] areas = m_Areas.GetComponentsInChildren<RVOArea>(false);
         foreach (RVOArea area in areas)
@@ -372,6 +380,7 @@ public class XNavMeshTools : EditorWindow
             foreach (Transform tf in m_Areas)
             {
                 RVOArea ob = tf.GetComponent<RVOArea>();
+                ob.UpdatePoints();
                 List<Vector2> points = ob.GetUnityVertices2(m_Current.MinX, m_Current.MinY, m_Current.MaxX, m_Current.MaxY);
                 foreach (Vector2 p in points)
                 {

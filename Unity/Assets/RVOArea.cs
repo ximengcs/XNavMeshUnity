@@ -1,20 +1,46 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using XFrame.PathFinding;
-using Vector2 = RVO.Vector2;
 
 public class RVOArea : MonoBehaviour
 {
-    public List<Vector2> GetVertices()
+    private LineRenderer m_Line;
+    private PolygonCollider2D m_Polygon;
+    private List<Vector3> m_Vertices;
+
+    public void UpdatePoints()
+    {
+        if(m_Line == null)
+        {
+            m_Line = GetComponent<LineRenderer>();
+            m_Polygon = GetComponent<PolygonCollider2D>();
+            m_Vertices = new List<Vector3>();
+        }
+
+        if (m_Polygon != null)
+        {
+            if (Selection.activeGameObject == gameObject)
+            {
+                m_Vertices.Clear();
+                foreach (Vector2 p in m_Polygon.points)
+                    m_Vertices.Add(new Vector3(p.x, p.y));
+                m_Line.positionCount = m_Vertices.Count;
+                m_Line.SetPositions(m_Vertices.ToArray());
+            }
+        }
+    }
+
+    public List<RVO.Vector2> GetVertices()
     {
         UnityEngine.Vector2 basePos = transform.position;
         LineRenderer line = GetComponent<LineRenderer>();
         Vector3[] list = new Vector3[line.positionCount];
         int count = line.GetPositions(list);
-        List<Vector2> result = new List<Vector2>(count);
+        List<RVO.Vector2> result = new List<RVO.Vector2>(count);
         for (int i = 0; i < count; ++i)
-            result.Add(new Vector2(list[i].x + basePos.x, list[i].y + basePos.y));
+            result.Add(new RVO.Vector2(list[i].x + basePos.x, list[i].y + basePos.y));
         return result;
     }
 

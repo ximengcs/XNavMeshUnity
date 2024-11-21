@@ -67,8 +67,8 @@ public partial class Test
                 line.endColor = meshInfo.Color;
                 line.startWidth = 0.2f;
                 line.endWidth = 0.2f;
-                if (ReferenceEquals(line.material, null))
-                    line.material = new Material(Resources.Load<Material>("Line"));
+                if (ReferenceEquals(line.sharedMaterial, null))
+                    line.sharedMaterial = new Material(Resources.Load<Material>("Line"));
                 m_Meshs.Add(go);
             }
         }

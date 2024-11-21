@@ -20,7 +20,7 @@ namespace RVOCS
         }
 
 
-        public void setupScenario()
+        public void setupScenario(Vector2 pos, Vector2 target)
         {
             /* Specify the global time step of the simulation. */
             Simulator.Instance.setTimeStep(0.25f);
@@ -31,23 +31,30 @@ namespace RVOCS
              */
             Simulator.Instance.setAgentDefaults(15.0f, 10, 10.0f, 10.0f, 1.5f, 2.0f, new Vector2(0.0f, 0.0f));
 
+            Simulator.Instance.addAgent(pos);
+            goals.Add(target);
+            GameObject go = GameObject.Instantiate(m_Prefab);
+            go.transform.position = new UnityEngine.Vector3(pos.x(), pos.y());
+            items.Add(go);
+
             /*
              * Add agents, specifying their start position, and store their
              * goals on the opposite side of the environment.
              */
-            for (int i = 0; i < 250; ++i)
-            {
-                Vector2 pos = 200.0f *
-                    new Vector2((float)Math.Cos(i * 2.0f * Math.PI / 250.0f),
-                        (float)Math.Sin(i * 2.0f * Math.PI / 250.0f));
-                Simulator.Instance.addAgent(pos);
-                goals.Add(-Simulator.Instance.getAgentPosition(i));
-
-                GameObject go = GameObject.Instantiate(m_Prefab);
-                go.name = $"{i}";
-                go.transform.position = new UnityEngine.Vector3(pos.x(), pos.y());
-                items.Add(go);
-            }
+            //for (int i = 0; i < 250; ++i)
+            //{
+            //    Vector2 pos = 200.0f *
+            //        new Vector2((float)Math.Cos(i * 2.0f * Math.PI / 250.0f),
+            //            (float)Math.Sin(i * 2.0f * Math.PI / 250.0f));
+            //    Simulator.Instance.addAgent(pos);
+            //    Debug.LogWarning($"pos {pos.x()} {pos.y()} ");
+            //    goals.Add(-Simulator.Instance.getAgentPosition(i));
+            //
+            //    GameObject go = GameObject.Instantiate(m_Prefab);
+            //    go.name = $"{i}";
+            //    go.transform.position = new UnityEngine.Vector3(pos.x(), pos.y());
+            //    items.Add(go);
+            //}
         }
 
         public void updateVisualization()

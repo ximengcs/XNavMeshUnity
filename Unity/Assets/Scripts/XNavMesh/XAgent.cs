@@ -13,12 +13,19 @@ namespace XFrame.PathFinding
 
         public XVector2 Pos
         {
-            get { return m_Pos; }
+            get { return new XVector2(m_Inst.transform.position.x, m_Inst.transform.position.y); }
             set
             {
                 m_Inst.transform.position = value.ToUnityVec3();
                 m_Pos = value;
             }
+        }
+
+        public void Towards(XVector2 dir)
+        {
+            float angle = XMath.Angle(new XVector2(1, 0), dir) * (180 / XMath.PI);
+            Quaternion q = Quaternion.Euler(0, 0, angle);
+            m_Inst.transform.rotation = q;
         }
 
         public XAgent(int id, XVector2 initPos, GameObject prefab)

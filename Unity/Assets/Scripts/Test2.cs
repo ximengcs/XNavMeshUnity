@@ -152,22 +152,22 @@ public partial class Test2 : MonoBehaviour
 
         Console.Inst.AddCommand("rvo", (param) =>
         {
-            Simulator.Instance.setTimeStep(0.25f);
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 10.0f, 10.0f, 1.5f, 2.0f, new RVO.Vector2(0.0f, 0.0f));
-
-            List<Triangle> triangles = m_NavMesh.GetObstacles(1.5f);
-            foreach (Triangle triangle in triangles)
-            {
-                List<RVO.Vector2> points = new List<RVO.Vector2>()
-                {
-                    new RVO.Vector2(triangle.P1.X, triangle.P1.Y),
-                    new RVO.Vector2(triangle.P2.X, triangle.P2.Y),
-                    new RVO.Vector2(triangle.P3.X, triangle.P3.Y)
-                };
-                Simulator.Instance.addObstacle(points);
-            }
+            Circle circle = new Circle(CirclePrefab);
+            circle.setupScenario(
+                new RVO.Vector2(StartPoint.position.x, StartPoint.position.y),
+                new RVO.Vector2(EndPoint.position.x, EndPoint.position.y)
+                );
+            circle.updateVisualization();
+            if (RVOObstacle)
+                Simulator.Instance.addObstacle(RVOObstacle.GetVertices());
             Simulator.Instance.processObstacles();
-
+            m_UpdaterList.Add(new Updater(() =>
+            {
+                circle.updateVisualization();
+                circle.setPreferredVelocities();
+                Simulator.Instance.doStep();
+                return true;
+            }));
         });
 
         Console.Inst.AddCommand("agent-follow", (param) =>
@@ -194,7 +194,7 @@ public partial class Test2 : MonoBehaviour
                 if (Input.GetMouseButtonUp(0))
                 {
                     Vector3 pos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-                    Console.Inst.ExecuteCommand($"agent-to 1 {pos.x},{pos.y}");
+                    Console.Inst.ExecuteCommand($"agent-to 0 {pos.x},{pos.y}");
                 }
                 return true;
             }));
@@ -207,14 +207,15 @@ public partial class Test2 : MonoBehaviour
             Console.Inst.ExecuteCommand("navmesh-show");
             Console.Inst.ExecuteCommand("navmesh-poly-rotate 24 0.1");
 
-            Simulator.Instance.setTimeStep(0.25f);
-            Simulator.Instance.setAgentDefaults(15.0f, 10, 10.0f, 10.0f, 1f, 2.0f, new RVO.Vector2(0.0f, 0.0f));
+            Simulator.Instance.setTimeStep(0.15f);
+            Simulator.Instance.setAgentDefaults(2, 5, 10.0f, 10.0f, 0.5f, 2.0f, new RVO.Vector2(0.0f, 0.0f));
 
-            m_Triangles = m_NavMesh.GetObstacles(2.1f);
-            Debug.LogWarning($" {m_Triangles.Count} ");
-
+            m_Triangles = m_NavMesh.GetObstacles(0);
             foreach (Triangle triangle in m_Triangles)
             {
+                if (triangle.IsClockwise())
+                    triangle.ChangeOrientation();
+
                 List<RVO.Vector2> points = new List<RVO.Vector2>()
                 {
                     new RVO.Vector2(triangle.P1.X, triangle.P1.Y),
@@ -225,12 +226,14 @@ public partial class Test2 : MonoBehaviour
             }
             Simulator.Instance.processObstacles();
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 100; i++)
             {
                 XVector2 bornPos = m_NavMesh.GetRandomPoint();
                 Console.Inst.ExecuteCommand($"agent-create {bornPos.X},{bornPos.Y}");
+                //Console.Inst.ExecuteCommand($"agent-create {StartPoint.position.x},{StartPoint.position.y}");
             }
         });
+
 
         Console.Inst.AddCommand("agent-create", (param) =>
         {
@@ -239,7 +242,6 @@ public partial class Test2 : MonoBehaviour
                 int agentId = Simulator.Instance.addAgent(new RVO.Vector2(p.X, p.Y));
                 XAgent agent = new XAgent(agentId, p, CirclePrefab);
                 m_Agents.Add(agent.Id, agent);
-
                 int index = 0;
                 XVector2 target = default;
                 bool hasTarget = false;
@@ -254,13 +256,20 @@ public partial class Test2 : MonoBehaviour
                     {
                         target = m_NavMesh.GetRandomPoint();
                         path = TestPath(m_NavMesh, agent.Pos, target, out XNavMeshHelper helper);
-
-                        from = m_NavMesh.Normalizer.Normalize(agent.Pos);
-                        to = m_NavMesh.Normalizer.Normalize(target);
-                        targets = helper.GetPathPoints(path, from, to);
-                        m_NavMesh.Normalizer.UnNormalize(targets);
-                        index = 0;
-                        hasTarget = true;
+                        if (path != null)
+                        {
+                            from = m_NavMesh.Normalizer.Normalize(agent.Pos);
+                            to = m_NavMesh.Normalizer.Normalize(target);
+                            targets = helper.GetPathPoints(path, from, to);
+                            m_NavMesh.Normalizer.UnNormalize(targets);
+                            Debug.LogWarning("path-------------");
+                            foreach (var target in targets)
+                                Debug.LogWarning(target);
+                            Debug.LogWarning("path=============");
+                            index = 0;
+                            Debug.LogWarning($" {index}:{targets.Count} {targets[index]} ");
+                            hasTarget = true;
+                        }
                     }
                     else
                     {
@@ -268,9 +277,14 @@ public partial class Test2 : MonoBehaviour
                         {
                             hasTarget = false;
                             agent.Pos = targets[targets.Count - 1];
-                            Debug.LogWarning($"next");
                             return true;
                         }
+                        RVO.Vector2 pos = Simulator.Instance.getAgentPosition(agentId);
+                        agent.Pos = new XVector2(pos.x(), pos.y());
+
+                        RVO.Vector2 vel = Simulator.Instance.getAgentVelocity(agentId);
+                        agent.Towards(new XVector2(vel.x(), vel.y()));
+
                         XVector2 tarPos = targets[index];
                         XVector2 power = tarPos - agent.Pos;
                         RVO.Vector2 v = new RVO.Vector2(power.X, power.Y);
@@ -278,22 +292,22 @@ public partial class Test2 : MonoBehaviour
                         {
                             v = RVOMath.normalize(v);
                         }
-                        //power *= Time.deltaTime * 10;
-                        //agent.Pos += power;
-
-                        Simulator.Instance.setAgentPrefVelocity(agentId, v);
-                        Simulator.Instance.doStep();
-                        RVO.Vector2 pos = Simulator.Instance.getAgentPosition(agentId);
-                        agent.Pos = new XVector2(pos.x(), pos.y());
 
                         bool notReachGoal = RVOMath.absSq(pos - new RVO.Vector2(tarPos.X, tarPos.Y)) > Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId);
 
-                        Debug.LogWarning($"notReachGoal |{v.x()}|{v.y()}| {agent.Pos} {tarPos} {RVOMath.absSq(pos - new RVO.Vector2(tarPos.X, tarPos.Y))} {Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId)} ");
                         if (!notReachGoal)
                         {
                             index++;
-                        }
+                            //if (index < targets.Count)
+                            //    Debug.LogWarning($" {index}:{targets.Count} {targets[index]} ");
 
+                            Simulator.Instance.setAgentPrefVelocity(agentId, new RVO.Vector2());
+                        }
+                        else
+                        {
+                            Simulator.Instance.setAgentPrefVelocity(agentId, v);
+                        }
+                        m_Dirty = true;
                         return true;
                     }
 
@@ -308,26 +322,29 @@ public partial class Test2 : MonoBehaviour
             {
                 if (m_Agents.TryGetValue(agentId, out XAgent agent))
                 {
-                    AStarPath path = TestPath(m_NavMesh, agent.Pos, p, out XNavMeshHelper helper);
-                    XVector2 from = m_NavMesh.Normalizer.Normalize(agent.Pos);
-                    XVector2 to = m_NavMesh.Normalizer.Normalize(p);
-                    List<XVector2> targets = helper.GetPathPoints(path, from, to);
-                    m_NavMesh.Normalizer.UnNormalize(targets);
-
-                    int index = 1;
+                    Debug.LogWarning("Start");
                     m_UpdaterList.Add(new Updater(() =>
                     {
-                        if (index >= targets.Count)
-                            return false;
-                        XVector2 tarPos = targets[index];
-                        XVector2 power = XVector2.Normalize(tarPos - agent.Pos);
-                        power *= Time.deltaTime * 10;
-                        agent.Pos += power;
-
-                        if (XVector2.Distance(agent.Pos, tarPos) < 0.1f)
+                        RVO.Vector2 v = new RVO.Vector2(p.X, p.Y);
+                        v = v - Simulator.Instance.getAgentPosition(agentId);
+                        if (RVOMath.absSq(v) > 1.0f)
                         {
-                            index++;
+                            v = RVOMath.normalize(v);
                         }
+
+                        Simulator.Instance.setAgentPrefVelocity(agentId, v);
+                        Simulator.Instance.doStep();
+
+                        RVO.Vector2 pos = Simulator.Instance.getAgentPosition(agentId);
+                        agent.Pos = new XVector2(pos.x(), pos.y());
+                        bool notReachGoal = RVOMath.absSq(pos - new RVO.Vector2(p.X, p.Y)) > Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId);
+
+                        if (!notReachGoal)
+                        {
+                            Debug.LogWarning("Finish");
+                            return false;
+                        }
+
                         return true;
                     }));
                 }
