@@ -250,8 +250,9 @@ namespace XFrame.PathFinding
                     {
                         if (count++ > 1000)
                         {
-
+#if DEBUG_PATH
                             Recorder.Show(null);
+#endif
                             throw new Exception("loop error");
                         }
 
@@ -303,8 +304,9 @@ namespace XFrame.PathFinding
                 {
                     if (count++ > 1000)
                     {
-
+#if DEBUG_PATH
                         Recorder.Show(null);
+#endif
                         throw new Exception("loop error");
                     }
 
@@ -382,7 +384,9 @@ namespace XFrame.PathFinding
 
                     if (count++ > 1000)
                     {
+#if DEBUG_PATH
                         Recorder.Show(null);
+#endif
                         Triangle start = new Triangle(startTriangle);
                         DataUtility.Save("walk-error", triangulationData);
                         throw new Exception("loop exec");

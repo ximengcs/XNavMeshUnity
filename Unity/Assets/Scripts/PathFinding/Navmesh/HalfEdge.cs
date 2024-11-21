@@ -36,17 +36,7 @@ namespace XFrame.PathFinding
             Vertex = vertex;
         }
 
-        public Edge ToEdge()
-        {
-            return new Edge(Vertex.Position, NextEdge.Vertex.Position);
-        }
-
-        public bool PointEquals(HalfEdge edge)
-        {
-            return Vertex.Position.Equals(edge.Vertex.Position);
-        }
-
-        public bool EqualsEdge(Edge edge)
+        public bool Equals(Edge edge)
         {
             return Vertex.Position.Equals(edge.P1) && NextEdge.Vertex.Position.Equals(edge.P2);
         }

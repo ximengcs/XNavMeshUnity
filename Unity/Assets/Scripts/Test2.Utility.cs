@@ -84,14 +84,14 @@ public partial class Test2
         Console.Inst.AddCommand("poly-scale", ScalePoly);
         Console.Inst.AddCommand("main-show", ShowMainArea);
         Console.Inst.AddCommand("main-hide", HideMainArea);
-        Console.Inst.AddCommand("main-save", SaveMain);
-        Console.Inst.AddCommand("main-open", OpenMain);
         Console.Inst.AddCommand("edge-test", TestEdge);
         Console.Inst.AddCommand("t1-on", OnT1);
         Console.Inst.AddCommand("t1-off", OffT1);
         Console.Inst.AddCommand("check-valid", CheckValid);
         Console.Inst.AddCommand("entity", CreateObject);
+#if DEBUG_PATH
         Console.Inst.AddCommand("record-show", Recorder.Show);
+#endif
         Console.Inst.AddCommand("record-gene-relation", GenerateRelation);
         Console.Inst.AddCommand("record-gene-new-poly", GenerateNewPloyPoints);
         Console.Inst.AddCommand("poly-show", ShowPoly);
@@ -106,7 +106,7 @@ public partial class Test2
 
     private void GenDataPointEntity(string param)
     {
-        GenrateFaceEntity(HalfDataTest.Data.Faces);
+        GenrateFaceEntity(HalfDataTest.Triangles);
     }
 
     private void GenerateHalfData(string param)
@@ -194,16 +194,20 @@ public partial class Test2
         s_Cache = new StringBuilder();
         HalfEdgeData data = XNavMesh.GenerateHalfEdgeData2(edges, true, relationAllPoints);
         HalfDataTest?.Dispose();
-        HalfDataTest = new HalfEdgeInfo(data, Color.cyan);
+        HalfDataTest = new HalfEdgeInfo(m_NavMesh, data, Color.cyan);
+
+#if DEBUG_PATH
         Debug.LogWarning("check valid------------------");
         Debug.LogWarning(data.CheckValid());
         Debug.LogWarning("-----------------------------");
+#endif
     }
 
     public static StringBuilder s_Cache;
 
     private void GenerateRelation(string param)
     {
+#if DEBUG_PATH
         Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         List<List<XVector2>> list = Recorder.CurrentInfo.RelationAllPoints;
 
@@ -219,10 +223,12 @@ public partial class Test2
                 pInst.transform.position = f(pt2).ToUnityVec3();
             }
         }
+#endif
     }
 
     private void GenerateNewPloyPoints(string param)
     {
+#if DEBUG_PATH
         Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         Dictionary<int, List<XVector2>> list = Recorder.CurrentInfo.PolyNewPoints;
         GameObject root = new GameObject("new points");
@@ -237,45 +243,43 @@ public partial class Test2
                 p.transform.position = f(point).ToUnityVec3();
             }
         }
+#endif
     }
 
     private void RecordCurNewDataEntity(string param)
     {
+#if DEBUG_PATH
         GenrateFaceEntity(Recorder.CurrentInfo.CloneData.Faces);
+#endif
     }
 
-    public void GenrateFaceEntity(HashSet<HalfEdgeFace> faces)
+    public void GenrateFaceEntity(List<TriangleArea> faces)
     {
-        Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
         GameObject dataInst = new GameObject("triangle");
-        foreach (HalfEdgeFace face in faces)
+        foreach (TriangleArea area in faces)
         {
-            HalfEdge e1 = face.Edge;
-            HalfEdge e2 = e1.NextEdge;
-            HalfEdge e3 = e2.NextEdge;
-
-            Triangle triangle = new Triangle(face);
-            GameObject tri = new GameObject($"< {f(e1.Vertex.Position)} {f(e2.Vertex.Position)} {f(e3.Vertex.Position)}>");
+            Triangle triangle = area.Shape;
+            GameObject tri = new GameObject($"< {triangle.P1} {triangle.P2} {triangle.P3}>");
             tri.transform.SetParent(dataInst.transform);
 
             GameObject selfPoints = new GameObject("selfPoints");
             selfPoints.transform.SetParent(tri.transform);
 
-            GameObject p1 = new GameObject(f(triangle.P1).ToString());
+            GameObject p1 = new GameObject((triangle.P1).ToString());
             p1.transform.SetParent(selfPoints.transform);
-            p1.transform.position = f(triangle.P1).ToUnityVec3();
+            p1.transform.position = triangle.P1.ToUnityVec3();
 
-            GameObject p2 = new GameObject(f(triangle.P2).ToString());
+            GameObject p2 = new GameObject((triangle.P2).ToString());
             p2.transform.SetParent(selfPoints.transform);
-            p2.transform.position = f(triangle.P2).ToUnityVec3();
+            p2.transform.position = triangle.P2.ToUnityVec3();
 
-            GameObject p3 = new GameObject(f(triangle.P3).ToString());
+            GameObject p3 = new GameObject((triangle.P3).ToString());
             p3.transform.SetParent(selfPoints.transform);
-            p3.transform.position = f(triangle.P3).ToUnityVec3();
+            p3.transform.position = triangle.P3.ToUnityVec3();
 
-            if (e1.OppositeEdge != null) GenerateSubStruct(e1, p1);
-            if (e2.OppositeEdge != null) GenerateSubStruct(e2, p2);
-            if (e3.OppositeEdge != null) GenerateSubStruct(e3, p3);
+            //if (e1.OppositeEdge != null) GenerateSubStruct(e1, p1);
+            //if (e2.OppositeEdge != null) GenerateSubStruct(e2, p2);
+            //if (e3.OppositeEdge != null) GenerateSubStruct(e3, p3);
         }
     }
 
@@ -351,37 +355,24 @@ public partial class Test2
     {
         param = param.TrimEnd(' ');
         byte[] bytes = File.ReadAllBytes($"Assets/Data/Navmesh/{param}.bytes");
-        m_NavMesh = DataUtility.ToNavmesh(bytes);
+        m_NavMesh = new XNavMesh(bytes);
         Normalizer = m_NavMesh.Normalizer;
 
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
         m_FullMeshArea.Refresh();
-        Debug.Log($"read success, navmesh face count {m_NavMesh.Data.Faces.Count}");
+        Debug.Log($"read success, navmesh face count {m_NavMesh.AreaCount}");
     }
 
     private void OpenData(string param)
     {
         param = param.TrimEnd(' ');
         byte[] bytes = File.ReadAllBytes($"Assets/Data/{param}.bytes");
-        HalfEdgeData data = DataUtility.FromBytes(bytes);
-        HalfDataTest = new HalfEdgeInfo(data, Color.cyan);
+        HalfEdgeData data = new HalfEdgeData(bytes);
+        HalfDataTest = new HalfEdgeInfo(m_NavMesh, data, Color.cyan);
         Debug.Log($"read success, face count {data.Faces.Count}");
+#if DEBUG_PATH
         Debug.Log(data.CheckValid());
-    }
-
-    private void SaveMain(string param)
-    {
-        byte[] bytes = DataUtility.ToBytes(Navmesh.Data);
-        File.WriteAllBytes("Assets/Data/main.bytes", bytes);
-#if UNITY_EDITOR
-        AssetDatabase.Refresh();
 #endif
-        Debug.Log($"save success, size {bytes.Length}");
-    }
-
-    private void OpenMain(string param)
-    {
-        OpenData("main");
     }
 
     private void CreateObject(string param)
@@ -709,15 +700,15 @@ public partial class Test2
                     color.a = 0.5f;
                     Gizmos.color = color;
 
-                    if (item.E1HasOpposite())
+                    if (item.AreaInfo.E1HasOpposite)
                     {
                         InnerDrawArrow2(p1, p2, Color.magenta);
                     }
-                    if (item.E2HasOpposite())
+                    if (item.AreaInfo.E2HasOpposite)
                     {
                         InnerDrawArrow2(p2, p3, Color.magenta);
                     }
-                    if (item.E3HasOpposite())
+                    if (item.AreaInfo.E3HasOpposite)
                     {
                         InnerDrawArrow2(p3, p1, Color.magenta);
                     }

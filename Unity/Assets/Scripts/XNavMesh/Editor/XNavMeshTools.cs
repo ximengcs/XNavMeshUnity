@@ -230,10 +230,10 @@ public class XNavMeshTools : EditorWindow
         m_CurrentNavmesh.Renderer = new XNavMeshRenderer();
         m_CurrentNavmesh.Renderer.Refresh(m_CurrentNavmesh.MeshArea);
 
-        byte[] bytes = DataUtility.ToBytes(navmesh);
+        byte[] bytes = navmesh.ToBytes();
         File.WriteAllBytes($"Assets/Data/Navmesh/{m_Current.Name}.bytes", bytes);
         AssetDatabase.Refresh();
-        Debug.Log($"save success, {navmesh.Data.Faces.Count} size {bytes.Length}");
+        Debug.Log($"save success, {navmesh.AreaCount} size {bytes.Length}");
     }
 
     private void InnerNew()

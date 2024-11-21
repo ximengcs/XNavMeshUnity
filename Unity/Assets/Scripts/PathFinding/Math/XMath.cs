@@ -1,8 +1,5 @@
 ﻿
 using System;
-using System.Drawing;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace XFrame.PathFinding
@@ -19,6 +16,18 @@ namespace XFrame.PathFinding
         public const float EPSILON = 0.00001f;
 
         public const float PI = (float)Math.PI;
+
+        public static int LogInt(int baseValue, int a)
+        {
+            int result = 0;
+            int cache = 1;
+            while (cache <= a)
+            {
+                cache *= baseValue;
+                result++;
+            }
+            return result;
+        }
 
         public static float Cos(float angle)
         {

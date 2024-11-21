@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 
 namespace XFrame.PathFinding
@@ -15,7 +16,7 @@ namespace XFrame.PathFinding
 
         private int InnerGetSize(int count)
         {
-            int num = (int)Math.Ceiling(Math.Log(count, 2));
+            int num = XMath.LogInt(2, count);
             num = Math.Min(num, MIN);
             return num;
         }
@@ -54,7 +55,7 @@ namespace XFrame.PathFinding
             items.Add(inst);
         }
 
-        public void Spwan<T>(int count, int capacity, bool fillInst) where T : class, new()
+        public void Spwan<T>(int capacity, int count, bool fillInst) where T : class, new()
         {
             Type type = typeof(T);
             int num = InnerGetSize(count);
@@ -68,44 +69,6 @@ namespace XFrame.PathFinding
                 for (int j = items.Count; j < items.Capacity; j++)
                     items.Add(new T());
             }
-        }
-    }
-
-    internal static class XPool
-    {
-        private static Dictionary<Type, PoolItem> m_Objects = new Dictionary<Type, PoolItem>();
-
-        public static void Spwan<T>(int count, int capacity, bool fillInst) where T : class, new()
-        {
-            Type type = typeof(T);
-            if (!m_Objects.TryGetValue(type, out PoolItem poolItem))
-            {
-                poolItem = new PoolItem();
-                m_Objects[type] = poolItem;
-            }
-            poolItem.Spwan<T>(count, capacity, fillInst);
-        }
-
-        public static T Require<T>(int count = 16) where T : class, new()
-        {
-            Type type = typeof(T);
-            if (!m_Objects.TryGetValue(type, out PoolItem poolItem))
-            {
-                poolItem = new PoolItem();
-                m_Objects[type] = poolItem;
-            }
-            return poolItem.Require<T>(count);
-        }
-
-        public static void Release(object inst, int count = 16)
-        {
-            Type type = inst.GetType();
-            if (!m_Objects.TryGetValue(type, out PoolItem item))
-            {
-                item = new PoolItem();
-                m_Objects[type] = item;
-            }
-            item.Release(inst, count);
         }
     }
 }

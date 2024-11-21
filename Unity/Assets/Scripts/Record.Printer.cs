@@ -1,4 +1,4 @@
-﻿
+﻿#if DEBUG_PATH
 using UnityEngine;
 
 public static partial class Recorder
@@ -14,3 +14,4 @@ public static partial class Recorder
             Debug.Log(CurrentInfo);
     }
 }
+#endif

@@ -15,7 +15,7 @@ namespace XFrame.PathFinding
             m_Data = data;
         }
 
-        public int GetGValue(IAStarItem from, IAStarItem to)
+        public int GetGValue(object from, object to)
         {
             HalfEdgeFace f1 = from as HalfEdgeFace;
             HalfEdgeFace f2 = to as HalfEdgeFace;
@@ -48,7 +48,7 @@ namespace XFrame.PathFinding
             }
         }
 
-        public int GetHValue(IAStarItem start, IAStarItem end)
+        public int GetHValue(object start, object end)
         {
             HalfEdgeFace f1 = start as HalfEdgeFace;
             HalfEdgeFace f2 = end as HalfEdgeFace;
@@ -58,7 +58,7 @@ namespace XFrame.PathFinding
             return (int)(XVector2.Distance(p1, p2) * 100000);
         }
 
-        public void GetItemRound(IAStarItem item, HashSet<IAStarItem> result)
+        public void GetItemRound(object item, HashSet<object> result)
         {
             HalfEdgeFace f = item as HalfEdgeFace;
             HalfEdge e1 = f.Edge;
@@ -197,8 +197,8 @@ namespace XFrame.PathFinding
             List<XVector2> points = new List<XVector2>();
             for (int i = 0; i < path.Count - 1; i++)
             {
-                IAStarItem a = path[i];
-                IAStarItem b = path[i + 1];
+                object a = path[i];
+                object b = path[i + 1];
                 List<XVector2> subPoints = GetPathPoints(a, b);
                 for (int j = 0; j < subPoints.Count - 1; j++)
                     points.Add(subPoints[j]);
@@ -212,7 +212,7 @@ namespace XFrame.PathFinding
             return points;
         }
 
-        public List<XVector2> GetPathPoints(IAStarItem from, IAStarItem to)
+        public List<XVector2> GetPathPoints(object from, object to)
         {
             HalfEdgeFace f1 = from as HalfEdgeFace;
             HalfEdgeFace f2 = to as HalfEdgeFace;
@@ -242,7 +242,7 @@ namespace XFrame.PathFinding
             }
         }
 
-        public int GetUniqueId(IAStarItem item)
+        public int GetUniqueId(object item)
         {
             return item.GetHashCode();
         }

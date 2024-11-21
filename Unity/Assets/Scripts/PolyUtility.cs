@@ -46,7 +46,9 @@ public class PolyUtility
     {
         if (list == null || list.Count == 0)
         {
+#if DEBUG_PATH
             Recorder.Show(null);
+#endif
             Debug.LogError("list is null");
             newList = null;
             return null;
@@ -359,7 +361,7 @@ public class PolyUtility
         }
 
         List<XVector2> result = new List<XVector2>();
-        Edge current = null;
+        Edge current = default;
         foreach (List<XVector2> points in list)
         {
             for (int i = 0; i < points.Count; i++)
@@ -389,7 +391,9 @@ public class PolyUtility
                     }
                     Debug.LogWarning("======================");
                 }
+#if DEBUG_PATH
                 Recorder.Show(null);
+#endif
                 Debug.LogError($"Error happen {current.P1} {list.Count} ");
                 break;
             }
@@ -411,7 +415,9 @@ public class PolyUtility
 
             if (edges.Count == 0)
             {
+#if DEBUG_PATH
                 Recorder.Show(null);
+#endif
                 Debug.LogError($"error happen {current.P1} ");
                 break;
             }
@@ -436,7 +442,9 @@ public class PolyUtility
 
                 if (cur.Equals(XVector2.Zero))
                 {
+#if DEBUG_PATH
                     Recorder.Show(null);
+#endif
                     Debug.LogError($" nan error {current.P2} {current.P1}");
                 }
 
@@ -599,7 +607,7 @@ public class PolyUtility
 
         Debug.LogWarning($" lfet bottom {min} {leftBottom}");
         List<XVector2> result = new List<XVector2>();
-        Edge current = null;
+        Edge current = default;
         for (int i = 0; i < points1.Count; i++)
         {
             if (points1[i].Equals(leftBottom))
@@ -624,13 +632,15 @@ public class PolyUtility
         {
             if (calCount++ >= 100)
             {
+#if DEBUG_PATH
                 Recorder.Show(null);
+#endif
                 Debug.LogError("Error happen");
                 break;
             }
 
-            Edge e1 = null;
-            Edge e2 = null;
+            Edge e1 = default;
+            Edge e2 = default;
 
             for (int i = 0; i < points1.Count; i++)
             {
@@ -653,7 +663,9 @@ public class PolyUtility
 
             if (e1 == null && e2 == null)
             {
+#if DEBUG_PATH
                 Recorder.Show(null);
+#endif
                 Debug.LogError($"error happen {(e1 == null)} {(e2 == null)} {current.P1} ");
                 break;
             }

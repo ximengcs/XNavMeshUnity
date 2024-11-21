@@ -1,30 +1,26 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
-using System;
+﻿using System;
+using UnityEngine;
 using Simon001.PathFinding;
-using Unity.VisualScripting;
-using UnityEngine.AI;
+using System.Collections.Generic;
 
 namespace XFrame.PathFinding
 {
     public partial class XNavMesh
     {
-        public static int s_PolyId;
-
         private AABB m_AABB;
         private Normalizer m_Normalizer;
         private HalfEdgeData m_Data;
+
+        private int s_PolyId;
         private Dictionary<int, Poly> m_Polies;
 
-        public AABB AABB => m_AABB;
+        public XVector2 Min => m_AABB.Min;
+        public XVector2 Max => m_AABB.Max;
 
         public Normalizer Normalizer => m_Normalizer;
-        public HalfEdgeData Data => m_Data;
-        public Dictionary<int, Poly> Polies
-        {
-            get { return m_Polies; }
-            internal set { m_Polies = value; }
-        }
+        public Dictionary<int, Poly> Polies => m_Polies;
+
+        public int AreaCount => m_Data.Faces.Count;
 
         public XNavMesh(AABB aabb)
         {
@@ -33,17 +29,15 @@ namespace XFrame.PathFinding
             m_Data = new HalfEdgeData();
             m_Polies = new Dictionary<int, Poly>();
 
-            Initialize();
+            InnerInitialize();
         }
 
-        public XNavMesh(AABB aabb, HalfEdgeData data)
+        public XNavMesh(byte[] data)
         {
-            m_AABB = aabb;
-            m_Normalizer = new Normalizer(aabb);
-            m_Data = data;
+            InnerToNavmesh(data);
         }
 
-        private void Initialize()
+        private void InnerInitialize()
         {
             Triangle superTriangle = GeometryUtility.SuperTriangle;
             m_Data.AddTriangle(superTriangle);
@@ -58,20 +52,86 @@ namespace XFrame.PathFinding
             DelaunayIncrementalSloan.RemoveSuperTriangle(superTriangle, m_Data);
         }
 
-        public List<Triangle> GetObstacles(float radius)
+        public List<XVector2> FindPath(XVector2 startPoint, XVector2 endPoint)
+        {
+            XNavMeshHelper helper = new XNavMeshHelper(m_Data);
+            AStar aStar = new AStar(helper);
+            HalfEdgeFace start = FindWalkFace(startPoint);
+            HalfEdgeFace end = FindWalkFace(endPoint);
+            if (start != null && end != null)
+            {
+                AStarPath path = aStar.Execute(start, end);
+
+                if (path != null)
+                {
+                    List<XVector2> points = new List<XVector2>();
+                    for (int i = 0; i < path.Count - 1; i++)
+                    {
+                        object a = path[i];
+                        object b = path[i + 1];
+                        List<XVector2> subPoints = GetPathPoints(a, b);
+                        for (int j = 0; j < subPoints.Count - 1; j++)
+                            points.Add(m_Normalizer.UnNormalize(subPoints[j]));
+                    }
+                    if (points.Count > 0)
+                        points[0] = endPoint;
+                    else
+                        points.Add(endPoint);
+                    points.Reverse();
+                    return points;
+                }
+                else
+                {
+                    Debug.LogError($"calculate path count is null {startPoint} {endPoint}");
+                    return null;
+                }
+            }
+            else
+            {
+                Debug.LogError($"start or end is null. {start == null} {end == null} ");
+                return null;
+            }
+        }
+
+        public List<XVector2> GetPathPoints(object from, object to)
+        {
+            HalfEdgeFace f1 = from as HalfEdgeFace;
+            HalfEdgeFace f2 = to as HalfEdgeFace;
+            if (f1.IsAdjacent(f2))
+            {
+                return new List<XVector2>()
+                {
+                    new Triangle(f1).InnerCentrePoint,
+                    new Triangle(f2).InnerCentrePoint
+                };
+            }
+            else
+            {
+                if (f1.GetSameVert(f2, out XVector2 insect))
+                {
+                    return new List<XVector2>()
+                    {
+                        new Triangle(f1).InnerCentrePoint,
+                        insect,
+                        new Triangle(f2).InnerCentrePoint
+                    };
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+        }
+
+        public List<Triangle> GetArea(AreaType areaType)
         {
             List<Triangle> result = new List<Triangle>();
             foreach (HalfEdgeFace face in m_Data.Faces)
             {
-                if (face.Area == AreaType.Obstacle)
+                if (face.Area == areaType)
                 {
                     Triangle triangle = new Triangle(face);
-                    triangle = Normalizer.UnNormalize(triangle);
-                    XVector2 inner = triangle.CenterOfGravityPoint;
-                    triangle.P1 += XVector2.Normalize(inner - triangle.P1) * radius;
-                    triangle.P2 += XVector2.Normalize(inner - triangle.P2) * radius;
-                    triangle.P3 += XVector2.Normalize(inner - triangle.P3) * radius;
-
+                    triangle = m_Normalizer.UnNormalize(triangle);
                     result.Add(triangle);
                 }
             }
@@ -89,24 +149,28 @@ namespace XFrame.PathFinding
 
             HalfEdgeFace target = faces[UnityEngine.Random.Range(0, faces.Count)];
             XVector2 point = new Triangle(target).RandomPoint();
-            point = Normalizer.UnNormalize(point);
-            point = Normalizer.Constraint(point);
+            point = m_Normalizer.UnNormalize(point);
+            point = m_Normalizer.Constraint(point);
             return point;
         }
 
         public HalfEdgeFace FindWalkFace(XVector2 point)
         {
-            point = Normalizer.Normalize(point);
+            point = m_Normalizer.Normalize(point);
+            return InnerFindFace(point, AreaType.Walk);
+        }
+
+        private HalfEdgeFace InnerFindFace(XVector2 point, AreaType type)
+        {
             foreach (HalfEdgeFace face in m_Data.Faces)
             {
-                if (face.Area != AreaType.Obstacle)
+                if (face.Area == type)
                 {
                     if (new Triangle(face).Contains(point))
                     {
                         return face;
                     }
                 }
-
             }
             return null;
         }
@@ -118,7 +182,7 @@ namespace XFrame.PathFinding
 
         public void Test()
         {
-            Test(m_Data, Normalizer);
+            Test(m_Data, m_Normalizer);
         }
 
         public static void Test(XNavMesh nav, Normalizer normalizer)
@@ -242,17 +306,17 @@ namespace XFrame.PathFinding
                 for (int i = 0; i < edgeList.Count; i++)
                 {
                     Edge edge = new Edge(edgeList[i], edgeList[(i + 1) % edgeList.Count]);
-                    if (e1.EqualsEdge(edge))
+                    if (e1.Equals(edge))
                     {
                         faces.Add(face);
                         break;
                     }
-                    if (e2.EqualsEdge(edge))
+                    if (e2.Equals(edge))
                     {
                         faces.Add(face);
                         break;
                     }
-                    if (e3.EqualsEdge(edge))
+                    if (e3.Equals(edge))
                     {
                         faces.Add(face);
                         break;
@@ -273,7 +337,7 @@ namespace XFrame.PathFinding
         public bool ChangeWithExtraData(Poly poly, List<XVector2> newPoints, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
             List<XVector2> oldPoints = new List<XVector2>(poly.Points);
-            if (!AABB.Contains(newPoints))
+            if (!m_AABB.Contains(newPoints))
             {
                 newAreaData = null;
                 newAreaOutEdges = null;
@@ -285,47 +349,64 @@ namespace XFrame.PathFinding
 
         private bool InnerChangeWithExtraData(Poly poly, List<XVector2> oldPoints, List<XVector2> newPoints, out HalfEdgeData newAreaData, out List<Edge> newAreaOutEdges)
         {
+#if DEBUG_PATH
             Recorder.MarkCurrent();
+#endif
             newAreaData = null;
             newAreaOutEdges = null;
             if (newPoints[0].Equals(oldPoints[0]))  // 点位没有发生变化直接返回失败
                 return false;
 
+#if DEBUG_PATH
             Recorder.SetPolyId(poly.Id);
+#endif
 
-            Normalizer.Normalize(oldPoints);
-            Normalizer.Normalize(newPoints);
+            m_Normalizer.Normalize(oldPoints);
+            m_Normalizer.Normalize(newPoints);
 
+#if DEBUG_PATH
             Recorder.SetOldPoints(oldPoints);
             Recorder.SetNewPoints(newPoints);
+#endif
 
             HashSet<HalfEdgeFace> relationFaces = new HashSet<HalfEdgeFace>();
             InnerFindRelationFaces(oldPoints, relationFaces);
 
             InnerFindRelationFaces(newPoints, relationFaces);
 
+#if DEBUG_PATH
             Recorder.SetRelationFaces(relationFaces);
+#endif
 
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
+#if DEBUG_PATH
             Recorder.SetNewAreaOutEdges(newAreaOutEdges);
+#endif
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
                 return false;
 
+#if DEBUG_PATH
             Recorder.SetPolies(m_Polies);
+#endif
 
             Dictionary<Poly, List<XVector2>> relationlist = InnerFindRelationPolies(poly, newPoints, relationFaces, out List<List<XVector2>> relationAllPoints);
 
+#if DEBUG_PATH
             Recorder.SetRelationNewPoint(relationlist);
             Recorder.SetRelationAllPoints(relationAllPoints);
+#endif
 
             newAreaData = GenerateHalfEdgeData2(newAreaOutEdges, true, relationAllPoints);
 
+#if DEBUG_PATH
             Recorder.SetHalfEdgeData(newAreaData);
+#endif
 
             if (newAreaData.Faces.Count == 0)
             {
+#if DEBUG_PATH
                 Recorder.Show(null);
-                Test2.Inst.GenrateFaceEntity(relationFaces);
+#endif
                 Debug.LogError("error");
                 return false;
             }
@@ -341,7 +422,7 @@ namespace XFrame.PathFinding
 
             InnerReplaceHalfEdgeData(newAreaOutEdges, relationFaces, newAreaData);
 
-            Normalizer.UnNormalize(newPoints);  // 还原点
+            m_Normalizer.UnNormalize(newPoints);  // 还原点
             return true;
         }
 
@@ -375,7 +456,7 @@ namespace XFrame.PathFinding
                 {
                     AreaCollection targetArea = null;
                     List<XVector2> tmpPoints = new List<XVector2>(tmpPoly.Points);
-                    Normalizer.Normalize(tmpPoints);
+                    m_Normalizer.Normalize(tmpPoints);
 
                     foreach (AreaCollection area in allAreaList)
                     {
@@ -461,7 +542,7 @@ namespace XFrame.PathFinding
             }
 
             List<XVector2> points = poly.Points;
-            Normalizer.UnNormalize(points);
+            m_Normalizer.UnNormalize(points);
             HashSet<HalfEdgeFace> relationFaces = InnerFindRelationFaces(points);
             newAreaOutEdges = InnerGetEdgeList3(relationFaces);
             if (newAreaOutEdges.Count < 3)  //边界点小于3直接返回失败
@@ -514,7 +595,9 @@ namespace XFrame.PathFinding
             }
             else
             {
+#if DEBUG_PATH
                 Recorder.Show(null);
+#endif
                 Debug.LogError("not find new triangle");
             }
         }
@@ -603,8 +686,10 @@ namespace XFrame.PathFinding
                     XVector2 p2 = e.NextEdge.Vertex.Position;
                     if (!p1.Equals(curE.P2))
                     {
+#if DEBUG_PATH
                         Recorder.Show(null);
-                        Debug.LogError($"error happen {Normalizer.UnNormalize(p1)} {Normalizer.UnNormalize(p2)}");
+#endif
+                        Debug.LogError($"error happen {m_Normalizer.UnNormalize(p1)} {m_Normalizer.UnNormalize(p2)}");
                     }
 
                     XVector2 n2 = XVector2.Normalize(p2 - curE.P2);
@@ -612,7 +697,7 @@ namespace XFrame.PathFinding
                     float tmpD = XMath.Dot(n1, n2);
                     float tmpCross = XVector2.Cross(n1, n2);
 
-                    Func<XVector2, XVector2> f = Test2.Normalizer.UnNormalize;
+                    Func<XVector2, XVector2> f = m_Normalizer.UnNormalize;
                     //Debug.LogWarning($"[edge] {f(p1)} {f(p2)} {f(curE.P2)} {a} {angle} ");
 
                     if (angle == 0)
@@ -658,25 +743,6 @@ namespace XFrame.PathFinding
             return InnerSortEdge(edgeList);
         }
 
-        private void TryAddEdgeList(HalfEdge e, List<Edge> edgeList)
-        {
-            Edge cur = e.ToEdge();
-            Edge tar = null;
-            foreach (Edge tmp in edgeList)
-            {
-                if (tmp == cur)
-                {
-                    tar = tmp;
-                    break;
-                }
-            }
-
-            if (tar == null)
-            {
-                edgeList.Add(cur);
-            }
-        }
-
         private List<Edge> InnerSortEdge(List<Edge> edgeList)
         {
             int sortCount;
@@ -688,11 +754,13 @@ namespace XFrame.PathFinding
             {
                 if (count++ > 1000)
                 {
+#if DEBUG_PATH
                     Recorder.Show(null);
+#endif
                     throw new System.Exception("loop error");
                 }
                 Edge tmp = curEdge;
-                curEdge = null;
+                curEdge = default;
                 foreach (Edge e in edgeList)
                 {
                     if (e.P2.Equals(tmp.P1))
@@ -707,7 +775,7 @@ namespace XFrame.PathFinding
                             XVector2 p1 = sortEdge[sortCount - 1].P1;
                             XVector2 p2 = sortEdge[sortCount - 2].P1;
                             XVector2 p3 = sortEdge[sortCount - 3].P1;
-                            if (XMath.CheckPointsHasSame(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                            if (XMath.CheckPointsHasSame(p1, p2, p3) && m_AABB.InSide(m_Normalizer.UnNormalize(p1)))
                             {
                                 sortEdge.RemoveAt(sortCount - 2);
                                 targetCount--;
@@ -727,7 +795,7 @@ namespace XFrame.PathFinding
                 XVector2 p1 = sortEdge[0].P1;
                 XVector2 p2 = sortEdge[sortCount - 1].P1;
                 XVector2 p3 = sortEdge[sortCount - 2].P1;
-                if (XMath.CheckPointsHasSame(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                if (XMath.CheckPointsHasSame(p1, p2, p3) && m_AABB.InSide(m_Normalizer.UnNormalize(p1)))
                     sortEdge.RemoveAt(sortCount - 1);
 
                 sortCount = sortEdge.Count;
@@ -736,7 +804,7 @@ namespace XFrame.PathFinding
                     p1 = sortEdge[1].P1;
                     p2 = sortEdge[0].P1;
                     p3 = sortEdge[sortCount - 1].P1;
-                    if (XMath.CheckPointsHasSame(p1, p2, p3) && AABB.InSide(Normalizer.UnNormalize(p1)))
+                    if (XMath.CheckPointsHasSame(p1, p2, p3) && m_AABB.InSide(m_Normalizer.UnNormalize(p1)))
                         sortEdge.RemoveAt(0);
                 }
             }
@@ -753,7 +821,7 @@ namespace XFrame.PathFinding
             {
                 foreach (HalfEdge e in tmpData.Edges)
                 {
-                    if (e.EqualsEdge(edge))
+                    if (e.Equals(edge))
                     {
                         foreach (HalfEdgeFace face in relationFaces)  //只需要找相关联的面就可以
                         {
@@ -912,13 +980,15 @@ namespace XFrame.PathFinding
             return null;
         }
 
-        public static XNavMeshList<TriangleArea> ToTriangles(XNavMesh navMesh, HalfEdgeData data)
+        public List<TriangleArea> ToTriangles(HalfEdgeData data = null)
         {
-            XNavMeshList<TriangleArea> triangles = new XNavMeshList<TriangleArea>(8);
+            if (data == null)
+                data = m_Data;
+            List<TriangleArea> triangles = new List<TriangleArea>(8);
             foreach (HalfEdgeFace face in data.Faces)
             {
                 int polyId = -1;
-                foreach (Poly poly in navMesh.m_Polies.Values)
+                foreach (Poly poly in m_Polies.Values)
                 {
                     if (poly.Contains(face))
                     {
@@ -927,15 +997,10 @@ namespace XFrame.PathFinding
                     }
                 }
 
-                triangles.Add(new TriangleArea(face, polyId, navMesh.Normalizer));
+                triangles.Add(new TriangleArea(face, polyId, m_Normalizer));
             }
 
             return triangles;
-        }
-
-        public XNavMeshList<TriangleArea> ToTriangles()
-        {
-            return ToTriangles(this, m_Data);
         }
     }
 }

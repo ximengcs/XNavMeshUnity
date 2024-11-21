@@ -13,7 +13,6 @@ using SW = System.Diagnostics.Stopwatch;
 public partial class Test2 : MonoBehaviour
 {
     public static bool T1;
-    public static XNavMesh Navmesh;
     public static Normalizer Normalizer;
     public static AABB AABB;
 
@@ -48,108 +47,35 @@ public partial class Test2 : MonoBehaviour
             SW sw = SW.StartNew();
             for (int i = 0; i < 100; i++)
             {
-                object obj = new object();
+                List<object> obj = new List<object>();
                 obj.GetHashCode();
             }
             sw.Stop();
             Debug.LogWarning(sw.ElapsedTicks);
-
-            XPool.Spwan<object>(1, 100, true);
-
+            int listCount = 16;
+            XFrame.PathFinding.Pool.Spwan<object>(100, listCount);
             sw = SW.StartNew();
-            for (int i = 0; i < 100; i++)
+            List<List<object>> list = XFrame.PathFinding.Pool.Require<List<List<object>>>();
+            for (int i = 0; i < listCount; i++)
             {
-                object obj = XPool.Require<object>();
+                List<object> obj = XFrame.PathFinding.Pool.Require<List<object>>(listCount);
                 obj.GetHashCode();
+                list.Add(obj);
             }
             sw.Stop();
+
+            foreach (List<object> obj in list)
+                XFrame.PathFinding.Pool.Release(obj, listCount);
+            XFrame.PathFinding.Pool.Release(list);
             Debug.LogWarning(sw.ElapsedTicks);
-        });
-        Console.Inst.AddCommand("test-4", (param) =>
-        {
-            if (ParamToVecVec(param, out XVector2 p1, out XVector2 p2))
-            {
-                TestPath(Navmesh, p1, p2, out _);
-            }
         });
         Console.Inst.AddCommand("test-44", (param) =>
         {
             XVector2 start = StartPoint.position.ToVec();
             XVector2 end = EndPoint.position.ToVec();
-            TestPath(Navmesh, start, end, out _);
+            m_NavMesh.FindPath(start, end);
         });
-        Console.Inst.AddCommand("test-5", (param) =>
-        {
-            foreach (HalfEdgeFace f in m_NavMesh.Data.Faces)
-            {
-                List<HalfEdgeFace> faces = new List<HalfEdgeFace>();
-                HalfEdge e1 = f.Edge;
-                HalfEdge e2 = e1.NextEdge;
-                HalfEdge e3 = e1.PrevEdge;
-
-                HalfEdge ope1 = e1.OppositeEdge;
-                HalfEdge ope2 = e2.OppositeEdge;
-                HalfEdge ope3 = e3.OppositeEdge;
-
-                if (ope1 != null)
-                {
-                    HalfEdgeFace opf1 = ope1.Face;
-                    faces.Add(opf1);
-
-                    HalfEdge e = ope1.NextEdge.OppositeEdge;
-                    while (e != null)
-                    {
-                        HalfEdgeFace ef = e.Face;
-                        if (ope2 != null && ef == ope2.Face) break;
-                        if (ope3 != null && ef == ope3.Face) break;
-
-                        faces.Add(ef);
-                        e = e.NextEdge.OppositeEdge;
-                    }
-                }
-                if (ope2 != null)
-                {
-                    HalfEdgeFace opf2 = ope2.Face;
-                    faces.Add(opf2);
-
-                    HalfEdge e = ope2.NextEdge.OppositeEdge;
-                    while (e != null)
-                    {
-                        HalfEdgeFace ef = e.Face;
-
-                        if (ope3 != null && ef == ope3.Face) break;
-                        if (ope1 != null && ef == ope1.Face) break;
-
-                        faces.Add(ef);
-                        e = e.NextEdge.OppositeEdge;
-                    }
-                }
-                if (ope3 != null)
-                {
-                    HalfEdgeFace opf3 = ope3.Face;
-                    faces.Add(opf3);
-
-                    HalfEdge e = ope3.NextEdge.OppositeEdge;
-                    while (e != null)
-                    {
-                        HalfEdgeFace ef = e.Face;
-                        if (ope1 != null && ef == ope1.Face) break;
-                        if (ope2 != null && ef == ope2.Face) break;
-
-                        faces.Add(ef);
-                        e = e.NextEdge.OppositeEdge;
-                    }
-                }
-
-                Func<Triangle, Triangle> fun = Test2.Normalizer.UnNormalize;
-                StringBuilder s = new StringBuilder();
-                s.AppendLine($"face {fun(new Triangle(f))}");
-                foreach (HalfEdgeFace face in faces)
-                    s.AppendLine($" -- {fun(new Triangle(face))}");
-                Debug.Log(s.ToString());
-            }
-        });
-
+        
         Console.Inst.AddCommand("rvo", (param) =>
         {
             Circle circle = new Circle(CirclePrefab);
@@ -210,7 +136,7 @@ public partial class Test2 : MonoBehaviour
             Simulator.Instance.setTimeStep(0.15f);
             Simulator.Instance.setAgentDefaults(2, 5, 10.0f, 10.0f, 0.5f, 2.0f, new RVO.Vector2(0.0f, 0.0f));
 
-            m_Triangles = m_NavMesh.GetObstacles(0);
+            m_Triangles = m_NavMesh.GetArea(AreaType.Obstacle);
             foreach (Triangle triangle in m_Triangles)
             {
                 if (triangle.IsClockwise())
@@ -255,13 +181,12 @@ public partial class Test2 : MonoBehaviour
                     if (!hasTarget)
                     {
                         target = m_NavMesh.GetRandomPoint();
-                        path = TestPath(m_NavMesh, agent.Pos, target, out XNavMeshHelper helper);
-                        if (path != null)
+                        Debug.LogWarning($"target {target}");
+                        from = agent.Pos;
+                        to = target;
+                        targets = m_NavMesh.FindPath(from, to);
+                        if (targets != null)
                         {
-                            from = m_NavMesh.Normalizer.Normalize(agent.Pos);
-                            to = m_NavMesh.Normalizer.Normalize(target);
-                            targets = helper.GetPathPoints(path, from, to);
-                            m_NavMesh.Normalizer.UnNormalize(targets);
                             Debug.LogWarning("path-------------");
                             foreach (var target in targets)
                                 Debug.LogWarning(target);
@@ -361,36 +286,6 @@ public partial class Test2 : MonoBehaviour
         //XNavMesh.DelaunayIncrementalSloan.TriangulationWalk(new XVector2(-0.9968367f, -6.047449f), null, HalfDataTest.Data);
     }
 
-    private AStarPath TestPath(XNavMesh navmesh, XVector2 p1, XVector2 p2, out XNavMeshHelper helper)
-    {
-        Normalizer normalizer = navmesh.Normalizer;
-        helper = new XNavMeshHelper(navmesh.Data);
-        AStar aStar = new AStar(helper);
-        IAStarItem start = navmesh.FindWalkFace(p1);
-        IAStarItem end = navmesh.FindWalkFace(p2);
-        if (start != null && end != null)
-        {
-            AStarPath path = aStar.Execute(start, end);
-            List<XVector2> points = new List<XVector2>();
-            List<Edge> edges = new List<Edge>();
-            for (int i = 0; i < points.Count - 1; i++)
-                edges.Add(new Edge(points[i], points[i + 1]));
-            m_Edges.Add(edges);
-
-            if (path == null)
-            {
-                Debug.LogError("calculate path count is null");
-            }
-
-            return path;
-        }
-        else
-        {
-            Debug.LogError($"start or end is null. {start == null} {end == null} ");
-        }
-        return null;
-    }
-
     private void TestEdge(string param)
     {
         List<List<XVector2>> list = new List<List<XVector2>>();
@@ -425,7 +320,6 @@ public partial class Test2 : MonoBehaviour
         List<XVector2> points = GetAllPoints(RectPoints, false);
         Normalizer = new Normalizer(new AABB(points));
         m_NavMesh = new XNavMesh(new AABB(points));
-        Navmesh = m_NavMesh;
         Normalizer = m_NavMesh.Normalizer;
         m_NavMesh.Add(points);
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);

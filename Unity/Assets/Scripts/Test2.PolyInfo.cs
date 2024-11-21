@@ -26,15 +26,13 @@ public partial class Test2
 
     private class HalfEdgeInfo
     {
-        public HalfEdgeData Data;
+        public List<TriangleArea> Triangles;
         public List<MeshInfo> m_Meshs;
 
-        public HalfEdgeInfo(HalfEdgeData data, Color color)
+        public HalfEdgeInfo(XNavMesh navmesh, HalfEdgeData data, Color color)
         {
-            Data = data;
-
-            List<TriangleArea> triangles = XNavMesh.ToTriangles(Test2.Navmesh, data);
-            m_Meshs = MeshArea.GenerateMesh(triangles, color);
+            Triangles = navmesh.ToTriangles(data);
+            m_Meshs = MeshArea.GenerateMesh(Triangles, color);
         }
 
         public void Dispose()

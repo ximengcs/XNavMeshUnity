@@ -153,7 +153,9 @@ namespace XFrame.PathFinding
                 {
                     if (count++ > 1000)
                     {
+#if DEBUG_PATH
                         Recorder.Show(null);
+#endif
                         throw new System.Exception("loop error");
                     }
 
@@ -299,7 +301,9 @@ namespace XFrame.PathFinding
                 {
                     if (count++ > 1000)
                     {
+#if DEBUG_PATH
                         Recorder.Show(null);
+#endif
                         throw new System.Exception("loop error");
                     }
 
@@ -482,7 +486,9 @@ namespace XFrame.PathFinding
                 {
                     if (count++ > 1000)
                     {
+#if DEBUG_PATH
                         Recorder.Show(null);
+#endif
                         throw new System.Exception("loop error");
                     }
                     //Step 3.1. Remove an edge from the list of edges that intersects the constrained edge

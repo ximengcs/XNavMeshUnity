@@ -9,21 +9,21 @@
             A星寻路辅助器
             </summary>
         </member>
-        <member name="M:Simon001.PathFinding.IAStarHelper.GetItemRound(Simon001.PathFinding.IAStarItem,System.Collections.Generic.HashSet{Simon001.PathFinding.IAStarItem})">
+        <member name="M:Simon001.PathFinding.IAStarHelper.GetItemRound(System.Object,System.Collections.Generic.HashSet{System.Object})">
             <summary>
             获取单元格周围的单元
             </summary>
             <param name="item">目标单元格实例</param>
             <param name="result">结果列表, 传入列表为空，不用手动清空</param>
         </member>
-        <member name="M:Simon001.PathFinding.IAStarHelper.GetUniqueId(Simon001.PathFinding.IAStarItem)">
+        <member name="M:Simon001.PathFinding.IAStarHelper.GetUniqueId(System.Object)">
             <summary>
             获取单元格实例的唯一标识
             </summary>
             <param name="item">目标单元格实例</param>
             <returns>每个单元格唯一标识</returns>
         </member>
-        <member name="M:Simon001.PathFinding.IAStarHelper.GetHValue(Simon001.PathFinding.IAStarItem,Simon001.PathFinding.IAStarItem)">
+        <member name="M:Simon001.PathFinding.IAStarHelper.GetHValue(System.Object,System.Object)">
             <summary>
             获取H权重值(预估值)
             </summary>
@@ -31,7 +31,7 @@
             <param name="end">结束单元格</param>
             <returns>H值</returns>
         </member>
-        <member name="M:Simon001.PathFinding.IAStarHelper.GetGValue(Simon001.PathFinding.IAStarItem,Simon001.PathFinding.IAStarItem)">
+        <member name="M:Simon001.PathFinding.IAStarHelper.GetGValue(System.Object,System.Object)">
             <summary>
             获取G权重值
             </summary>

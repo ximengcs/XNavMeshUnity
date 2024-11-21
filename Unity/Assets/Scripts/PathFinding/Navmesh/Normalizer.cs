@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using UnityEngine;
+﻿using System.Collections.Generic;
 
 namespace XFrame.PathFinding
 {
@@ -98,10 +95,12 @@ namespace XFrame.PathFinding
 
         public void UnNormalize(List<Edge> edges)
         {
-            foreach (Edge e in edges)
+            for (int i = 0; i < edges.Count; i++)
             {
+                Edge e = edges[i];
                 e.P1 = UnNormalize(e.P1);
                 e.P2 = UnNormalize(e.P2);
+                edges[i] = e;
             }
         }
     }

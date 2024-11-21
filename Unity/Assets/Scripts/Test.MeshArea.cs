@@ -1,7 +1,6 @@
 ﻿
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 using XFrame.PathFinding;
 
 public partial class Test
@@ -20,55 +19,6 @@ public partial class Test
             Color = color;
             Triangle = areaInfo.Shape;
         }
-
-        public bool E1HasOpposite()
-        {
-            HalfEdge e1 = AreaInfo.Face.Edge;
-            HalfEdge e2 = e1.NextEdge;
-            return InnerCheckHasOpposite(e1, e2);
-        }
-
-        public bool E2HasOpposite()
-        {
-            HalfEdge e2 = AreaInfo.Face.Edge.NextEdge;
-            HalfEdge e3 = e2.NextEdge;
-            return InnerCheckHasOpposite(e2, e3);
-        }
-
-        public bool E3HasOpposite()
-        {
-            HalfEdge e1 = AreaInfo.Face.Edge;
-            HalfEdge e3 = e1.PrevEdge;
-            return InnerCheckHasOpposite(e3, e1);
-        }
-
-        private bool InnerCheckHasOpposite(HalfEdge e1, HalfEdge e2)
-        {
-            if (AreaInfo.Face.IsSide)
-                return false;
-
-            if (e2.OppositeEdge != null)
-            {
-                XVector2 p1 = e1.Vertex.Position;
-                XVector2 p2 = e2.Vertex.Position;
-                XVector2 p3 = e2.OppositeEdge.Vertex.Position;
-                XVector2 p4 = e2.OppositeEdge.PrevEdge.Vertex.Position;
-
-                //string str = $" {AreaInfo.Normalizer.UnNormalize(p1)},{AreaInfo.Normalizer.UnNormalize(p2)} ";
-                //if (e1.OppositeEdge != null)
-                //    str += $" op {AreaInfo.Normalizer.UnNormalize(p3)}, {AreaInfo.Normalizer.UnNormalize(p4)} ";
-                //else
-                //    str += " op is null";
-                //UnityEngine.Debug.Log(str);
-
-                if (p1.Equals(p3) && p2.Equals(p4))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
     }
 
     public class MeshArea
@@ -84,13 +34,6 @@ public partial class Test
             m_Color = color;
             m_NavMesh = navMesh;
             Refresh(navMesh.ToTriangles());
-        }
-
-        public MeshArea(XNavMesh navMesh, HalfEdgeData data, Color color)
-        {
-            m_Color = color;
-            m_NavMesh = navMesh;
-            Refresh(XNavMesh.ToTriangles(navMesh, data));
         }
 
         public void Dispose()
@@ -110,10 +53,10 @@ public partial class Test
 
         public void Refresh(HalfEdgeData data)
         {
-            Refresh(XNavMesh.ToTriangles(m_NavMesh, data));
+            Refresh(m_NavMesh.ToTriangles(data));
         }
 
-        public void Refresh(XNavMeshList<TriangleArea> triangles)
+        public void Refresh(List<TriangleArea> triangles)
         {
             Dispose();
             m_Meshs = GenerateMesh(triangles, m_Color);
