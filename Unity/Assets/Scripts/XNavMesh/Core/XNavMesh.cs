@@ -294,8 +294,9 @@ namespace XFrame.PathFinding
             return faces;
         }
 
-        private static HashSet<HalfEdgeFace> InnerFindContainsFaces(HalfEdgeData data, List<XVector2> edgeList, HashSet<HalfEdgeFace> result = null)
+        private HashSet<HalfEdgeFace> InnerFindContainsFaces(HalfEdgeData data, List<XVector2> edgeList, HashSet<HalfEdgeFace> result = null)
         {
+            Dictionary<HalfEdgeFace, int> opFaceCount = new Dictionary<HalfEdgeFace, int>();
             HashSet<HalfEdgeFace> faces = result != null ? result : new HashSet<HalfEdgeFace>();
             foreach (HalfEdgeFace face in data.Faces)
             {
@@ -303,26 +304,78 @@ namespace XFrame.PathFinding
                 HalfEdge e2 = e1.NextEdge;
                 HalfEdge e3 = e2.NextEdge;
 
+                bool isContains = false;
                 for (int i = 0; i < edgeList.Count; i++)
                 {
                     Edge edge = new Edge(edgeList[i], edgeList[(i + 1) % edgeList.Count]);
                     if (e1.Equals(edge))
                     {
                         faces.Add(face);
+                        isContains = true;
                         break;
                     }
                     if (e2.Equals(edge))
                     {
                         faces.Add(face);
+                        isContains = true;
                         break;
                     }
                     if (e3.Equals(edge))
                     {
                         faces.Add(face);
+                        isContains = true;
                         break;
                     }
                 }
+
+                if (isContains)
+                {
+                    if (e1.OppositeEdge != null)
+                    {
+                        HalfEdgeFace f = e1.OppositeEdge.Face;
+                        if (!faces.Contains(f))
+                        {
+                            if (opFaceCount.TryGetValue(f, out int count))
+                                opFaceCount[f] = count + 1;
+                            else
+                                opFaceCount.Add(f, 1);
+                        }
+                    }
+
+                    if (e2.OppositeEdge != null)
+                    {
+                        HalfEdgeFace f = e2.OppositeEdge.Face;
+                        if (!faces.Contains(f))
+                        {
+                            if (opFaceCount.TryGetValue(f, out int count))
+                                opFaceCount[f] = count + 1;
+                            else
+                                opFaceCount.Add(f, 1);
+                        }
+                    }
+
+                    if (e3.OppositeEdge != null)
+                    {
+                        HalfEdgeFace f = e3.OppositeEdge.Face;
+                        if (!faces.Contains(f))
+                        {
+                            if (opFaceCount.TryGetValue(f, out int count))
+                                opFaceCount[f] = count + 1;
+                            else
+                                opFaceCount.Add(f, 1);
+                        }
+                    }
+                }
             }
+
+            foreach (var item in opFaceCount)
+            {
+                if (item.Value >= 3)
+                {
+                    faces.Add(item.Key);
+                }
+            }
+
             return faces;
         }
 
