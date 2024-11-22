@@ -138,6 +138,16 @@ namespace XFrame.PathFinding
             return new XVector2(v.X / magnitude, v.Y / magnitude);
         }
 
+        public static float operator *(XVector2 vector1, XVector2 vector2)
+        {
+            return vector1.X * vector2.X + vector1.Y * vector2.Y;
+        }
+
+        public static XVector2 operator /(XVector2 vector, float scalar)
+        {
+            return new XVector2(vector.X / scalar, vector.Y / scalar);
+        }
+
         public static XVector2 operator +(XVector2 a, XVector2 b)
         {
             return new XVector2(a.X + b.X, a.Y + b.Y);

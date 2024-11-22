@@ -32,15 +32,15 @@ public class RVOArea : MonoBehaviour
         }
     }
 
-    public List<RVO.Vector2> GetVertices()
+    public List<XVector2> GetVertices()
     {
         UnityEngine.Vector2 basePos = transform.position;
         LineRenderer line = GetComponent<LineRenderer>();
         Vector3[] list = new Vector3[line.positionCount];
         int count = line.GetPositions(list);
-        List<RVO.Vector2> result = new List<RVO.Vector2>(count);
+        List<XVector2> result = new List<XVector2>(count);
         for (int i = 0; i < count; ++i)
-            result.Add(new RVO.Vector2(list[i].x + basePos.x, list[i].y + basePos.y));
+            result.Add(new XVector2(list[i].x + basePos.x, list[i].y + basePos.y));
         return result;
     }
 

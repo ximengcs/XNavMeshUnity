@@ -1,11 +1,8 @@
-using RVO;
-using RVOCS;
 using Simon001.PathFinding;
-using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 using XFrame.PathFinding;
+using XFrame.PathFinding.RVO;
 using static Test;
 using SW = System.Diagnostics.Stopwatch;
 
@@ -76,26 +73,6 @@ public partial class Test2 : MonoBehaviour
             m_NavMesh.FindPath(start, end);
         });
         
-        Console.Inst.AddCommand("rvo", (param) =>
-        {
-            Circle circle = new Circle(CirclePrefab);
-            circle.setupScenario(
-                new RVO.Vector2(StartPoint.position.x, StartPoint.position.y),
-                new RVO.Vector2(EndPoint.position.x, EndPoint.position.y)
-                );
-            circle.updateVisualization();
-            if (RVOObstacle)
-                Simulator.Instance.addObstacle(RVOObstacle.GetVertices());
-            Simulator.Instance.processObstacles();
-            m_UpdaterList.Add(new Updater(() =>
-            {
-                circle.updateVisualization();
-                circle.setPreferredVelocities();
-                Simulator.Instance.doStep();
-                return true;
-            }));
-        });
-
         Console.Inst.AddCommand("agent-follow", (param) =>
         {
             if (ParamToInt(param, out int id))
@@ -134,7 +111,7 @@ public partial class Test2 : MonoBehaviour
             Console.Inst.ExecuteCommand("navmesh-poly-rotate 24 0.1");
 
             Simulator.Instance.setTimeStep(0.15f);
-            Simulator.Instance.setAgentDefaults(2, 5, 10.0f, 10.0f, 0.5f, 2.0f, new RVO.Vector2(0.0f, 0.0f));
+            Simulator.Instance.setAgentDefaults(2, 5, 10.0f, 10.0f, 0.5f, 2.0f, new XVector2(0.0f, 0.0f));
 
             m_Triangles = m_NavMesh.GetArea(AreaType.Obstacle);
             foreach (Triangle triangle in m_Triangles)
@@ -142,17 +119,17 @@ public partial class Test2 : MonoBehaviour
                 if (triangle.IsClockwise())
                     triangle.ChangeOrientation();
 
-                List<RVO.Vector2> points = new List<RVO.Vector2>()
+                List<XVector2> points = new List<XVector2>()
                 {
-                    new RVO.Vector2(triangle.P1.X, triangle.P1.Y),
-                    new RVO.Vector2(triangle.P2.X, triangle.P2.Y),
-                    new RVO.Vector2(triangle.P3.X, triangle.P3.Y)
+                    new XVector2(triangle.P1.X, triangle.P1.Y),
+                    new XVector2(triangle.P2.X, triangle.P2.Y),
+                    new XVector2(triangle.P3.X, triangle.P3.Y)
                 };
                 Simulator.Instance.addObstacle(points);
             }
             Simulator.Instance.processObstacles();
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 1; i++)
             {
                 XVector2 bornPos = m_NavMesh.GetRandomPoint();
                 Console.Inst.ExecuteCommand($"agent-create {bornPos.X},{bornPos.Y}");
@@ -165,7 +142,7 @@ public partial class Test2 : MonoBehaviour
         {
             if (ParamToVec(param, out XVector2 p))
             {
-                int agentId = Simulator.Instance.addAgent(new RVO.Vector2(p.X, p.Y));
+                int agentId = Simulator.Instance.addAgent(new XVector2(p.X, p.Y));
                 XAgent agent = new XAgent(agentId, p, CirclePrefab);
                 m_Agents.Add(agent.Id, agent);
                 int index = 0;
@@ -204,21 +181,21 @@ public partial class Test2 : MonoBehaviour
                             agent.Pos = targets[targets.Count - 1];
                             return true;
                         }
-                        RVO.Vector2 pos = Simulator.Instance.getAgentPosition(agentId);
-                        agent.Pos = new XVector2(pos.x(), pos.y());
+                        XVector2 pos = Simulator.Instance.getAgentPosition(agentId);
+                        agent.Pos = new XVector2(pos.X, pos.Y);
 
-                        RVO.Vector2 vel = Simulator.Instance.getAgentVelocity(agentId);
-                        agent.Towards(new XVector2(vel.x(), vel.y()));
+                        XVector2 vel = Simulator.Instance.getAgentVelocity(agentId);
+                        agent.Towards(new XVector2(vel.X, vel.Y));
 
                         XVector2 tarPos = targets[index];
                         XVector2 power = tarPos - agent.Pos;
-                        RVO.Vector2 v = new RVO.Vector2(power.X, power.Y);
+                        XVector2 v = new XVector2(power.X, power.Y);
                         if (RVOMath.absSq(v) > 1.0f)
                         {
                             v = RVOMath.normalize(v);
                         }
 
-                        bool notReachGoal = RVOMath.absSq(pos - new RVO.Vector2(tarPos.X, tarPos.Y)) > Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId);
+                        bool notReachGoal = RVOMath.absSq(pos - new XVector2(tarPos.X, tarPos.Y)) > Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId);
 
                         if (!notReachGoal)
                         {
@@ -226,7 +203,7 @@ public partial class Test2 : MonoBehaviour
                             //if (index < targets.Count)
                             //    Debug.LogWarning($" {index}:{targets.Count} {targets[index]} ");
 
-                            Simulator.Instance.setAgentPrefVelocity(agentId, new RVO.Vector2());
+                            Simulator.Instance.setAgentPrefVelocity(agentId, new XVector2());
                         }
                         else
                         {
@@ -250,7 +227,7 @@ public partial class Test2 : MonoBehaviour
                     Debug.LogWarning("Start");
                     m_UpdaterList.Add(new Updater(() =>
                     {
-                        RVO.Vector2 v = new RVO.Vector2(p.X, p.Y);
+                        XVector2 v = new XVector2(p.X, p.Y);
                         v = v - Simulator.Instance.getAgentPosition(agentId);
                         if (RVOMath.absSq(v) > 1.0f)
                         {
@@ -260,9 +237,9 @@ public partial class Test2 : MonoBehaviour
                         Simulator.Instance.setAgentPrefVelocity(agentId, v);
                         Simulator.Instance.doStep();
 
-                        RVO.Vector2 pos = Simulator.Instance.getAgentPosition(agentId);
-                        agent.Pos = new XVector2(pos.x(), pos.y());
-                        bool notReachGoal = RVOMath.absSq(pos - new RVO.Vector2(p.X, p.Y)) > Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId);
+                        XVector2 pos = Simulator.Instance.getAgentPosition(agentId);
+                        agent.Pos = new XVector2(pos.X, pos.Y);
+                        bool notReachGoal = RVOMath.absSq(pos - new XVector2(p.X, p.Y)) > Simulator.Instance.getAgentRadius(agentId) * Simulator.Instance.getAgentRadius(agentId);
 
                         if (!notReachGoal)
                         {
