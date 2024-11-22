@@ -296,12 +296,11 @@ public partial class Test2 : MonoBehaviour
             return;
         List<XVector2> points = GetAllPoints(RectPoints, false);
         Normalizer = new Normalizer(new AABB(points));
-        m_NavMesh = new XNavMesh(new AABB(points));
+        m_NavMesh = new XNavmesh(new AABB(points));
         Normalizer = m_NavMesh.Normalizer;
         m_NavMesh.Add(points);
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
         m_FullMeshArea.Refresh();
-        m_NavMesh.CheckDataValid();
     }
 
     private void CreatePoly(string param)
@@ -316,8 +315,6 @@ public partial class Test2 : MonoBehaviour
                 Poly poly = m_NavMesh.AddWithExtraData(points, AreaType.Obstacle, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
                 m_ShowPoly = InnerAddPolyInfo(poly.Id, poly, newAreaData, newOutLine);
                 m_FullMeshArea.Refresh();
-                m_NavMesh.CheckDataValid();
-                m_NavMesh.Test();
             }
         }
     }
@@ -333,7 +330,6 @@ public partial class Test2 : MonoBehaviour
                 m_NavMesh.Remove(polyInfo.Poly, out HalfEdgeData newAreaData, out List<Edge> newOutLine);
                 m_FullMeshArea.Refresh();
                 InnerRemovePolyInfo(id);
-                m_NavMesh.CheckDataValid();
             }
         }
     }
@@ -350,8 +346,6 @@ public partial class Test2 : MonoBehaviour
                 {
                     m_ShowPoly = InnerAddPolyInfo(id, polyInfo.Poly, newAreaData, newOutLine);
                     m_FullMeshArea.Refresh();
-                    m_NavMesh.CheckDataValid();
-                    m_NavMesh.Test();
                 }
                 else
                 {
@@ -373,7 +367,6 @@ public partial class Test2 : MonoBehaviour
                 {
                     m_ShowPoly = InnerAddPolyInfo(id, polyInfo.Poly, newAreaData, newOutLine);
                     m_FullMeshArea.Refresh();
-                    m_NavMesh.CheckDataValid();
                 }
                 else
                 {

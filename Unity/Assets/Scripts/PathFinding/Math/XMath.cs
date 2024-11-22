@@ -45,6 +45,74 @@ namespace XFrame.PathFinding
             return gap <= EPSILON && gap >= -EPSILON;
         }
 
+        //
+        // Is a point inside a triangle?
+        //
+        //From http://totologic.blogspot.se/2014/01/accurate-point-in-triangle-test.html
+        public static bool PointTriangle(Triangle t, XVector2 p, bool includeBorder)
+        {
+            //To avoid floating point precision issues we can add a small value
+            float epsilon = XMath.EPSILON;
+
+            //Based on Barycentric coordinates
+            float denominator = ((t.P2.Y - t.P3.Y) * (t.P1.X - t.P3.X) + (t.P3.X - t.P2.X) * (t.P1.Y - t.P3.Y));
+
+            float a = ((t.P2.Y - t.P3.Y) * (p.X - t.P3.X) + (t.P3.X - t.P2.X) * (p.Y - t.P3.Y)) / denominator;
+            float b = ((t.P3.Y - t.P1.Y) * (p.X - t.P3.X) + (t.P1.X - t.P3.X) * (p.Y - t.P3.Y)) / denominator;
+            float c = 1 - a - b;
+
+            bool isWithinTriangle = false;
+
+            if (includeBorder)
+            {
+                float zero = 0f - epsilon;
+                float one = 1f + epsilon;
+
+                //The point is within the triangle or on the border
+                if (a >= zero && a <= one && b >= zero && b <= one && c >= zero && c <= one)
+                {
+                    isWithinTriangle = true;
+                }
+            }
+            else
+            {
+                float zero = 0f + epsilon;
+                float one = 1f - epsilon;
+
+                //The point is within the triangle
+                if (a > zero && a < one && b > zero && b < one && c > zero && c < one)
+                {
+                    isWithinTriangle = true;
+                }
+            }
+
+            return isWithinTriangle;
+        }
+
+        /// <summary>
+        /// 检查三角形是否为顺时针
+        /// <a href="https://math.stackexchange.com/questions/1324179/how-to-tell-if-3-connected-points-are-connected-clockwise-or-counter-clockwise"/>
+        /// <a href="https://en.wikipedia.org/wiki/Curve_orientation"/>
+        /// </summary>
+        /// <param name="p1">三角形点1</param>
+        /// <param name="p2">三角形点2</param>
+        /// <param name="p3">三角形点3</param>
+        /// <returns>true表示顺时针</returns>
+        public static bool IsTriangleOrientedClockwise(XVector2 p1, XVector2 p2, XVector2 p3)
+        {
+            bool isClockWise = true;
+
+            float determinant = p1.X * p2.Y + p3.X * p1.Y + p2.X * p3.Y - p1.X * p3.Y - p3.X * p2.Y - p2.X * p1.Y;
+
+            if (determinant > 0f)
+                isClockWise = false;
+
+            if (Math.Abs(determinant) <= float.Epsilon)
+                return true;
+
+            return isClockWise;
+        }
+
         public static bool CheckPointOnTriangleLine(Triangle triangle, XVector2 point, out XVector2 oppositePoint)
         {
             XVector2 p1 = triangle.P1;
@@ -233,7 +301,7 @@ namespace XFrame.PathFinding
         public static XVector2 CalculateCircleCenter(XVector2 a, XVector2 b, XVector2 c)
         {
             //Make sure the triangle a-b-c is counterclockwise
-            if (!GeometryUtility.IsTriangleOrientedClockwise(a, b, c))
+            if (!IsTriangleOrientedClockwise(a, b, c))
             {
                 //Swap two vertices to change orientation
                 (a, b) = (b, a);

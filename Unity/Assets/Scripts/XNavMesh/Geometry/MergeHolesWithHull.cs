@@ -262,7 +262,7 @@ namespace XFrame.PathFinding
 
             foreach (XVector2 v in reflectVertices)
             {
-                if (GeometryUtility.PointTriangle(t, v, includeBorder: true))
+                if (XMath.PointTriangle(t, v, includeBorder: true))
                 {
                     float angle = XMath.AngleBetween(intersectionVertex - hole.maxX_Vert, v - hole.maxX_Vert);
 

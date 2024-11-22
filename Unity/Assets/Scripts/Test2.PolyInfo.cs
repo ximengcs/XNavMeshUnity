@@ -10,7 +10,7 @@ public partial class Test2
     private class PolyInfo
     {
         public Poly Poly;
-        public XNavMesh NavMesh;
+        public XNavmesh NavMesh;
         public MeshArea MeshArea;
         public HalfEdgeData ChangeData;
         public List<Edge> ChangeLine;
@@ -29,7 +29,7 @@ public partial class Test2
         public List<TriangleArea> Triangles;
         public List<MeshInfo> m_Meshs;
 
-        public HalfEdgeInfo(XNavMesh navmesh, HalfEdgeData data, Color color)
+        public HalfEdgeInfo(XNavmesh navmesh, HalfEdgeData data, Color color)
         {
             Triangles = navmesh.ToTriangles(data);
             m_Meshs = MeshArea.GenerateMesh(Triangles, color);

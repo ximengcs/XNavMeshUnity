@@ -6,6 +6,7 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 using XFrame.PathFinding;
+using XFrame.PathFinding.Extensions;
 using XFrame.PathFinding.RVO;
 using static Test;
 
@@ -16,7 +17,7 @@ public partial class Test2
     public Transform RectPoints;
     public List<Transform> Holls;
 
-    private XNavMesh m_NavMesh;
+    private XNavmesh m_NavMesh;
     private XNavMeshRenderer m_Render;
     private MeshArea m_FullMeshArea;
     private Dictionary<int, PolyInfo> m_Polies;
@@ -189,7 +190,7 @@ public partial class Test2
         }
 
         s_Cache = new StringBuilder();
-        HalfEdgeData data = XNavMesh.GenerateHalfEdgeData2(edges, true, relationAllPoints);
+        HalfEdgeData data = HalfEdgeExtension.GenerateConstraintData(edges, true, relationAllPoints);
         HalfDataTest?.Dispose();
         HalfDataTest = new HalfEdgeInfo(m_NavMesh, data, Color.cyan);
 
@@ -352,7 +353,7 @@ public partial class Test2
     {
         param = param.TrimEnd(' ');
         byte[] bytes = File.ReadAllBytes($"Assets/Data/Navmesh/{param}.bytes");
-        m_NavMesh = new XNavMesh(bytes);
+        m_NavMesh = new XNavmesh(bytes);
         Normalizer = m_NavMesh.Normalizer;
 
         m_FullMeshArea = new MeshArea(m_NavMesh, Color.green);
@@ -391,7 +392,7 @@ public partial class Test2
 
     private void CheckValid(string param)
     {
-        m_NavMesh.CheckDataValid();
+
     }
 
     public void OnT1(string param)

@@ -9,7 +9,7 @@ using static Test;
 
 public struct CurrentNavmesh
 {
-    public XNavMesh Navmesh;
+    public XNavmesh Navmesh;
     public MeshArea MeshArea;
     public XNavMeshRenderer Renderer;
 }
@@ -202,7 +202,7 @@ public class XNavMeshTools : EditorWindow
     private void InnerGenerateNavmesh()
     {
         InnerSyncData();
-        XNavMesh navmesh = new XNavMesh(new AABB(m_Current.MinX, m_Current.MaxX, m_Current.MinY, m_Current.MaxY));
+        XNavmesh navmesh = new XNavmesh(new AABB(m_Current.MinX, m_Current.MaxX, m_Current.MinY, m_Current.MaxY));
 
         foreach (var entry in m_Current.Areas)
         {

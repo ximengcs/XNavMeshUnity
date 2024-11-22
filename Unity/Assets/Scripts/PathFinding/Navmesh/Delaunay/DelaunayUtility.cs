@@ -1,45 +1,56 @@
 ﻿
 namespace XFrame.PathFinding
 {
-    public class HalfEdgeUtility
+    internal class DelaunayUtility
     {
-        public static int RandInt(int start, int end)
+        //
+        // Is a quadrilateral convex? Assume no 3 points are colinear and the shape doesnt look like an hourglass
+        //
+        //A quadrilateral is a polygon with four edges (or sides) and four vertices or corners
+        public static bool IsQuadrilateralConvex(XVector2 a, XVector2 b, XVector2 c, XVector2 d)
         {
-            return UnityEngine.Random.Range(start, end);
-        }
+            bool isConvex = false;
 
-        //Test if we should flip an edge
-        //a, b, c belongs to the triangle and d is the point on the other triangle
-        //a-c is the edge, which is important so we can flip it, by making the edge b-d
-        public static bool ShouldFlipEdge(XVector2 a, XVector2 b, XVector2 c, XVector2 d)
-        {
-            bool shouldFlipEdge = false;
+            //Convex if the convex hull includes all 4 points - will require just 4 determinant operations
+            //In this case we dont kneed to know the order of the points, which is better
+            //We could split it up into triangles, but still messy because of interior/exterior angles
+            //Another version is if we know the edge between the triangles that form a quadrilateral
+            //then we could measure the 4 angles of the edge, add them together (2 and 2) to get the interior angle
+            //But it will still require 8 magnitude operations which is slow
+            //From: https://stackoverflow.com/questions/2122305/convex-hull-of-4-points
+            bool abc = XMath.IsTriangleOrientedClockwise(a, b, c);
+            bool abd = XMath.IsTriangleOrientedClockwise(a, b, d);
+            bool bcd = XMath.IsTriangleOrientedClockwise(b, c, d);
+            bool cad = XMath.IsTriangleOrientedClockwise(c, a, d);
 
-            //Use the circle test to test if we need to flip this edge
-            //We should flip if d is inside a circle formed by a, b, c
-            IntersectionCases intersectionCases = XMath.PointCircle(a, b, c, d);
-
-            if (intersectionCases == IntersectionCases.IsInside)
+            if (abc && abd && bcd & !cad)
             {
-                //Are these the two triangles forming a convex quadrilateral? Otherwise the edge cant be flipped
-                if (DelaunayUtility.IsQuadrilateralConvex(a, b, c, d))
-                {
-                    //If the new triangle after a flip is not better, then dont flip
-                    //This will also stop the algorithm from ending up in an endless loop
-                    IntersectionCases intersectionCases2 = XMath.PointCircle(b, c, d, a);
-
-                    if (intersectionCases2 == IntersectionCases.IsOnEdge || intersectionCases2 == IntersectionCases.IsInside)
-                    {
-                        shouldFlipEdge = false;
-                    }
-                    else
-                    {
-                        shouldFlipEdge = true;
-                    }
-                }
+                isConvex = true;
+            }
+            else if (abc && abd && !bcd & cad)
+            {
+                isConvex = true;
+            }
+            else if (abc && !abd && bcd & cad)
+            {
+                isConvex = true;
+            }
+            //The opposite sign, which makes everything inverted
+            else if (!abc && !abd && !bcd & cad)
+            {
+                isConvex = true;
+            }
+            else if (!abc && !abd && bcd & !cad)
+            {
+                isConvex = true;
+            }
+            else if (!abc && abd && !bcd & !cad)
+            {
+                isConvex = true;
             }
 
-            return shouldFlipEdge;
+
+            return isConvex;
         }
 
         //
@@ -141,6 +152,45 @@ namespace XFrame.PathFinding
 
             //Opposite-edges are not changing!
             //And neither are we adding, removing data so we dont need to update the lists with all data
+        }
+
+        //From "A fast algortihm for generating constrained delaunay..."
+        //Is numerically stable
+        //v1, v2 should belong to the edge we ant to flip
+        //v1, v2, v3 are counter-clockwise
+        //Is also checking if the edge can be swapped
+        public static bool ShouldFlipEdgeStable(XVector2 v1, XVector2 v2, XVector2 v3, XVector2 vp)
+        {
+            float x_13 = v1.X - v3.X;
+            float x_23 = v2.X - v3.X;
+            float x_1p = v1.X - vp.X;
+            float x_2p = v2.X - vp.X;
+
+            float y_13 = v1.Y - v3.Y;
+            float y_23 = v2.Y - v3.Y;
+            float y_1p = v1.Y - vp.Y;
+            float y_2p = v2.Y - vp.Y;
+
+            float cos_a = x_13 * x_23 + y_13 * y_23;
+            float cos_b = x_2p * x_1p + y_2p * y_1p;
+
+            if (cos_a >= 0f && cos_b >= 0f)
+            {
+                return false;
+            }
+            if (cos_a < 0f && cos_b < 0)
+            {
+                return true;
+            }
+
+            float sin_ab = (x_13 * y_23 - x_23 * y_13) * cos_b + (x_2p * y_1p - x_1p * y_2p) * cos_a;
+
+            if (sin_ab < 0)
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -23,13 +23,13 @@ public partial class Test
 
     public class MeshArea
     {
-        private XNavMesh m_NavMesh;
+        private XNavmesh m_NavMesh;
         private Color m_Color;
         private List<MeshInfo> m_Meshs;
 
         public List<MeshInfo> Meshs => m_Meshs;
 
-        public MeshArea(XNavMesh navMesh, Color color)
+        public MeshArea(XNavmesh navMesh, Color color)
         {
             m_Color = color;
             m_NavMesh = navMesh;

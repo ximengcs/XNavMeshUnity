@@ -408,7 +408,7 @@ namespace XFrame.PathFinding
                 }
 
                 //If a relect vertex intersects with the triangle, then this vertex is not an ear
-                if (GeometryUtility.PointTriangle(t, test_p, includeBorder: true))
+                if (XMath.PointTriangle(t, test_p, includeBorder: true))
                 {
                     return false;
                 }
