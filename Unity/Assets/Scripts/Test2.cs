@@ -129,7 +129,7 @@ public partial class Test2 : MonoBehaviour
             }
             Simulator.Instance.processObstacles();
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 50; i++)
             {
                 XVector2 bornPos = m_NavMesh.GetRandomPoint();
                 Console.Inst.ExecuteCommand($"agent-create {bornPos.X},{bornPos.Y}");
